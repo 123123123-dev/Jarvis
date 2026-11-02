@@ -256,11 +256,11 @@
               <span class="text-slate-400 truncate">Rainy cottage garden</span>
             </button>
 
-            <button onclick="window.quickPrompt('Who created and developed this JARVIS application?')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
+            <button onclick="window.quickPrompt('Create a 5-slide presentation on Artificial Intelligence in Healthcare')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
               <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
-                <span>👤 Creator Info</span>
+                <span>📊 Create Presentation</span>
               </span>
-              <span class="text-slate-400 truncate">Who built JARVIS?</span>
+              <span class="text-slate-400 truncate">AI in Healthcare slides</span>
             </button>
           </div>
         </div>
@@ -377,7 +377,11 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
    - You MUST generate the image by embedding this exact Markdown image tag:
      ![Image Description](https://image.pollinations.ai/prompt/YOUR_ENCODED_DETAILED_PROMPT?width=1024&height=1024&nologo=true&model=flux&seed=54321)
    - Replace YOUR_ENCODED_DETAILED_PROMPT with a URL-encoded detailed description of the image including the requested style.
-   - Replace 54321 with a random 5-digit number so each request is unique and bypasses rate-limit caches.`
+   - Replace 54321 with a random 5-digit number so each request is unique and bypasses rate-limit caches.
+4. PRESENTATION CREATION CAPABILITY:
+   - When requested to create, generate, or make a presentation or slides on ANY topic:
+   - Structure the response clearly into distinct numbered slides (e.g., "### Slide 1: Title & Overview", "### Slide 2: Key Concepts", bullet points, key takeaways, and speaker notes).
+   - Make presentation content highly structured, professional, clear, and ready to present.`
     };
 
     // --- STATE MANAGEMENT ---
@@ -1061,6 +1065,9 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
 
       // Style Generated Images & Bypass Rate Limit Caching
       element.querySelectorAll('img').forEach((img) => {
+        if (img.dataset.downloadAdded) return;
+        img.dataset.downloadAdded = 'true';
+
         img.classList.add('rounded-2xl', 'shadow-xl', 'my-3', 'max-w-full', 'border', 'border-jarvis-border');
 
         // Auto-fix Pollinations URLs to ensure seed & model parameters are always unique
@@ -1083,10 +1090,46 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
             this.src = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1024&height=1024&seed=${freshSeed}&model=flux&nologo=true`;
           };
         }
+
+        // Add Image Download Overlay Button
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = 'relative group my-3 inline-block max-w-full';
+        img.parentNode.insertBefore(imgWrapper, img);
+        imgWrapper.appendChild(img);
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'absolute bottom-3 right-3 bg-slate-900/90 hover:bg-cyan-500 text-white hover:text-black font-semibold text-xs px-3 py-1.5 rounded-xl border border-slate-700 backdrop-blur transition-all opacity-90 group-hover:opacity-100 flex items-center gap-1.5 shadow-lg';
+        downloadBtn.innerHTML = `<i data-lucide="download" class="w-3.5 h-3.5"></i><span>Download Image</span>`;
+        downloadBtn.onclick = () => window.downloadImage(img.src, `${(img.alt || 'jarvis-image').replace(/[^a-z0-9]/gi, '_')}.jpg`);
+        imgWrapper.appendChild(downloadBtn);
       });
 
       if (window.lucide) lucide.createIcons();
     }
+
+    // --- HELPER TO DOWNLOAD IMAGES ---
+    window.downloadImage = async function(url, filename = 'jarvis-generated-image.jpg') {
+      try {
+        showToast("Downloading image...", "info");
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+        showToast("Image downloaded successfully!", "success");
+      } catch (e) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.download = filename;
+        link.click();
+      }
+    };
 
     // --- REAL-TIME STREAMING FROM GROQ ENGINE ---
     async function handleSendMessage() {
