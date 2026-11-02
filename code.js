@@ -391,6 +391,23 @@ async function handleSendMessage() {
 
   // Construct assistant placeholder message
   const assistantMsgId = 'msg_' + (Date.now() + 1);
+  const assistantMsg = {
+    id: assistantMsgId,
+    role: 'assistant',
+    content: '',
+    timestamp: Date.now()
+  };
+  currentSession.messages.push(assistantMsg);
+
+  state.isGenerating = true;
+  renderChatMessages();
+
+  const formattedMessages = [
+    { role: 'system', content: state.settings.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION },
+    ...currentSession.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
+  ];
+
+  try {
     let response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
