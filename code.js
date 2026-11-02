@@ -33,7 +33,10 @@ CRITICAL BEHAVIOR & STYLE GUIDELINES:
    - For simple or casual questions (e.g., greetings, basic facts, short queries): Answer directly, concisely, and naturally in plain conversational language like ChatGPT without using unnecessary tables, markdown clutter, or strange bracket symbols.
    - For coding questions: Provide clean, efficient, well-formatted code inside standard code blocks with clear explanations.
    - For math questions: Present step-by-step mathematical solutions clearly and cleanly using standard mathematical equations.
-4. VISUAL HTML PRESENTATIONS: When asked to create, generate, or make a presentation or slides on ANY topic, DO NOT output plain text markdown bullet points. Instead, output a complete, standalone, visually styled HTML document wrapped inside a \`\`\`html code block. Include CSS embedded styling with fixed 1280x720 slide containers (<div class="slide-container">), modern visual styling, high-contrast typography, title cards, structured card grids, visual metrics, and clean light backgrounds so each slide looks like a professional presentation deck.
+4. VISUAL PRESENTATIONS & SLIDES: When asked to create, generate, or make a presentation or slides on ANY topic:
+   - Output a complete, multi-slide visual HTML slide deck inside a \`\`\`html code block.
+   - Use <section class="slide"> tags for each slide (Slide 1, Slide 2, etc.).
+   - Include modern 16:9 card layouts, bold typography, grid cards, highlight badges, and speaker notes so each slide renders as a visual presentation deck.
 5. TONE: Speak directly, naturally, smoothly, and cleanly like ChatGPT. Keep output clean and easily readable.`;
 
 // --- GLOBAL APPLICATION STATE ---
@@ -321,6 +324,9 @@ function renderFormattedMarkdown(element, content) {
     }
   }
 
+  // Detect & Render Interactive Visual Presentation Slide Decks
+  renderInteractiveSlideDecks(element, content);
+
   // Attach code block headers, copy buttons, and presentation preview/download buttons
   const preElements = element.querySelectorAll('pre');
   preElements.forEach((pre) => {
@@ -391,6 +397,189 @@ function renderFormattedMarkdown(element, content) {
   });
 
   if (window.lucide) window.lucide.createIcons();
+}
+
+// --- INTERACTIVE SLIDE DECK WIDGET RENDERER ---
+function renderInteractiveSlideDecks(element, rawText) {
+  if (!element || !rawText) return;
+
+  const isSlideContent = /Slide\s*\d+/i.test(rawText) || rawText.includes('class="slide"') || rawText.includes('<section class="slide"');
+  if (!isSlideContent) return;
+
+  if (element.querySelector('.presentation-deck-widget')) return;
+
+  let slidesHtml = '';
+  let slidesList = [];
+
+  if (rawText.includes('<section') || rawText.includes('class="slide"')) {
+    const htmlMatch = rawText.match(/```html\s*([\s\S]*?)```/i);
+    slidesHtml = htmlMatch ? htmlMatch[1] : rawText;
+  } else {
+    slidesHtml = convertMarkdownTextToHtmlSlides(rawText);
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(slidesHtml, 'text/html');
+  let extracted = Array.from(doc.querySelectorAll('section, .slide, .slide-container'));
+
+  if (!extracted.length) {
+    const slideBlocks = slidesHtml.split(/(?=<div class="slide"|<section)/i);
+    extracted = slideBlocks.filter(b => b.trim().length > 0);
+  }
+
+  slidesList = extracted.map(el => typeof el === 'string' ? el : el.outerHTML);
+  if (!slidesList.length) return;
+
+  let currentSlideIndex = 0;
+  let currentTheme = 'dark';
+
+  const widget = document.createElement('div');
+  widget.className = 'presentation-deck-widget my-4 bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-2xl w-full';
+
+  widget.innerHTML = `
+    <div class="flex items-center justify-between px-4 py-2.5 bg-slate-950 border-b border-slate-800 text-xs">
+      <div class="flex items-center gap-2 font-bold text-white truncate">
+        <span class="text-cyan-400 text-sm">✦</span>
+        <span class="widget-deck-title truncate">Interactive Slide Deck</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800 text-slate-300">
+          <button class="prev-btn hover:text-cyan-400 disabled:opacity-30 px-1 font-bold">◀</button>
+          <span class="slide-counter text-[11px] font-mono font-semibold px-1 text-cyan-300">1 of ${slidesList.length}</span>
+          <button class="next-btn hover:text-cyan-400 disabled:opacity-30 px-1 font-bold">▶</button>
+        </div>
+        <button class="theme-toggle-btn p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white" title="Toggle Light/Dark Theme">🌙</button>
+        <button class="export-deck-btn px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-[11px] flex items-center gap-1 transition-colors">
+          <i data-lucide="download" class="w-3 h-3"></i>
+          <span>Export .html</span>
+        </button>
+        <button class="fullscreen-deck-btn p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white" title="Fullscreen Preview">⛶</button>
+      </div>
+    </div>
+    <div class="slide-viewport relative w-full aspect-[16/9] bg-slate-950 flex items-center justify-center p-2">
+      <iframe class="slide-frame w-full h-full border-0 rounded-xl bg-slate-900" sandbox="allow-scripts"></iframe>
+    </div>
+  `;
+
+  const iframe = widget.querySelector('.slide-frame');
+  const prevBtn = widget.querySelector('.prev-btn');
+  const nextBtn = widget.querySelector('.next-btn');
+  const counter = widget.querySelector('.slide-counter');
+  const themeBtn = widget.querySelector('.theme-toggle-btn');
+  const exportBtn = widget.querySelector('.export-deck-btn');
+  const fullscreenBtn = widget.querySelector('.fullscreen-deck-btn');
+
+  function updateSlideDisplay() {
+    counter.textContent = `${currentSlideIndex + 1} of ${slidesList.length}`;
+    prevBtn.disabled = currentSlideIndex === 0;
+    nextBtn.disabled = currentSlideIndex === slidesList.length - 1;
+
+    const currentSlideContent = slidesList[currentSlideIndex];
+    const isDark = currentTheme === 'dark';
+    
+    iframe.srcdoc = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          body { margin: 0; padding: 2rem; font-family: system-ui, -apple-system, sans-serif; background: ${isDark ? '#0b0f19' : '#ffffff'}; color: ${isDark ? '#f8fafc' : '#0f172a'}; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
+          .slide-box { width: 100%; max-width: 1000px; margin: 0 auto; }
+          h1, h2, h3 { color: ${isDark ? '#38bdf8' : '#0284c7'}; margin-top: 0; }
+          .card { background: ${isDark ? '#162036' : '#f1f5f9'}; border: 1px solid ${isDark ? '#233352' : '#cbd5e1'}; padding: 1.25rem; border-radius: 1rem; margin-bottom: 1rem; }
+          ul { padding-left: 1.25rem; line-height: 1.7; }
+          .badge { background: ${isDark ? '#0284c7' : '#e0f2fe'}; color: ${isDark ? '#ffffff' : '#0369a1'}; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        </style>
+      </head>
+      <body>
+        <div class="slide-box">
+          ${currentSlideContent}
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  prevBtn.addEventListener('click', () => {
+    if (currentSlideIndex > 0) {
+      currentSlideIndex--;
+      updateSlideDisplay();
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentSlideIndex < slidesList.length - 1) {
+      currentSlideIndex++;
+      updateSlideDisplay();
+    }
+  });
+
+  themeBtn.addEventListener('click', () => {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    themeBtn.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+    updateSlideDisplay();
+  });
+
+  exportBtn.addEventListener('click', () => downloadPresentationHtml(slidesHtml));
+  fullscreenBtn.addEventListener('click', () => openPresentationPreviewModal(slidesHtml));
+
+  updateSlideDisplay();
+  element.insertBefore(widget, element.firstChild);
+}
+
+function convertMarkdownTextToHtmlSlides(text) {
+  const slideRegex = /Slide\s*(\d+)[\s:]*([^\n]*)/gi;
+  const sections = text.split(/Slide\s*\d+[\s:]*/i).filter(s => s.trim().length > 0);
+
+  if (!sections.length) return `<section class="slide"><div>${text}</div></section>`;
+
+  return sections.map((sec, idx) => {
+    const lines = sec.trim().split('\n').filter(l => l.trim().length > 0);
+    const title = lines[0] ? lines[0].replace(/^[#*\s-]+/, '') : `Slide ${idx + 1}`;
+    const bodyLines = lines.slice(1);
+
+    const keyPoints = [];
+    const notes = [];
+    let isNotes = false;
+
+    bodyLines.forEach(line => {
+      if (/speaker notes/i.test(line)) {
+        isNotes = true;
+        return;
+      }
+      if (isNotes) {
+        notes.push(line.replace(/^[#*\s-]+/, ''));
+      } else {
+        keyPoints.push(line.replace(/^[#*\s-]+/, ''));
+      }
+    });
+
+    return `
+      <section class="slide">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="badge">Slide ${idx + 1}</span>
+        </div>
+        <h2 class="text-2xl font-extrabold mb-4">${escapeHtml(title)}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+          <div class="card">
+            <h3 class="text-xs font-bold uppercase tracking-wider mb-2 opacity-80">Key Points</h3>
+            <ul class="text-sm">
+              ${keyPoints.map(kp => `<li>${escapeHtml(kp)}</li>`).join('')}
+            </ul>
+          </div>
+          ${notes.length ? `
+            <div class="card">
+              <h3 class="text-xs font-bold uppercase tracking-wider mb-2 opacity-80">Speaker Notes</h3>
+              <ul class="text-sm">
+                ${notes.map(n => `<li>${escapeHtml(n)}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        </div>
+      </section>
+    `;
+  }).join('\n');
 }
 
 // --- PRESENTATION PREVIEW MODAL & DOWNLOAD HELPERS ---
