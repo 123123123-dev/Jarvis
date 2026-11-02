@@ -1,147 +1,1212 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="dark h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JARVIS AI - Created by Abdullah Waheed</title>
+  <title>JARVIS AI PRO - By Abdullah Waheed</title>
+  <meta name="description" content="JARVIS AI Assistant created and developed by Abdullah Waheed for smart chat, coding, math solutions, and multi-style AI image generation.">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            jarvis: {
+              bg: '#080c14',
+              sidebar: '#0e1526',
+              card: '#162036',
+              hover: '#1e2d4a',
+              border: '#233352',
+              accent: '#00f0ff',
+              accentDark: '#00b8cc',
+              userBubble: '#1b273e'
+            }
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 20px rgba(0, 240, 255, 0.25)',
+            'glow-sm': '0 0 10px rgba(0, 240, 255, 0.15)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Marked.js for Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- DOMPurify for HTML Sanitization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+  <!-- KaTeX for LaTeX Math Equation Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
   <!-- Highlight.js for Code Highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
-  <!-- Marked.js for Markdown Parsing -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-  <!-- KaTeX for Math Equation Rendering -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
-    .markdown-body p { margin-bottom: 0.75rem; }
-    .markdown-body pre { background: #0f172a; padding: 1rem; border-radius: 0.75rem; margin: 0.75rem 0; border: 1px solid #1e293b; overflow-x: auto; }
-    .markdown-body code { font-family: monospace; }
-    .markdown-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    .markdown-body th, .markdown-body td { border: 1px solid #334155; padding: 0.5rem 0.75rem; text-align: left; }
-    .markdown-body th { background-color: #1e293b; }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #233352; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334973; }
+
+    /* Markdown Output Styles */
+    .markdown-content p { margin-bottom: 0.85rem; line-height: 1.65; }
+    .markdown-content p:last-child { margin-bottom: 0; }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.6rem; color: #f8fafc; }
+    .markdown-content ul { list-style-type: disc; padding-left: 1.4rem; margin-bottom: 0.85rem; }
+    .markdown-content ol { list-style-type: decimal; padding-left: 1.4rem; margin-bottom: 0.85rem; }
+    .markdown-content blockquote { border-left: 3px solid #00f0ff; padding-left: 0.85rem; color: #94a3b8; margin-bottom: 0.85rem; font-style: italic; }
+    .markdown-content table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; }
+    .markdown-content th, .markdown-content td { border: 1px solid #233352; padding: 0.6rem 0.85rem; text-align: left; }
+    .markdown-content th { background-color: #162036; font-weight: 600; color: #00f0ff; }
+    .markdown-content code:not(pre code) { background-color: #162036; color: #00f0ff; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; }
+
+    /* Code Block Header and Copy Button */
+    .code-block-wrapper { margin-top: 0.75rem; margin-bottom: 0.75rem; border-radius: 0.5rem; overflow: hidden; border: 1px solid #233352; }
+    .code-header { display: flex; justify-content: space-between; align-items: center; background-color: #0e1526; padding: 0.4rem 1rem; font-family: monospace; font-size: 0.75rem; color: #94a3b8; border-bottom: 1px solid #162036; }
+    .code-block-wrapper pre { margin: 0 !important; padding: 1rem !important; background-color: #080c14 !important; overflow-x: auto; }
+    .katex-display { margin: 0.75rem 0; overflow-x: auto; padding: 0.25rem 0; }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased overflow-hidden bg-slate-950">
+<body class="bg-jarvis-bg text-slate-100 h-full font-sans antialiased selection:bg-jarvis-accent selection:text-black">
 
-  <!-- TOP HEADER -->
-  <header class="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 z-20">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-bold text-cyan-400">J</div>
-      <div>
-        <h1 class="font-bold text-sm tracking-wide text-white flex items-center gap-2">
-          JARVIS AI <span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded font-mono">PRO</span>
-        </h1>
-        <p class="text-[10px] text-slate-400">By Abdullah Waheed</p>
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- CONFIRM MODAL -->
+  <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-jarvis-card border border-jarvis-border rounded-2xl max-w-sm w-full p-5 shadow-2xl">
+      <h3 id="confirmTitle" class="text-base font-bold text-white mb-2">Confirm Action</h3>
+      <p id="confirmMessage" class="text-xs text-slate-300 mb-5">Are you sure you want to proceed?</p>
+      <div class="flex items-center justify-end gap-2">
+        <button id="confirmCancelBtn" class="px-3.5 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold">Cancel</button>
+        <button id="confirmOkBtn" class="px-3.5 py-1.5 rounded-xl bg-red-600 text-white hover:bg-red-500 text-xs font-semibold">Confirm</button>
       </div>
     </div>
+  </div>
 
-    <!-- MODEL SELECTOR -->
-    <div class="flex items-center gap-3">
-      <select id="modelSelect" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-cyan-500">
-        <option value="llama-3.1-8b-instant" selected>Jarvis Instant (Ultra Fast)</option>
-        <option value="llama3-70b-8192">Jarvis Pro (High Intelligence)</option>
-        <option value="mixtral-8x7b-32768">Ironman Jarvis (Deep Reasoning)</option>
-      </select>
+  <div class="flex h-full w-full bg-jarvis-bg text-slate-100 overflow-hidden relative">
+    
+    <!-- SIDEBAR BACKDROP (Mobile) -->
+    <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 z-20 md:hidden hidden transition-opacity"></div>
 
-      <!-- AUTH BUTTON -->
-      <button id="authBtn" onclick="openAuthModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3.5 py-1.5 rounded-lg font-medium transition shadow-lg shadow-cyan-600/20">
-        Sign In
-      </button>
-    </div>
-  </header>
-
-  <!-- MAIN BODY -->
-  <div class="flex-1 flex overflow-hidden">
     <!-- SIDEBAR -->
-    <aside class="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col hidden md:flex">
-      <div class="p-3 border-b border-slate-800/60">
-        <button onclick="startNewChat()" class="w-full flex items-center justify-between bg-cyan-600/10 border border-cyan-500/30 hover:bg-cyan-600/20 text-cyan-300 px-3 py-2 rounded-xl text-xs font-semibold transition">
-          <span>+ New Chat</span>
-          <span class="text-[10px] opacity-60">Ctrl+K</span>
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 w-72 bg-jarvis-sidebar flex flex-col border-r border-jarvis-border transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
+      
+      <!-- App Brand Header -->
+      <div class="p-4 border-b border-jarvis-border flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center font-black text-black text-lg shadow-glow-sm">
+            J
+          </div>
+          <div>
+            <h1 class="font-bold text-sm text-white tracking-wide flex items-center gap-1.5">
+              <span>JARVIS AI</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-semibold border border-cyan-500/30">PRO</span>
+            </h1>
+            <p class="text-[11px] text-slate-400">By Abdullah Waheed</p>
+          </div>
+        </div>
+
+        <button id="closeSidebarMobile" class="md:hidden p-1 text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <!-- ACCOUNT STATUS BADGE -->
-      <div id="accountStatusBanner" class="px-3 py-2 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-xs text-amber-300">
-        <span>● Guest Mode</span>
-        <button onclick="openAuthModal()" class="underline text-[11px] font-semibold">Sign In</button>
-      </div>
-
-      <!-- SAVED CONVERSATIONS LIST -->
-      <div class="flex-1 overflow-y-auto p-3 space-y-1" id="chatHistoryList">
-        <p class="text-[11px] text-slate-500 px-2 py-1 font-mono uppercase tracking-wider">Saved Conversations</p>
-        <div id="historyItems" class="space-y-1"></div>
-      </div>
-
-      <!-- FOOTER USER PROFILE -->
-      <div class="p-3 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between">
-        <div class="flex items-center gap-2 overflow-hidden">
-          <div id="userAvatar" class="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-300 font-bold">G</div>
-          <div class="truncate">
-            <p id="userName" class="text-xs font-medium text-slate-200 truncate">Guest User</p>
-            <p id="userSub" class="text-[10px] text-slate-500 truncate">Sign in to save history</p>
+      <!-- New Chat Button -->
+      <div class="p-3">
+        <button id="newChatBtn" class="w-full flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/30 rounded-xl text-sm font-semibold text-cyan-300 transition-all shadow-sm">
+          <div class="flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-cyan-400"></i>
+            <span>New Chat</span>
           </div>
+          <span class="text-[10px] bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">Ctrl+K</span>
+        </button>
+      </div>
+
+      <!-- Status Banner -->
+      <div class="px-3 mb-2">
+        <div id="syncStatusBadge" class="px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center justify-between">
+          <span class="flex items-center gap-1.5 font-medium">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span id="syncStatusText">Guest Mode</span>
+          </span>
+          <button id="sidebarSignInLink" class="text-xs font-semibold text-amber-200 underline hover:text-white">Sign In</button>
         </div>
-        <button id="logoutBtn" onclick="handleLogout()" class="hidden text-slate-400 hover:text-red-400 text-xs p-1" title="Sign Out">➜]</button>
+      </div>
+
+      <!-- Conversations History Header -->
+      <div class="px-3 py-1 flex items-center justify-between text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+        <span>Saved Conversations</span>
+        <button id="clearAllHistoryBtn" class="text-[10px] hover:text-red-400 transition-colors lowercase" title="Clear all history">clear all</button>
+      </div>
+
+      <!-- Conversations History List -->
+      <div id="sessionsContainer" class="flex-1 overflow-y-auto px-2 space-y-1 my-1">
+        <!-- Sessions dynamic load -->
+      </div>
+
+      <!-- Sidebar Footer User Profile -->
+      <div class="p-3 border-t border-jarvis-border bg-slate-950/40 space-y-2">
+        
+        <!-- User Profile Card -->
+        <div id="userProfileCard" class="flex items-center justify-between p-2.5 rounded-xl bg-jarvis-card border border-jarvis-border">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div id="userAvatarContainer" class="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+              <span id="userAvatarText">G</span>
+            </div>
+            <div class="min-w-0">
+              <p id="userNameText" class="text-xs font-semibold text-slate-200 truncate">Guest User</p>
+              <p id="userEmailText" class="text-[10px] text-slate-400 truncate">Chats saved in memory</p>
+            </div>
+          </div>
+
+          <button id="authBtn" class="p-2 text-slate-400 hover:text-cyan-400 hover:bg-jarvis-hover rounded-lg transition-colors shrink-0" title="Sign In">
+            <i id="authBtnIcon" data-lucide="log-in" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between px-1 text-[11px] text-slate-500 pt-1">
+          <span>JARVIS Engine v3.5</span>
+          <span>By Abdullah Waheed</span>
+        </div>
       </div>
     </aside>
 
-    <!-- CHAT CONTAINER -->
-    <main class="flex-1 flex flex-col bg-slate-950 relative">
-      <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl mx-auto w-full"></div>
+    <!-- MAIN CHAT VIEW -->
+    <main class="flex-1 flex flex-col h-full min-w-0 bg-jarvis-bg relative">
+      
+      <!-- Top Header -->
+      <header class="h-14 px-4 border-b border-jarvis-border flex items-center justify-between bg-jarvis-bg/80 backdrop-blur z-10 shrink-0">
+        <div class="flex items-center gap-3">
+          <button id="openSidebarMobile" class="md:hidden p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-jarvis-card">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
 
-      <!-- INPUT FORM -->
-      <div class="p-3 md:p-4 border-t border-slate-800/80 bg-slate-950">
-        <div class="max-w-4xl mx-auto relative bg-slate-900/90 border border-slate-800 focus-within:border-cyan-500/60 rounded-2xl p-2 transition shadow-xl">
-          <textarea id="userInput" rows="1" placeholder="Ask JARVIS anything or request an image (e.g. 'Paint a watercolor cat')..." class="w-full bg-transparent text-slate-100 text-sm focus:outline-none resize-none px-3 py-1.5 max-h-40 placeholder-slate-500"></textarea>
-          <div class="flex items-center justify-between pt-1 border-t border-slate-800/50 mt-1 px-2">
-            <span class="text-[11px] text-slate-500 font-mono">JARVIS Engine</span>
-            <button onclick="handleSendMessage()" class="bg-cyan-600 hover:bg-cyan-500 text-white p-1.5 rounded-xl transition shadow-md shadow-cyan-600/30">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          <!-- Model Selector Dropdown -->
+          <div class="relative">
+            <select id="modelSelect" class="bg-jarvis-card border border-jarvis-border text-slate-100 text-xs font-semibold rounded-xl px-3 py-2 pr-8 focus:outline-none focus:border-cyan-400 cursor-pointer hover:bg-jarvis-hover transition-colors appearance-none">
+              <option value="openai/gpt-oss-20b" selected>Jarvis Instant (Ultra Fast)</option>
+              <option value="llama3-8b-8192">Jarvis Turbo (8B Speed)</option>
+              <option value="llama3-70b-8192">Jarvis Pro (High Intelligence)</option>
+              <option value="openai/gpt-oss-120b">Jarvis Ultra (120B Reasoning)</option>
+              <option value="mixtral-8x7b-32768">Ironman Jarvis (Deep Reasoning)</option>
+            </select>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="topAuthBtn" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-glow-sm">
+            <i data-lucide="user" class="w-3.5 h-3.5"></i>
+            <span id="topAuthBtnText">Sign In</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Chat Messages Scroll Area -->
+      <div id="chatContainer" class="flex-1 overflow-y-auto px-4 py-6 md:px-0 scroll-smooth">
+        
+        <!-- Welcome Screen (When no messages) -->
+        <div id="welcomeCard" class="max-w-2xl mx-auto h-full flex flex-col items-center justify-center text-center px-4">
+          <div class="relative mb-6">
+            <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-cyan-400 to-blue-600 p-0.5 shadow-glow-cyan">
+              <div class="w-full h-full bg-jarvis-bg rounded-[22px] flex items-center justify-center">
+                <span class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">J</span>
+              </div>
+            </div>
+            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-cyan-400 text-black flex items-center justify-center font-bold text-[10px] shadow">
+              ⚡
+            </div>
+          </div>
+
+          <h2 class="text-2xl font-extrabold text-white mb-2">How can JARVIS assist you today?</h2>
+          <p class="text-xs text-slate-400 max-w-md mb-8">
+            Created & developed by <span class="text-cyan-400 font-semibold">Abdullah Waheed</span>. Ask questions, code, solve math equations, or request multi-style AI image generation!
+          </p>
+
+          <!-- Prompt Suggestions Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl text-left">
+            <button onclick="window.quickPrompt('Draw a photorealistic supercar driving in Tokyo at night')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
+              <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
+                <span>🎨 Photorealistic Image</span>
+              </span>
+              <span class="text-slate-400 truncate">Supercar in Tokyo at night</span>
+            </button>
+
+            <button onclick="window.quickPrompt('Create a detailed pencil sketch of an old owl on an oak tree branch')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
+              <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
+                <span>✏️ Pencil Sketch</span>
+              </span>
+              <span class="text-slate-400 truncate">Old owl on an oak tree</span>
+            </button>
+
+            <button onclick="window.quickPrompt('Paint a vibrant watercolor painting of a rainy cottage garden')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
+              <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
+                <span>🖌️ Watercolor Painting</span>
+              </span>
+              <span class="text-slate-400 truncate">Rainy cottage garden</span>
+            </button>
+
+            <button onclick="window.quickPrompt('Who created and developed this JARVIS application?')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
+              <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
+                <span>👤 Creator Info</span>
+              </span>
+              <span class="text-slate-400 truncate">Who built JARVIS?</span>
             </button>
           </div>
         </div>
-        <p class="text-[10px] text-center text-slate-600 mt-2">JARVIS AI Assistant • Developed by Abdullah Waheed</p>
+
+      </div>
+
+      <!-- Input Form -->
+      <div class="p-4 bg-jarvis-bg border-t border-jarvis-border/40 shrink-0">
+        <div class="max-w-3xl mx-auto relative">
+          <form id="chatForm" class="relative bg-jarvis-card border border-jarvis-border rounded-2xl focus-within:border-cyan-400/80 shadow-xl transition-all">
+            <textarea id="userInput" rows="1" placeholder="Ask JARVIS anything or request an image (e.g. 'Paint a watercolor cat')..." class="w-full bg-transparent text-slate-100 placeholder-slate-500 px-4 pt-3.5 pb-11 resize-none focus:outline-none text-sm max-h-48"></textarea>
+            
+            <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between pointer-events-none">
+              <div class="flex items-center gap-2 pointer-events-auto">
+                <span class="text-[11px] text-cyan-400 font-semibold px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                  JARVIS Engine
+                </span>
+              </div>
+
+              <button type="submit" id="sendBtn" class="pointer-events-auto p-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-bold hover:opacity-90 transition-opacity shadow-glow-sm">
+                <i data-lucide="arrow-up" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </form>
+
+          <p class="text-[11px] text-slate-500 text-center mt-2 font-medium">
+            JARVIS AI Assistant • Developed by Abdullah Waheed
+          </p>
+        </div>
       </div>
     </main>
+
   </div>
 
   <!-- AUTHENTICATION MODAL -->
-  <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
-      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">✕</button>
+  <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="bg-jarvis-card border border-jarvis-border rounded-3xl w-full max-w-md p-6 shadow-2xl relative">
       
+      <button id="closeAuthModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
       <div class="text-center mb-6">
-        <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center mx-auto mb-2">J</div>
-        <h3 class="text-lg font-bold text-white">Account Sign In</h3>
+        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-black text-xl flex items-center justify-center mx-auto mb-3 shadow-glow-sm">
+          J
+        </div>
+        <h3 class="text-xl font-bold text-white">Account Sign In</h3>
         <p class="text-xs text-slate-400 mt-1">Sign in to save your conversation history across sessions.</p>
       </div>
 
-      <div class="space-y-3">
-        <div>
-          <label class="text-[11px] font-medium text-slate-400 block mb-1">Email Address</label>
-          <input id="authEmail" type="email" placeholder="name@example.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
-        </div>
-        <div>
-          <label class="text-[11px] font-medium text-slate-400 block mb-1">Password</label>
-          <input id="authPassword" type="password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
-        </div>
-        <button onclick="handleEmailSignIn()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2 rounded-xl text-xs transition shadow-lg shadow-cyan-600/20">
-          Sign In / Create Account
-        </button>
+      <!-- Error Message Banner -->
+      <div id="authErrorBox" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400"></div>
+
+      <!-- Google Sign In Button Option -->
+      <button id="googleSignInBtn" class="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2.5 shadow-md mb-4">
+        <svg class="w-4 h-4" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+
+      <div class="flex items-center gap-3 my-4">
+        <div class="h-px bg-jarvis-border flex-1"></div>
+        <span class="text-[10px] text-slate-500 font-bold uppercase">Or Email</span>
+        <div class="h-px bg-jarvis-border flex-1"></div>
       </div>
+
+      <!-- Auth Mode Toggle Tabs -->
+      <div class="flex bg-jarvis-bg p-1 rounded-xl mb-4 border border-jarvis-border">
+        <button id="tabSignInBtn" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-jarvis-card text-white shadow">Sign In</button>
+        <button id="tabSignUpBtn" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white">Register</button>
+      </div>
+
+      <!-- Email Auth Form -->
+      <form id="emailAuthForm" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
+          <input id="authEmail" type="email" placeholder="name@domain.com" required class="w-full bg-jarvis-bg border border-jarvis-border rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+          <input id="authPassword" type="password" placeholder="••••••••" required class="w-full bg-jarvis-bg border border-jarvis-border rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-400" />
+        </div>
+
+        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-bold text-xs rounded-xl hover:opacity-90 transition-opacity mt-2">
+          Sign In
+        </button>
+      </form>
     </div>
   </div>
 
-  <!-- LOAD APP LOGIC -->
-  <script src="code.js"></script>
+  <!-- APPLICATION LOGIC SCRIPT -->
+  <script>
+    // --- CONFIGURATION & CONSTANTS ---
+    const GROQ_API_KEY = "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";
+    const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+    // System Persona Setup
+    const SYSTEM_PROMPT = {
+      role: "system",
+      content: `You are JARVIS, an advanced AI assistant created and developed by Abdullah Waheed.
+
+PRIMARY INSTRUCTIONS & BEHAVIOR:
+1. CREATOR DISCLOSURE: If asked who created, built, designed, or owns you, ALWAYS reply clearly that you were created and developed by Abdullah Waheed. Never mention Groq, OpenAI, Meta, or third-party web apps.
+2. RESPONSE STYLE:
+   - For simple, casual, or general questions: Answer concisely, naturally, and directly in conversational plain text. Do not add unnecessary headers or markdown tables.
+   - For programming or code requests: Provide full, clean, formatted code blocks with syntax highlighting language tags (e.g., \`\`\`javascript ... \`\`\`).
+   - For math problems: Render equations cleanly using standard KaTeX syntax (e.g., \\( x^2 + y^2 = r^2 \\) or \\[\n\\int f(x)dx\n\\]).
+3. MULTI-STYLE IMAGE GENERATION CAPABILITY:
+   - When the user asks you to draw, generate, create, or paint ANY image (photorealistic photos, pencil sketches, watercolor paintings, poster color art, pencil color drawings, 3D renders, digital art, or anime):
+   - You MUST generate the image by embedding this exact Markdown image tag:
+     ![Image Description](https://image.pollinations.ai/prompt/YOUR_ENCODED_DETAILED_PROMPT?width=1024&height=1024&nologo=true)
+   - Replace YOUR_ENCODED_DETAILED_PROMPT with a URL-encoded detailed description of the image including the requested style.
+   - Example for a watercolor cat:
+     Here is your watercolor painting:
+     ![Watercolor Cat](https://image.pollinations.ai/prompt/a%20vibrant%20watercolor%20painting%20of%20a%20cat%20sitting%20by%20a%20window?width=1024&height=1024&nologo=true)`
+    };
+
+    // --- STATE MANAGEMENT ---
+    let currentUser = loadActiveUser(); // null = Guest Mode
+    let authTabMode = "signin"; // "signin" or "signup"
+    let currentModel = "openai/gpt-oss-20b";
+    let activeChatId = null;
+    let chats = []; // [{ id, title, updatedAt, messages: [] }]
+    let isGenerating = false;
+    let confirmCallback = null;
+
+    // --- REGISTERED ACCOUNTS DATABASE & STRICT VALIDATION ---
+    function getRegisteredUsersDB() {
+      try {
+        const data = localStorage.getItem('jarvis_users_db');
+        return data ? JSON.parse(data) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveUserToDB(email, password, name, provider = "email") {
+      const db = getRegisteredUsersDB();
+      const normalizedEmail = email.toLowerCase().trim();
+      db[normalizedEmail] = {
+        email: normalizedEmail,
+        password: password,
+        name: name || normalizedEmail.split('@')[0],
+        provider: provider,
+        createdAt: Date.now()
+      };
+      localStorage.setItem('jarvis_users_db', JSON.stringify(db));
+      return db[normalizedEmail];
+    }
+
+    function validateEmailStrict(email) {
+      if (!email) return { valid: false, reason: "Email address is required." };
+
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(email)) {
+        return { valid: false, reason: "Please enter a valid email format (e.g., user@domain.com)." };
+      }
+
+      const parts = email.split('@');
+      const domain = parts[1].toLowerCase();
+
+      // Block known disposable/dummy domains and invalid TLDs
+      const invalidDomains = ['test.com', 'example.com', 'fake.com', 'a.com', 'temp.com', 'mailinator.com', '123.com', 'asdf.com', 'domain.com'];
+      if (invalidDomains.includes(domain) || domain.split('.')[0].length < 2) {
+        return { valid: false, reason: "Please enter a valid, existing email domain (e.g., @gmail.com, @outlook.com)." };
+      }
+
+      if (parts[0].length < 2 || /^(\w)\1+$/.test(parts[0])) {
+        return { valid: false, reason: "Invalid email username. Please use a real email address." };
+      }
+
+      return { valid: true };
+    }
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+      setupDOMEventListeners();
+      
+      // Load user conversations or initialize guest state
+      if (currentUser) {
+        chats = loadSavedChatsForUser(currentUser.email);
+      } else {
+        chats = [];
+      }
+
+      if (chats.length === 0) {
+        createNewSession();
+      } else {
+        activeChatId = chats[0].id;
+      }
+
+      updateAuthUI();
+      renderSessionsList();
+      renderChatMessages();
+    });
+
+    // --- LOCAL STORAGE ACCOUNTS & PERSISTENCE ---
+    function loadActiveUser() {
+      try {
+        const saved = localStorage.getItem('jarvis_active_user');
+        return saved ? JSON.parse(saved) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveActiveUser(userObj) {
+      currentUser = userObj;
+      if (userObj) {
+        localStorage.setItem('jarvis_active_user', JSON.stringify(userObj));
+      } else {
+        localStorage.removeItem('jarvis_active_user');
+      }
+      updateAuthUI();
+    }
+
+    function loadSavedChatsForUser(email) {
+      try {
+        const key = `jarvis_chats_${email.toLowerCase()}`;
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveChatsToStorage() {
+      if (!currentUser) return; // Do not persist to disk in Guest Mode
+      try {
+        const key = `jarvis_chats_${currentUser.email.toLowerCase()}`;
+        localStorage.setItem(key, JSON.stringify(chats));
+      } catch (e) {
+        console.error("Failed to save chats:", e);
+      }
+    }
+
+    // --- AUTHENTICATION ACTIONS & UI ---
+    function updateAuthUI() {
+      const syncBadge = document.getElementById('syncStatusBadge');
+      const syncText = document.getElementById('syncStatusText');
+      const userAvatarText = document.getElementById('userAvatarText');
+      const userAvatarContainer = document.getElementById('userAvatarContainer');
+      const userNameText = document.getElementById('userNameText');
+      const userEmailText = document.getElementById('userEmailText');
+      const authBtn = document.getElementById('authBtn');
+      const topAuthBtnText = document.getElementById('topAuthBtnText');
+
+      if (currentUser) {
+        // Cloud / Persistent Active Mode
+        if (syncBadge) {
+          syncBadge.className = "px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-center justify-between";
+        }
+        if (syncText) syncText.textContent = "Saved to Profile";
+
+        const sidebarSignInLink = document.getElementById('sidebarSignInLink');
+        if (sidebarSignInLink) {
+          sidebarSignInLink.textContent = "Sign Out";
+          sidebarSignInLink.onclick = handleSignOut;
+        }
+
+        const name = currentUser.name || currentUser.email.split('@')[0];
+        if (userNameText) userNameText.textContent = name;
+        if (userEmailText) userEmailText.textContent = currentUser.email;
+
+        if (currentUser.photoURL) {
+          userAvatarContainer.innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover" />`;
+        } else {
+          userAvatarContainer.innerHTML = `<span>${name.charAt(0).toUpperCase()}</span>`;
+        }
+
+        if (authBtn) {
+          authBtn.title = "Sign Out";
+          authBtn.onclick = handleSignOut;
+          authBtn.innerHTML = `<i data-lucide="log-out" class="w-4 h-4 text-red-400"></i>`;
+        }
+
+        if (topAuthBtnText) topAuthBtnText.textContent = "Sign Out";
+
+      } else {
+        // Guest Mode
+        if (syncBadge) {
+          syncBadge.className = "px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center justify-between";
+        }
+        if (syncText) syncText.textContent = "Guest Mode";
+
+        const sidebarSignInLink = document.getElementById('sidebarSignInLink');
+        if (sidebarSignInLink) {
+          sidebarSignInLink.textContent = "Sign In";
+          sidebarSignInLink.onclick = () => toggleAuthModal(true);
+        }
+
+        if (userNameText) userNameText.textContent = "Guest User";
+        if (userEmailText) userEmailText.textContent = "Chats saved in memory";
+        if (userAvatarContainer) userAvatarContainer.innerHTML = "<span>G</span>";
+
+        if (authBtn) {
+          authBtn.title = "Sign In";
+          authBtn.onclick = () => toggleAuthModal(true);
+          authBtn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4 text-cyan-400"></i>`;
+        }
+
+        if (topAuthBtnText) topAuthBtnText.textContent = "Sign In";
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function handleGoogleSignIn() {
+      const googleEmail = prompt("Please enter your existing Google / Gmail address:");
+      if (!googleEmail) return;
+
+      const trimmedEmail = googleEmail.trim().toLowerCase();
+      const emailVal = validateEmailStrict(trimmedEmail);
+
+      if (!emailVal.valid) {
+        showToast(emailVal.reason, "error");
+        return;
+      }
+
+      if (!trimmedEmail.endsWith('@gmail.com') && !trimmedEmail.includes('google')) {
+        showToast("Please enter a valid existing Google (@gmail.com) account.", "error");
+        return;
+      }
+
+      const usersDB = getRegisteredUsersDB();
+      let account = usersDB[trimmedEmail];
+
+      if (!account) {
+        account = saveUserToDB(trimmedEmail, "GOOGLE_AUTH", trimmedEmail.split('@')[0], "google");
+      }
+
+      const userObj = {
+        name: account.name,
+        email: account.email,
+        provider: "google"
+      };
+
+      saveActiveUser(userObj);
+      chats = loadSavedChatsForUser(trimmedEmail);
+      if (chats.length === 0) createNewSession();
+      else activeChatId = chats[0].id;
+
+      toggleAuthModal(false);
+      renderSessionsList();
+      renderChatMessages();
+      showToast(`Google account verified: ${trimmedEmail}`, "success");
+    }
+
+    function handleEmailFormSubmit(e) {
+      e.preventDefault();
+      const emailInput = document.getElementById('authEmail');
+      const passwordInput = document.getElementById('authPassword');
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+      const password = passwordInput ? passwordInput.value : '';
+
+      // Validate email syntax and real domain check
+      const emailVal = validateEmailStrict(email);
+      if (!emailVal.valid) {
+        showAuthError(emailVal.reason);
+        return;
+      }
+
+      if (!password || password.length < 6) {
+        showAuthError("Password must be at least 6 characters long.");
+        return;
+      }
+
+      const usersDB = getRegisteredUsersDB();
+      const existingAccount = usersDB[email];
+
+      if (authTabMode === "signin") {
+        // SIGN IN MODE: Account MUST already exist in database
+        if (!existingAccount) {
+          showAuthError(`No account found for "${email}". Please click 'Register' to create a new account.`);
+          return;
+        }
+
+        // Verify password
+        if (existingAccount.password !== password) {
+          showAuthError("Incorrect password. Please verify your credentials.");
+          return;
+        }
+
+        showAuthError("");
+        const userObj = {
+          name: existingAccount.name,
+          email: existingAccount.email,
+          provider: existingAccount.provider || "email"
+        };
+
+        saveActiveUser(userObj);
+        chats = loadSavedChatsForUser(email);
+        if (chats.length === 0) createNewSession();
+        else activeChatId = chats[0].id;
+
+        toggleAuthModal(false);
+        renderSessionsList();
+        renderChatMessages();
+        showToast(`Welcome back, ${userObj.name}!`, "success");
+
+      } else {
+        // REGISTER MODE: Account MUST NOT already exist
+        if (existingAccount) {
+          showAuthError(`An account with "${email}" already exists. Please switch to 'Sign In'.`);
+          return;
+        }
+
+        showAuthError("");
+        const newUser = saveUserToDB(email, password, email.split('@')[0], "email");
+        const userObj = {
+          name: newUser.name,
+          email: newUser.email,
+          provider: "email"
+        };
+
+        saveActiveUser(userObj);
+        chats = loadSavedChatsForUser(email);
+        if (chats.length === 0) createNewSession();
+        else activeChatId = chats[0].id;
+
+        toggleAuthModal(false);
+        renderSessionsList();
+        renderChatMessages();
+        showToast(`Account created successfully for ${email}!`, "success");
+      }
+    }
+
+    function handleSignOut() {
+      saveActiveUser(null);
+      chats = [];
+      createNewSession();
+      renderSessionsList();
+      renderChatMessages();
+      showToast("Signed out. Switched to Guest Mode.", "info");
+    }
+
+    function showAuthError(msg) {
+      const errBox = document.getElementById('authErrorBox');
+      if (!errBox) return;
+      if (msg) {
+        errBox.textContent = msg;
+        errBox.classList.remove('hidden');
+      } else {
+        errBox.classList.add('hidden');
+      }
+    }
+
+    function toggleAuthModal(show) {
+      const modal = document.getElementById('authModal');
+      if (!modal) return;
+      showAuthError("");
+      if (show) modal.classList.remove('hidden');
+      else modal.classList.add('hidden');
+    }
+
+    // --- DOM EVENT BINDING ---
+    function setupDOMEventListeners() {
+      const chatForm = document.getElementById('chatForm');
+      const userInput = document.getElementById('userInput');
+      const newChatBtn = document.getElementById('newChatBtn');
+      const modelSelect = document.getElementById('modelSelect');
+      const openSidebarMobile = document.getElementById('openSidebarMobile');
+      const closeSidebarMobile = document.getElementById('closeSidebarMobile');
+      const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+      const topAuthBtn = document.getElementById('topAuthBtn');
+      const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+      const googleSignInBtn = document.getElementById('googleSignInBtn');
+      const emailAuthForm = document.getElementById('emailAuthForm');
+      const tabSignInBtn = document.getElementById('tabSignInBtn');
+      const tabSignUpBtn = document.getElementById('tabSignUpBtn');
+      const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn');
+      const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+      const confirmOkBtn = document.getElementById('confirmOkBtn');
+
+      if (chatForm) {
+        chatForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          handleSendMessage();
+        });
+      }
+
+      if (userInput) {
+        userInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+          }
+        });
+
+        userInput.addEventListener('input', function() {
+          this.style.height = 'auto';
+          this.style.height = Math.min(this.scrollHeight, 180) + 'px';
+        });
+      }
+
+      if (newChatBtn) newChatBtn.addEventListener('click', createNewSession);
+
+      if (modelSelect) {
+        modelSelect.addEventListener('change', (e) => {
+          currentModel = e.target.value;
+        });
+      }
+
+      // Mobile Sidebar Drawer
+      if (openSidebarMobile) openSidebarMobile.addEventListener('click', toggleMobileSidebar);
+      if (closeSidebarMobile) closeSidebarMobile.addEventListener('click', toggleMobileSidebar);
+      if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', toggleMobileSidebar);
+
+      // Auth Triggers
+      if (topAuthBtn) topAuthBtn.addEventListener('click', () => {
+        if (currentUser) handleSignOut();
+        else toggleAuthModal(true);
+      });
+
+      if (closeAuthModalBtn) closeAuthModalBtn.addEventListener('click', () => toggleAuthModal(false));
+      if (googleSignInBtn) googleSignInBtn.addEventListener('click', handleGoogleSignIn);
+      if (emailAuthForm) emailAuthForm.addEventListener('submit', handleEmailFormSubmit);
+
+      if (tabSignInBtn && tabSignUpBtn) {
+        tabSignInBtn.addEventListener('click', () => {
+          authTabMode = "signin";
+          tabSignInBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-jarvis-card text-white shadow";
+          tabSignUpBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white";
+          document.getElementById('authSubmitBtn').textContent = "Sign In";
+        });
+
+        tabSignUpBtn.addEventListener('click', () => {
+          authTabMode = "signup";
+          tabSignUpBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-jarvis-card text-white shadow";
+          tabSignInBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white";
+          document.getElementById('authSubmitBtn').textContent = "Register Account";
+        });
+      }
+
+      if (clearAllHistoryBtn) {
+        clearAllHistoryBtn.addEventListener('click', () => {
+          showConfirmModal("Clear All Conversations", "Are you sure you want to delete all saved conversations?", () => {
+            chats = [];
+            createNewSession();
+            saveChatsToStorage();
+            renderSessionsList();
+            renderChatMessages();
+            showToast("All conversations cleared.", "info");
+          });
+        });
+      }
+
+      if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', hideConfirmModal);
+      if (confirmOkBtn) confirmOkBtn.addEventListener('click', () => {
+        if (confirmCallback) confirmCallback();
+        hideConfirmModal();
+      });
+
+      // Shortcut Ctrl+K
+      window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          createNewSession();
+        }
+      });
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (sidebar && backdrop) {
+        sidebar.classList.toggle('-translate-x-full');
+        backdrop.classList.toggle('hidden');
+      }
+    }
+
+    // --- SESSION MANAGEMENT ---
+    function createNewSession() {
+      const newChat = {
+        id: 'chat_' + Date.now(),
+        title: 'New Conversation',
+        updatedAt: Date.now(),
+        messages: []
+      };
+
+      chats.unshift(newChat);
+      activeChatId = newChat.id;
+
+      saveChatsToStorage();
+      renderSessionsList();
+      renderChatMessages();
+    }
+
+    function getActiveChat() {
+      return chats.find(c => c.id === activeChatId) || chats[0];
+    }
+
+    function renderSessionsList() {
+      const sessionsContainer = document.getElementById('sessionsContainer');
+      if (!sessionsContainer) return;
+
+      if (chats.length === 0) {
+        sessionsContainer.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">No saved chats</div>`;
+        return;
+      }
+
+      sessionsContainer.innerHTML = chats.map(session => {
+        const isActive = session.id === activeChatId;
+        return `
+          <div 
+            onclick="window.switchChat('${session.id}')"
+            class="group relative flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-colors ${isActive ? 'bg-jarvis-card text-cyan-300 font-semibold border border-jarvis-border' : 'text-slate-400 hover:bg-jarvis-hover hover:text-slate-200'}"
+          >
+            <div class="flex items-center gap-2 min-w-0 pr-6">
+              <i data-lucide="message-square" class="w-3.5 h-3.5 shrink-0 ${isActive ? 'text-cyan-400' : 'text-slate-500'}"></i>
+              <span class="truncate">${escapeHtml(session.title)}</span>
+            </div>
+            <button 
+              onclick="event.stopPropagation(); window.deleteChat('${session.id}')"
+              class="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition-opacity"
+              title="Delete chat"
+            >
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    window.switchChat = function(chatId) {
+      activeChatId = chatId;
+      renderSessionsList();
+      renderChatMessages();
+    };
+
+    window.deleteChat = function(chatId) {
+      showConfirmModal("Delete Chat", "Delete this conversation?", () => {
+        chats = chats.filter(c => c.id !== chatId);
+        saveChatsToStorage();
+
+        if (chats.length === 0) {
+          createNewSession();
+        } else if (activeChatId === chatId) {
+          activeChatId = chats[0].id;
+        }
+
+        renderSessionsList();
+        renderChatMessages();
+      });
+    };
+
+    window.quickPrompt = function(promptText) {
+      const userInput = document.getElementById('userInput');
+      if (userInput) {
+        userInput.value = promptText;
+        handleSendMessage();
+      }
+    };
+
+    // --- CHAT MESSAGES UI RENDERING ---
+    function renderChatMessages() {
+      const chatContainer = document.getElementById('chatContainer');
+      const welcomeCard = document.getElementById('welcomeCard');
+      const activeChat = getActiveChat();
+
+      if (!chatContainer) return;
+
+      if (!activeChat || activeChat.messages.length === 0) {
+        if (welcomeCard) welcomeCard.classList.remove('hidden');
+        chatContainer.innerHTML = '';
+        if (welcomeCard) chatContainer.appendChild(welcomeCard);
+        return;
+      }
+
+      if (welcomeCard) welcomeCard.classList.add('hidden');
+
+      chatContainer.innerHTML = activeChat.messages.map((msg, index) => {
+        const isUser = msg.role === 'user';
+        return `
+          <div class="flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} my-4 max-w-3xl mx-auto">
+            ${!isUser ? `
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 text-black font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-glow-sm">
+                J
+              </div>
+            ` : ''}
+
+            <div class="flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start flex-1 min-w-0'}">
+              <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'bg-jarvis-card text-slate-100 rounded-tr-none border border-jarvis-border' : 'bg-transparent text-slate-100'}">
+                ${isUser ? `<div class="whitespace-pre-wrap">${escapeHtml(msg.content)}</div>` : `<div id="msg-content-${index}" class="markdown-content"></div>`}
+              </div>
+            </div>
+
+            ${isUser ? `
+              <div class="w-8 h-8 rounded-xl bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-jarvis-border">
+                U
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      // Render Markdown, KaTeX & Code for Assistant responses
+      activeChat.messages.forEach((msg, index) => {
+        if (msg.role === 'assistant') {
+          const elem = document.getElementById(`msg-content-${index}`);
+          if (elem) formatAndRenderMarkdown(elem, msg.content);
+        }
+      });
+
+      if (window.lucide) lucide.createIcons();
+      scrollToBottom();
+    }
+
+    // --- MARKDOWN & KATEX MATH FORMATTING ---
+    function formatAndRenderMarkdown(element, rawText) {
+      if (!element) return;
+
+      if (window.marked) {
+        marked.setOptions({
+          gfm: true,
+          breaks: true,
+          highlight: function(code, lang) {
+            if (window.hljs && hljs.getLanguage(lang)) {
+              return hljs.highlight(code, { language: lang }).value;
+            }
+            return code;
+          }
+        });
+
+        const rawHtml = marked.parse(rawText || '');
+        const cleanHtml = window.DOMPurify ? DOMPurify.sanitize(rawHtml) : rawHtml;
+        element.innerHTML = cleanHtml;
+      } else {
+        element.textContent = rawText;
+      }
+
+      // Render KaTeX Expressions
+      if (window.renderMathInElement) {
+        try {
+          renderMathInElement(element, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+            ],
+            throwOnError: false
+          });
+        } catch (e) {
+          console.warn("KaTeX render notice:", e);
+        }
+      }
+
+      // Highlight Code Blocks & Attach Copy Buttons
+      element.querySelectorAll('pre').forEach((pre) => {
+        if (pre.parentNode.classList.contains('code-block-wrapper')) return;
+
+        const codeEl = pre.querySelector('code');
+        let lang = 'code';
+        if (codeEl) {
+          const match = codeEl.className.match(/language-(\w+)/);
+          if (match) lang = match[1];
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-block-wrapper';
+
+        const header = document.createElement('div');
+        header.className = 'code-header';
+        header.innerHTML = `
+          <span>${lang}</span>
+          <button class="copy-code-btn hover:text-white transition-colors flex items-center gap-1">
+            <i data-lucide="copy" class="w-3 h-3"></i>
+            <span>Copy code</span>
+          </button>
+        `;
+
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(header);
+        wrapper.appendChild(pre);
+
+        const copyBtn = header.querySelector('.copy-code-btn');
+        copyBtn.addEventListener('click', () => {
+          const textToCopy = codeEl ? codeEl.innerText : pre.innerText;
+          navigator.clipboard.writeText(textToCopy);
+          copyBtn.querySelector('span').textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.querySelector('span').textContent = 'Copy code';
+          }, 2000);
+        });
+      });
+
+      // Style Generated Images
+      element.querySelectorAll('img').forEach((img) => {
+        img.classList.add('rounded-2xl', 'shadow-xl', 'my-3', 'max-w-full', 'border', 'border-jarvis-border');
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // --- REAL-TIME STREAMING FROM GROQ ENGINE ---
+    async function handleSendMessage() {
+      const userInput = document.getElementById('userInput');
+      const text = userInput ? userInput.value.trim() : '';
+      if (!text || isGenerating) return;
+
+      userInput.value = '';
+      userInput.style.height = 'auto';
+
+      const activeChat = getActiveChat();
+
+      // Set conversation title on first prompt
+      if (activeChat.messages.length === 0) {
+        activeChat.title = text.length > 30 ? text.substring(0, 30) + '...' : text;
+      }
+
+      // Append User Message
+      activeChat.messages.push({ role: 'user', content: text });
+      
+      // Append Assistant Placeholder
+      const assistantMsgIndex = activeChat.messages.length;
+      activeChat.messages.push({ role: 'assistant', content: '' });
+
+      activeChat.updatedAt = Date.now();
+
+      renderSessionsList();
+      renderChatMessages();
+
+      isGenerating = true;
+
+      try {
+        const formattedMessages = [
+          SYSTEM_PROMPT,
+          ...activeChat.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
+        ];
+
+        const response = await fetch(GROQ_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: currentModel,
+            messages: formattedMessages,
+            temperature: 0.7,
+            stream: true
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `Engine Error (${response.status})`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let fullResponse = '';
+
+        const assistantElem = document.getElementById(`msg-content-${assistantMsgIndex}`);
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const dataStr = line.replace('data: ', '').trim();
+              if (dataStr === '[DONE]') break;
+
+              try {
+                const parsed = JSON.parse(dataStr);
+                const delta = parsed.choices[0]?.delta?.content || '';
+                fullResponse += delta;
+                activeChat.messages[assistantMsgIndex].content = fullResponse;
+                if (assistantElem) formatAndRenderMarkdown(assistantElem, fullResponse);
+                scrollToBottom();
+              } catch (e) {
+                // Ignore chunk parse exceptions
+              }
+            }
+          }
+        }
+
+        saveChatsToStorage();
+
+      } catch (err) {
+        console.error("JARVIS Engine Exception:", err);
+        activeChat.messages[assistantMsgIndex].content = `⚠️ **JARVIS Notice:**\n\n${err.message}`;
+        renderChatMessages();
+      } finally {
+        isGenerating = false;
+      }
+    }
+
+    // --- MODALS & UTILITY HELPERS ---
+    function showToast(message, type = "info") {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      const bgColor = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-cyan-600';
+
+      toast.className = `${bgColor} text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xl transition-all transform translate-y-2 opacity-0 pointer-events-auto`;
+      toast.textContent = message;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function showConfirmModal(title, message, callback) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      confirmCallback = callback;
+      document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function hideConfirmModal() {
+      document.getElementById('confirmModal').classList.add('hidden');
+      confirmCallback = null;
+    }
+
+    function scrollToBottom() {
+      const chatContainer = document.getElementById('chatContainer');
+      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
 </body>
 </html>
