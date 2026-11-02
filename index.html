@@ -375,11 +375,9 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
 3. MULTI-STYLE IMAGE GENERATION CAPABILITY:
    - When the user asks you to draw, generate, create, or paint ANY image (photorealistic photos, pencil sketches, watercolor paintings, poster color art, pencil color drawings, 3D renders, digital art, or anime):
    - You MUST generate the image by embedding this exact Markdown image tag:
-     ![Image Description](https://image.pollinations.ai/prompt/YOUR_ENCODED_DETAILED_PROMPT?width=1024&height=1024&nologo=true)
+     ![Image Description](https://image.pollinations.ai/prompt/YOUR_ENCODED_DETAILED_PROMPT?width=1024&height=1024&nologo=true&model=flux&seed=54321)
    - Replace YOUR_ENCODED_DETAILED_PROMPT with a URL-encoded detailed description of the image including the requested style.
-   - Example for a watercolor cat:
-     Here is your watercolor painting:
-     ![Watercolor Cat](https://image.pollinations.ai/prompt/a%20vibrant%20watercolor%20painting%20of%20a%20cat%20sitting%20by%20a%20window?width=1024&height=1024&nologo=true)`
+   - Replace 54321 with a random 5-digit number so each request is unique and bypasses rate-limit caches.`
     };
 
     // --- STATE MANAGEMENT ---
@@ -1040,7 +1038,7 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
         header.className = 'code-header';
         header.innerHTML = `
           <span>${lang}</span>
-          <button class="copy-code-btn hover:text-white transition-colors flex items-center gap-1">
+          <button class="copy-code-btn flex items-center gap-1 hover:text-white transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i>
             <span>Copy code</span>
           </button>
@@ -1052,18 +1050,39 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
 
         const copyBtn = header.querySelector('.copy-code-btn');
         copyBtn.addEventListener('click', () => {
-          const textToCopy = codeEl ? codeEl.innerText : pre.innerText;
-          navigator.clipboard.writeText(textToCopy);
-          copyBtn.querySelector('span').textContent = 'Copied!';
+          const codeText = codeEl ? codeEl.innerText : pre.innerText;
+          navigator.clipboard.writeText(codeText);
+          copyBtn.querySelector('span').innerText = 'Copied!';
           setTimeout(() => {
-            copyBtn.querySelector('span').textContent = 'Copy code';
+            copyBtn.querySelector('span').innerText = 'Copy code';
           }, 2000);
         });
       });
 
-      // Style Generated Images
+      // Style Generated Images & Bypass Rate Limit Caching
       element.querySelectorAll('img').forEach((img) => {
         img.classList.add('rounded-2xl', 'shadow-xl', 'my-3', 'max-w-full', 'border', 'border-jarvis-border');
+
+        // Auto-fix Pollinations URLs to ensure seed & model parameters are always unique
+        if (img.src.includes('pollinations.ai')) {
+          const randomSeed = Math.floor(Math.random() * 999999) + 1;
+          
+          if (!img.src.includes('seed=')) {
+            const separator = img.src.includes('?') ? '&' : '?';
+            img.src += `${separator}seed=${randomSeed}`;
+          }
+          if (!img.src.includes('model=')) {
+            img.src += `&model=flux`;
+          }
+
+          // Error recovery if a rate-limit banner is served
+          img.onerror = function() {
+            this.onerror = null; // Prevent loop
+            const freshSeed = Math.floor(Math.random() * 899999) + 100000;
+            const cleanPrompt = encodeURIComponent(img.alt || 'car photo');
+            this.src = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1024&height=1024&seed=${freshSeed}&model=flux&nologo=true`;
+          };
+        }
       });
 
       if (window.lucide) lucide.createIcons();
