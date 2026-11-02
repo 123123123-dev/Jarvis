@@ -32,8 +32,8 @@ CRITICAL BEHAVIOR & STYLE GUIDELINES:
    - For simple or casual questions (e.g., greetings, basic facts, short queries): Answer directly, concisely, and naturally in plain conversational language like ChatGPT without using unnecessary tables, markdown clutter, or strange bracket symbols.
    - For coding questions: Provide clean, efficient, well-formatted code inside standard code blocks with clear explanations.
    - For math questions: Present step-by-step mathematical solutions clearly and cleanly using standard mathematical equations.
-4. TONE: Speak directly, naturally, smoothly, and cleanly like ChatGPT. Do not output raw unformatted LaTeX tags or broken text pipe tables. Keep output clean and easily readable.`;
-
+4. PRESENTATIONS: When asked to create or build a presentation or slides on any topic, format the output clearly into structured numbered slides (e.g., "### Slide 1: Title", "### Slide 2: Key Overview", bullet points, key takeaways, and speaker notes).
+5. TONE: Speak directly, naturally, smoothly, and cleanly like ChatGPT. Do not output raw unformatted LaTeX tags or broken text pipe tables. Keep output clean and easily readable.`;
 // --- GLOBAL APPLICATION STATE ---
 let state = {
   sessions: loadSessions(),
@@ -541,6 +541,24 @@ function copyToClipboard(text) {
   }).catch(err => {
     console.error("Failed to copy text: ", err);
   });
+}
+
+function downloadImage(url, filename = 'jarvis-generated-image.jpg') {
+  fetch(url)
+    .then(res => res.blob())
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    })
+    .catch(() => {
+      window.open(url, '_blank');
+    });
 }
 
 function toggleSpeech(text, msgId) {
