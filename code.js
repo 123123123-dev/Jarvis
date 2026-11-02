@@ -8,6 +8,7 @@
  * - Markdown parsing using Marked.js
  * - Mathematical equation rendering using KaTeX
  * - Code syntax highlighting with Tokyo Night Dark theme & Copy buttons
+ * - Real-time HTML Slide Presentation generation, interactive live preview & download
  * - LocalStorage session management (Save, Switch, Delete, Search)
  * - Text-to-Speech synthesis output
  * - Markdown export capability
@@ -32,8 +33,9 @@ CRITICAL BEHAVIOR & STYLE GUIDELINES:
    - For simple or casual questions (e.g., greetings, basic facts, short queries): Answer directly, concisely, and naturally in plain conversational language like ChatGPT without using unnecessary tables, markdown clutter, or strange bracket symbols.
    - For coding questions: Provide clean, efficient, well-formatted code inside standard code blocks with clear explanations.
    - For math questions: Present step-by-step mathematical solutions clearly and cleanly using standard mathematical equations.
-4. PRESENTATIONS: When asked to create or build a presentation or slides on any topic, format the output clearly into structured numbered slides (e.g., "### Slide 1: Title", "### Slide 2: Key Overview", bullet points, key takeaways, and speaker notes).
-5. TONE: Speak directly, naturally, smoothly, and cleanly like ChatGPT. Do not output raw unformatted LaTeX tags or broken text pipe tables. Keep output clean and easily readable.`;
+4. VISUAL HTML PRESENTATIONS: When asked to create, generate, or make a presentation or slides on ANY topic, DO NOT output plain text markdown bullet points. Instead, output a complete, standalone, visually styled HTML document wrapped inside a \`\`\`html code block. Include CSS embedded styling with fixed 1280x720 slide containers (<div class="slide-container">), modern visual styling, high-contrast typography, title cards, structured card grids, visual metrics, and clean light backgrounds so each slide looks like a professional presentation deck.
+5. TONE: Speak directly, naturally, smoothly, and cleanly like ChatGPT. Keep output clean and easily readable.`;
+
 // --- GLOBAL APPLICATION STATE ---
 let state = {
   sessions: loadSessions(),
@@ -276,7 +278,7 @@ function renderChatMessages() {
   scrollToBottom();
 }
 
-// --- MARKDOWN & KATEX MATH RENDERING ---
+// --- MARKDOWN, KATEX MATH & PRESENTATION RENDERING ---
 function renderFormattedMarkdown(element, content) {
   if (!element) return;
 
@@ -294,7 +296,6 @@ function renderFormattedMarkdown(element, content) {
       }
     });
 
-    // Clean up standalone boxed tags if any
     let cleanContent = (content || '').replace(/\\boxed\{([^}]+)\}/g, '$1');
     const rawHtml = marked.parse(cleanContent);
     const sanitizedHtml = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
@@ -320,7 +321,7 @@ function renderFormattedMarkdown(element, content) {
     }
   }
 
-  // Attach code block headers and copy buttons
+  // Attach code block headers, copy buttons, and presentation preview/download buttons
   const preElements = element.querySelectorAll('pre');
   preElements.forEach((pre) => {
     if (pre.parentNode.classList.contains('code-block-wrapper')) return;
@@ -332,6 +333,9 @@ function renderFormattedMarkdown(element, content) {
       if (match) lang = match[1];
     }
 
+    const codeText = codeEl ? codeEl.innerText : pre.innerText;
+    const isPresentationHtml = lang === 'html' || codeText.includes('slide-container') || codeText.includes('<!DOCTYPE html>');
+
     const wrapper = document.createElement('div');
     wrapper.className = 'code-block-wrapper';
 
@@ -339,10 +343,22 @@ function renderFormattedMarkdown(element, content) {
     header.className = 'code-header';
     header.innerHTML = `
       <span>${lang}</span>
-      <button class="copy-code-btn flex items-center gap-1 hover:text-white transition-colors">
-        <i data-lucide="copy" class="w-3 h-3"></i>
-        <span>Copy code</span>
-      </button>
+      <div class="flex items-center gap-3">
+        ${isPresentationHtml ? `
+          <button class="preview-slides-btn flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-semibold transition-colors cursor-pointer">
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            <span>Preview Presentation</span>
+          </button>
+          <button class="download-slides-btn flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors cursor-pointer">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Download .html</span>
+          </button>
+        ` : ''}
+        <button class="copy-code-btn flex items-center gap-1 hover:text-white transition-colors cursor-pointer">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>Copy code</span>
+        </button>
+      </div>
     `;
 
     pre.parentNode.insertBefore(wrapper, pre);
@@ -350,17 +366,83 @@ function renderFormattedMarkdown(element, content) {
     wrapper.appendChild(pre);
 
     const copyBtn = header.querySelector('.copy-code-btn');
-    copyBtn.addEventListener('click', () => {
-      const codeText = codeEl ? codeEl.innerText : pre.innerText;
-      navigator.clipboard.writeText(codeText);
-      copyBtn.querySelector('span').innerText = 'Copied!';
-      setTimeout(() => {
-        copyBtn.querySelector('span').innerText = 'Copy code';
-      }, 2000);
-    });
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(codeText);
+        const span = copyBtn.querySelector('span');
+        if (span) span.innerText = 'Copied!';
+        setTimeout(() => {
+          if (span) span.innerText = 'Copy code';
+        }, 2000);
+      });
+    }
+
+    if (isPresentationHtml) {
+      const previewBtn = header.querySelector('.preview-slides-btn');
+      const downloadBtn = header.querySelector('.download-slides-btn');
+
+      if (previewBtn) {
+        previewBtn.addEventListener('click', () => openPresentationPreviewModal(codeText));
+      }
+      if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => downloadPresentationHtml(codeText));
+      }
+    }
   });
 
   if (window.lucide) window.lucide.createIcons();
+}
+
+// --- PRESENTATION PREVIEW MODAL & DOWNLOAD HELPERS ---
+function openPresentationPreviewModal(htmlCode) {
+  let modal = document.getElementById('presentationPreviewModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'presentationPreviewModal';
+    modal.className = 'fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-md p-4';
+    modal.innerHTML = `
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span>📊 JARVIS Presentation Live Preview</span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button id="downloadModalSlidesBtn" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Download Presentation (.html)</span>
+          </button>
+          <button id="closePresentationPreviewBtn" class="text-slate-400 hover:text-white p-1 text-lg font-bold">✕</button>
+        </div>
+      </div>
+      <div class="flex-1 my-3 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
+        <iframe id="presentationIframe" class="w-full h-full border-0"></iframe>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const iframe = modal.querySelector('#presentationIframe');
+  iframe.srcdoc = htmlCode;
+
+  const closeBtn = modal.querySelector('#closePresentationPreviewBtn');
+  closeBtn.onclick = () => modal.classList.add('hidden');
+
+  const downloadBtn = modal.querySelector('#downloadModalSlidesBtn');
+  downloadBtn.onclick = () => downloadPresentationHtml(htmlCode);
+
+  modal.classList.remove('hidden');
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function downloadPresentationHtml(htmlCode, filename = 'jarvis-presentation.html') {
+  const blob = new Blob([htmlCode], { type: 'text/html;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 // --- STREAMING CHAT COMPLETION (GROQ API ENGINE) ---
