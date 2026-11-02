@@ -197,10 +197,8 @@
           <div class="relative">
             <select id="modelSelect" class="bg-jarvis-card border border-jarvis-border text-slate-100 text-xs font-semibold rounded-xl px-3 py-2 pr-8 focus:outline-none focus:border-cyan-400 cursor-pointer hover:bg-jarvis-hover transition-colors appearance-none">
               <option value="openai/gpt-oss-20b" selected>Jarvis Instant (Ultra Fast)</option>
-              <option value="llama3-8b-8192">Jarvis Turbo (8B Speed)</option>
-              <option value="llama3-70b-8192">Jarvis Pro (High Intelligence)</option>
-              <option value="openai/gpt-oss-120b">Jarvis Ultra (120B Reasoning)</option>
-              <option value="mixtral-8x7b-32768">Ironman Jarvis (Deep Reasoning)</option>
+              <option value="openai/gpt-oss-120b">Jarvis Pro (120B High Intelligence)</option>
+              <option value="deepseek-r1-distill-llama-70b">Ironman Jarvis (70B Deep Reasoning)</option>
             </select>
             <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
           </div>
@@ -392,6 +390,12 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
     let chats = []; // [{ id, title, updatedAt, messages: [] }]
     let isGenerating = false;
     let confirmCallback = null;
+
+    const MODEL_LABELS = {
+      "openai/gpt-oss-20b": "Jarvis Instant",
+      "openai/gpt-oss-120b": "Jarvis Pro",
+      "deepseek-r1-distill-llama-70b": "Ironman Jarvis"
+    };
 
     // --- REGISTERED ACCOUNTS DATABASE & STRICT VALIDATION ---
     function getRegisteredUsersDB() {
@@ -1101,7 +1105,7 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
           ...activeChat.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
         ];
 
-        const response = await fetch(GROQ_API_URL, {
+        let response = await fetch(GROQ_API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1114,6 +1118,26 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
             stream: true
           })
         });
+
+        // Automatic fallback to default active model if selected model is restricted
+        if (!response.ok && currentModel !== "openai/gpt-oss-20b") {
+          currentModel = "openai/gpt-oss-20b";
+          const modelSelect = document.getElementById('modelSelect');
+          if (modelSelect) modelSelect.value = currentModel;
+          response = await fetch(GROQ_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${GROQ_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: currentModel,
+              messages: formattedMessages,
+              temperature: 0.7,
+              stream: true
+            })
+          });
+        }
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
@@ -1156,7 +1180,8 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
 
       } catch (err) {
         console.error("JARVIS Engine Exception:", err);
-        activeChat.messages[assistantMsgIndex].content = `⚠️ **JARVIS Notice:**\n\n${err.message}`;
+        const friendlyName = MODEL_LABELS[currentModel] || "Jarvis Engine";
+        activeChat.messages[assistantMsgIndex].content = `⚠️ **JARVIS Notice (${friendlyName} - \`${currentModel}\`):**\n\n${err.message}`;
         renderChatMessages();
       } finally {
         isGenerating = false;
