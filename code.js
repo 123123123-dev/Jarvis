@@ -20,9 +20,23 @@ const GROQ_API_KEY = "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";
 
 const MODELS = [
   { id: 'openai/gpt-oss-20b', name: 'Jarvis Instant', badge: 'Ultra Fast' },
+  { id: 'llama-3.2-11b-vision-preview', name: 'Jarvis Turbo', badge: 'Vision & Images' },
   { id: 'openai/gpt-oss-120b', name: 'Jarvis Pro', badge: '120B High Intelligence' },
-  { id: 'deepseek-r1-distill-llama-70b', name: 'Ironman Jarvis', badge: '70B Deep Reasoning' }
+  { id: 'deepseek-r1-distill-llama-70b', name: 'Jarvis Ironman', badge: '70B Deep Reasoning' }
 ];
+
+const MODEL_NAMES = {
+  "openai/gpt-oss-20b": "Jarvis Instant",
+  "openai/gpt-oss-120b": "Jarvis Pro",
+  "llama-3.2-11b-vision-preview": "Jarvis Turbo",
+  "llama-3.2-90b-vision-preview": "Jarvis Turbo Pro",
+  "llama-3.3-70b-versatile": "Jarvis Pro",
+  "deepseek-r1-distill-llama-70b": "Jarvis Ironman"
+};
+
+function getModelDisplayName(modelId) {
+  return MODEL_NAMES[modelId] || "Jarvis Engine";
+}
 
 const DEFAULT_SYSTEM_INSTRUCTION = `You are JARVIS, an advanced, highly intelligent AI assistant created and developed by Abdullah Waheed.
 
@@ -489,8 +503,10 @@ async function handleSendMessage() {
 
   if (state.isListening) stopVoiceWriting();
 
-  userInput.value = '';
-  userInput.style.height = 'auto';
+  if (userInput) {
+    userInput.value = '';
+    userInput.style.height = 'auto';
+  }
 
   const currentSession = getActiveSession();
 
@@ -535,8 +551,10 @@ async function handleSendMessage() {
   state.isGenerating = true;
   renderChatMessages();
 
+  const systemInstruction = state.settings.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION;
+
   const formattedMessages = [
-    { role: 'system', content: state.settings.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION },
+    { role: 'system', content: systemInstruction },
     ...currentSession.messages.slice(0, -1).map(m => {
       if (m.role !== 'user') return { role: m.role, content: m.content };
 
@@ -564,25 +582,23 @@ async function handleSendMessage() {
     })
   ];
 
-  try {
-    let response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: state.selectedModel,
-        messages: formattedMessages,
-        temperature: state.settings.temperature,
-        stream: true
-      })
-    });
+  const modelSelect = document.getElementById('modelSelect');
+  if (modelSelect) state.selectedModel = modelSelect.value;
 
-    if (!response.ok && state.selectedModel !== 'openai/gpt-oss-20b') {
-      state.selectedModel = 'openai/gpt-oss-20b';
-      const modelSelect = document.getElementById('modelSelect');
-      if (modelSelect) modelSelect.value = state.selectedModel;
+  const hasImagesInPayload = currentSession.messages.some(m => m.attachedFiles && m.attachedFiles.some(f => f.isImage));
+
+  let usedModel = state.selectedModel;
+  let response = null;
+
+  const modelCandidates = hasImagesInPayload
+    ? ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"]
+    : [state.selectedModel, "openai/gpt-oss-20b", "llama-3.3-70b-versatile"];
+
+  const uniqueCandidates = [...new Set(modelCandidates)];
+
+  for (const modelCandidate of uniqueCandidates) {
+    try {
+      usedModel = modelCandidate;
       response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -590,17 +606,56 @@ async function handleSendMessage() {
           'Authorization': `Bearer ${GROQ_API_KEY}`
         },
         body: JSON.stringify({
-          model: state.selectedModel,
+          model: modelCandidate,
           messages: formattedMessages,
-          temperature: state.settings.temperature,
+          temperature: state.settings.temperature || 0.7,
           stream: true
         })
       });
-    }
 
-    if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.error?.message || `HTTP ${response.status}: Failed to reach JARVIS engine.`);
+      if (response && response.ok) break;
+    } catch (e) {
+      console.warn(`Model candidate ${modelCandidate} notice:`, e);
+    }
+  }
+
+  if ((!response || !response.ok) && hasImagesInPayload) {
+    const textOnlyMessages = [
+      { role: 'system', content: systemInstruction },
+      ...currentSession.messages.slice(0, -1).map(m => {
+        if (m.role !== 'user') return { role: m.role, content: m.content };
+        let txt = m.content || '';
+        if (m.attachedFiles && m.attachedFiles.length > 0) {
+          m.attachedFiles.forEach(f => {
+            txt += `\n[Attached File: ${f.name}]`;
+          });
+        }
+        return { role: 'user', content: txt };
+      })
+    ];
+
+    usedModel = "openai/gpt-oss-20b";
+    try {
+      response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: usedModel,
+          messages: textOnlyMessages,
+          temperature: state.settings.temperature || 0.7,
+          stream: true
+        })
+      });
+    } catch (e) {}
+  }
+
+  try {
+    if (!response || !response.ok) {
+      const displayName = getModelDisplayName(usedModel);
+      throw new Error(`${displayName} is currently busy. Please try again in a moment.`);
     }
 
     const reader = response.body.getReader();
@@ -628,9 +683,7 @@ async function handleSendMessage() {
             assistantMsg.content = fullResponse;
             if (assistantElem) renderFormattedMarkdown(assistantElem, fullResponse);
             scrollToBottom();
-          } catch (err) {
-            // Ignore partial SSE JSON chunks
-          }
+          } catch (err) {}
         }
       }
     }
@@ -639,9 +692,8 @@ async function handleSendMessage() {
 
   } catch (error) {
     console.error("JARVIS Engine Exception:", error);
-    const modelObj = MODELS.find(m => m.id === state.selectedModel);
-    const modelLabel = modelObj ? `${modelObj.name} - \`${state.selectedModel}\`` : state.selectedModel;
-    assistantMsg.content = `⚠️ **JARVIS Notice (${modelLabel}):**\n\n${error.message}`;
+    const friendlyName = getModelDisplayName(state.selectedModel);
+    assistantMsg.content = `⚠️ **JARVIS Notice (${friendlyName}):**\n\n${error.message}`;
     saveSessions();
     renderChatMessages();
   } finally {
