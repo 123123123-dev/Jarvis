@@ -46,7 +46,10 @@ let state = {
   selectedModel: 'openai/gpt-oss-20b',
   settings: loadSettings(),
   isGenerating: false,
-  isSpeakingMsgId: null
+  isSpeakingMsgId: null,
+  attachedFile: null,      // Stores uploaded file object
+  isListening: false,     // Voice writing state
+  recognition: null       // Web Speech API Instance
 };
 
 // --- APPLICATION INITIALIZATION ---
@@ -130,6 +133,14 @@ function setupEventListeners() {
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const searchInput = document.getElementById('searchInput');
 
+  // File Attachment Elements
+  const attachFileBtn = document.getElementById('attachFileBtn');
+  const fileInput = document.getElementById('fileInput');
+  const removeFileBtn = document.getElementById('removeFileBtn');
+
+  // Voice Writing Mic Button
+  const micBtn = document.getElementById('micBtn');
+
   if (newChatBtn) newChatBtn.addEventListener('click', handleNewChat);
 
   if (chatForm) {
@@ -153,6 +164,20 @@ function setupEventListeners() {
     });
   }
 
+  // File Upload Handlers
+  if (attachFileBtn && fileInput) {
+    attachFileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+  }
+  if (removeFileBtn) {
+    removeFileBtn.addEventListener('click', clearAttachedFile);
+  }
+
+  // Voice Writing Mic Handler
+  if (micBtn) {
+    micBtn.addEventListener('click', toggleVoiceWriting);
+  }
+
   if (modelSelect) {
     modelSelect.addEventListener('change', (e) => {
       state.selectedModel = e.target.value;
@@ -172,52 +197,129 @@ function setupEventListeners() {
   }
 }
 
-// --- UI RENDERING FUNCTIONS ---
-function renderModelDropdown() {
-  const modelSelect = document.getElementById('modelSelect');
-  if (!modelSelect) return;
+// --- FILE ATTACHMENT HANDLING ---
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  modelSelect.innerHTML = MODELS.map(m => `
-    <option value="${m.id}" ${m.id === state.selectedModel ? 'selected' : ''}>
-      ${m.name} (${m.badge})
-    </option>
-  `).join('');
-}
+  const isImage = file.type.startsWith('image/');
+  const reader = new FileReader();
 
-function renderSessionsList(filterText = '') {
-  const sessionsContainer = document.getElementById('sessionsContainer');
-  if (!sessionsContainer) return;
+  reader.onload = function(evt) {
+    state.attachedFile = {
+      name: file.name,
+      type: file.type,
+      isImage: isImage,
+      dataUrl: isImage ? evt.target.result : null,
+      textContent: !isImage ? evt.target.result : null
+    };
 
-  const filtered = state.sessions.filter(s => s.title.toLowerCase().includes(filterText));
+    const previewBar = document.getElementById('filePreviewBar');
+    const previewName = document.getElementById('filePreviewName');
+    const previewIcon = document.getElementById('filePreviewIcon');
 
-  if (filtered.length === 0) {
-    sessionsContainer.innerHTML = `<div class="text-center text-xs text-gray-500 py-6">No chats found</div>`;
-    return;
+    if (previewBar && previewName) {
+      previewName.textContent = file.name;
+      if (previewIcon) {
+        previewIcon.setAttribute('data-lucide', isImage ? 'image' : 'file-text');
+        if (window.lucide) window.lucide.createIcons();
+      }
+      previewBar.classList.remove('hidden');
+    }
+  };
+
+  if (isImage) {
+    reader.readAsDataURL(file);
+  } else {
+    reader.readAsText(file);
   }
-
-  sessionsContainer.innerHTML = filtered.map(session => {
-    const isActive = session.id === state.activeSessionId;
-    return `
-      <div 
-        onclick="switchSession('${session.id}')"
-        class="group relative flex items-center justify-between px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors ${isActive ? 'bg-gpt-card text-white font-medium' : 'text-gray-400 hover:bg-gpt-hover hover:text-gray-200'}"
-      >
-        <div class="flex items-center gap-2.5 min-w-0 pr-12">
-          <i data-lucide="message-square" class="w-4 h-4 shrink-0 ${isActive ? 'text-gpt-accent' : 'text-gray-400'}"></i>
-          <span class="truncate text-xs">${escapeHtml(session.title)}</span>
-        </div>
-        <div class="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onclick="event.stopPropagation(); deleteSession('${session.id}')" class="p-1 text-gray-400 hover:text-red-400">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-          </button>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  if (window.lucide) window.lucide.createIcons();
 }
 
+function clearAttachedFile() {
+  state.attachedFile = null;
+  const fileInput = document.getElementById('fileInput');
+  const previewBar = document.getElementById('filePreviewBar');
+  if (fileInput) fileInput.value = '';
+  if (previewBar) previewBar.classList.add('hidden');
+}
+
+// --- VOICE WRITING (SPEECH-TO-TEXT) ---
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  const userInput = document.getElementById('userInput');
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    if (userInput) {
+      userInput.value = transcript;
+      userInput.style.height = 'auto';
+      userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
+    }
+  };
+
+  recognition.onerror = (err) => {
+    console.warn("Speech recognition error:", err);
+    stopVoiceWriting();
+  };
+
+  recognition.onend = () => {
+    if (state.isListening) stopVoiceWriting();
+  };
+
+  return recognition;
+}
+
+function toggleVoiceWriting() {
+  const micBtn = document.getElementById('micBtn');
+
+  if (state.isListening) {
+    stopVoiceWriting();
+  } else {
+    if (!state.recognition) {
+      state.recognition = initSpeechRecognition();
+    }
+
+    if (!state.recognition) {
+      alert("Voice speech recognition is not supported in this browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    try {
+      state.recognition.start();
+      state.isListening = true;
+      if (micBtn) {
+        micBtn.classList.remove('text-slate-400');
+        micBtn.classList.add('text-red-400', 'animate-pulse', 'bg-red-500/20');
+      }
+    } catch (e) {
+      console.error("Failed to start voice recognition:", e);
+    }
+  }
+}
+
+function stopVoiceWriting() {
+  const micBtn = document.getElementById('micBtn');
+  if (state.recognition && state.isListening) {
+    try { state.recognition.stop(); } catch(e) {}
+  }
+  state.isListening = false;
+  if (micBtn) {
+    micBtn.classList.remove('text-red-400', 'animate-pulse', 'bg-red-500/20');
+    micBtn.classList.add('text-slate-400');
+  }
+}
+
+// --- CHAT MESSAGES UI RENDERING WITH ATTACHED FILE SUPPORT ---
 function renderChatMessages() {
   const chatContainer = document.getElementById('chatContainer');
   const welcomeCard = document.getElementById('welcomeCard');
@@ -245,6 +347,21 @@ function renderChatMessages() {
 
         <div class="flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start flex-1 min-w-0'}">
           <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'bg-gpt-card text-gray-100 rounded-tr-none border border-gpt-border/60' : 'bg-transparent text-gray-100'}">
+            
+            <!-- Render Attached Image or File Pill in User Bubble -->
+            ${isUser && msg.attachedFile ? `
+              <div class="mb-2">
+                ${msg.attachedFile.isImage ? `
+                  <img src="${msg.attachedFile.dataUrl}" class="max-w-xs max-h-48 rounded-xl border border-slate-700 shadow-md mb-1.5" />
+                ` : `
+                  <div class="inline-flex items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-xl text-xs text-cyan-300 font-mono mb-1.5">
+                    <i data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
+                    <span>${escapeHtml(msg.attachedFile.name)}</span>
+                  </div>
+                `}
+              </div>
+            ` : ''}
+
             ${isUser ? `<div class="whitespace-pre-wrap">${escapeHtml(msg.content)}</div>` : `<div id="msg-content-${msg.id}" class="markdown-content"></div>`}
           </div>
 
@@ -281,381 +398,41 @@ function renderChatMessages() {
   scrollToBottom();
 }
 
-// --- MARKDOWN, KATEX MATH & PRESENTATION RENDERING ---
-function renderFormattedMarkdown(element, content) {
-  if (!element) return;
-
-  if (typeof marked !== 'undefined') {
-    marked.setOptions({
-      gfm: true,
-      tables: true,
-      breaks: true,
-      highlight: function(code, lang) {
-        if (typeof hljs !== 'undefined') {
-          const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-          return hljs.highlight(code, { language }).value;
-        }
-        return code;
-      }
-    });
-
-    let cleanContent = (content || '').replace(/\\boxed\{([^}]+)\}/g, '$1');
-    const rawHtml = marked.parse(cleanContent);
-    const sanitizedHtml = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
-    element.innerHTML = sanitizedHtml;
-  } else {
-    element.textContent = content;
-  }
-
-  // Render KaTeX Math Expressions
-  if (window.renderMathInElement) {
-    try {
-      window.renderMathInElement(element, {
-        delimiters: [
-          {left: '$$', right: '$$', display: true},
-          {left: '$', right: '$', display: false},
-          {left: '\\(', right: '\\)', display: false},
-          {left: '\\[', right: '\\]', display: true}
-        ],
-        throwOnError: false
-      });
-    } catch (e) {
-      console.error("KaTeX rendering error:", e);
-    }
-  }
-
-  // Detect & Render Interactive Visual Presentation Slide Decks
-  renderInteractiveSlideDecks(element, content);
-
-  // Attach code block headers, copy buttons, and presentation preview/download buttons
-  const preElements = element.querySelectorAll('pre');
-  preElements.forEach((pre) => {
-    if (pre.parentNode.classList.contains('code-block-wrapper')) return;
-
-    const codeEl = pre.querySelector('code');
-    let lang = 'code';
-    if (codeEl) {
-      const match = codeEl.className.match(/language-(\w+)/);
-      if (match) lang = match[1];
-    }
-
-    const codeText = codeEl ? codeEl.innerText : pre.innerText;
-    const isPresentationHtml = lang === 'html' || codeText.includes('slide-container') || codeText.includes('<!DOCTYPE html>');
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'code-block-wrapper';
-
-    const header = document.createElement('div');
-    header.className = 'code-header';
-    header.innerHTML = `
-      <span>${lang}</span>
-      <div class="flex items-center gap-3">
-        ${isPresentationHtml ? `
-          <button class="preview-slides-btn flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-semibold transition-colors cursor-pointer">
-            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-            <span>Preview Presentation</span>
-          </button>
-          <button class="download-slides-btn flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors cursor-pointer">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            <span>Download .html</span>
-          </button>
-        ` : ''}
-        <button class="copy-code-btn flex items-center gap-1 hover:text-white transition-colors cursor-pointer">
-          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-          <span>Copy code</span>
-        </button>
-      </div>
-    `;
-
-    pre.parentNode.insertBefore(wrapper, pre);
-    wrapper.appendChild(header);
-    wrapper.appendChild(pre);
-
-    const copyBtn = header.querySelector('.copy-code-btn');
-    if (copyBtn) {
-      copyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(codeText);
-        const span = copyBtn.querySelector('span');
-        if (span) span.innerText = 'Copied!';
-        setTimeout(() => {
-          if (span) span.innerText = 'Copy code';
-        }, 2000);
-      });
-    }
-
-    if (isPresentationHtml) {
-      const previewBtn = header.querySelector('.preview-slides-btn');
-      const downloadBtn = header.querySelector('.download-slides-btn');
-
-      if (previewBtn) {
-        previewBtn.addEventListener('click', () => openPresentationPreviewModal(codeText));
-      }
-      if (downloadBtn) {
-        downloadBtn.addEventListener('click', () => downloadPresentationHtml(codeText));
-      }
-    }
-  });
-
-  if (window.lucide) window.lucide.createIcons();
-}
-
-// --- INTERACTIVE SLIDE DECK WIDGET RENDERER ---
-function renderInteractiveSlideDecks(element, rawText) {
-  if (!element || !rawText) return;
-
-  const isSlideContent = /Slide\s*\d+/i.test(rawText) || rawText.includes('class="slide"') || rawText.includes('<section class="slide"');
-  if (!isSlideContent) return;
-
-  if (element.querySelector('.presentation-deck-widget')) return;
-
-  let slidesHtml = '';
-  let slidesList = [];
-
-  if (rawText.includes('<section') || rawText.includes('class="slide"')) {
-    const htmlMatch = rawText.match(/```html\s*([\s\S]*?)```/i);
-    slidesHtml = htmlMatch ? htmlMatch[1] : rawText;
-  } else {
-    slidesHtml = convertMarkdownTextToHtmlSlides(rawText);
-  }
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(slidesHtml, 'text/html');
-  let extracted = Array.from(doc.querySelectorAll('section, .slide, .slide-container'));
-
-  if (!extracted.length) {
-    const slideBlocks = slidesHtml.split(/(?=<div class="slide"|<section)/i);
-    extracted = slideBlocks.filter(b => b.trim().length > 0);
-  }
-
-  slidesList = extracted.map(el => typeof el === 'string' ? el : el.outerHTML);
-  if (!slidesList.length) return;
-
-  let currentSlideIndex = 0;
-  let currentTheme = 'dark';
-
-  const widget = document.createElement('div');
-  widget.className = 'presentation-deck-widget my-4 bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-2xl w-full';
-
-  widget.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-2.5 bg-slate-950 border-b border-slate-800 text-xs">
-      <div class="flex items-center gap-2 font-bold text-white truncate">
-        <span class="text-cyan-400 text-sm">✦</span>
-        <span class="widget-deck-title truncate">Interactive Slide Deck</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800 text-slate-300">
-          <button class="prev-btn hover:text-cyan-400 disabled:opacity-30 px-1 font-bold">◀</button>
-          <span class="slide-counter text-[11px] font-mono font-semibold px-1 text-cyan-300">1 of ${slidesList.length}</span>
-          <button class="next-btn hover:text-cyan-400 disabled:opacity-30 px-1 font-bold">▶</button>
-        </div>
-        <button class="theme-toggle-btn p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white" title="Toggle Light/Dark Theme">🌙</button>
-        <button class="export-deck-btn px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-[11px] flex items-center gap-1 transition-colors">
-          <i data-lucide="download" class="w-3 h-3"></i>
-          <span>Export .html</span>
-        </button>
-        <button class="fullscreen-deck-btn p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white" title="Fullscreen Preview">⛶</button>
-      </div>
-    </div>
-    <div class="slide-viewport relative w-full aspect-[16/9] bg-slate-950 flex items-center justify-center p-2">
-      <iframe class="slide-frame w-full h-full border-0 rounded-xl bg-slate-900" sandbox="allow-scripts"></iframe>
-    </div>
-  `;
-
-  const iframe = widget.querySelector('.slide-frame');
-  const prevBtn = widget.querySelector('.prev-btn');
-  const nextBtn = widget.querySelector('.next-btn');
-  const counter = widget.querySelector('.slide-counter');
-  const themeBtn = widget.querySelector('.theme-toggle-btn');
-  const exportBtn = widget.querySelector('.export-deck-btn');
-  const fullscreenBtn = widget.querySelector('.fullscreen-deck-btn');
-
-  function updateSlideDisplay() {
-    counter.textContent = `${currentSlideIndex + 1} of ${slidesList.length}`;
-    prevBtn.disabled = currentSlideIndex === 0;
-    nextBtn.disabled = currentSlideIndex === slidesList.length - 1;
-
-    const currentSlideContent = slidesList[currentSlideIndex];
-    const isDark = currentTheme === 'dark';
-    
-    iframe.srcdoc = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-          body { margin: 0; padding: 2rem; font-family: system-ui, -apple-system, sans-serif; background: ${isDark ? '#0b0f19' : '#ffffff'}; color: ${isDark ? '#f8fafc' : '#0f172a'}; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
-          .slide-box { width: 100%; max-width: 1000px; margin: 0 auto; }
-          h1, h2, h3 { color: ${isDark ? '#38bdf8' : '#0284c7'}; margin-top: 0; }
-          .card { background: ${isDark ? '#162036' : '#f1f5f9'}; border: 1px solid ${isDark ? '#233352' : '#cbd5e1'}; padding: 1.25rem; border-radius: 1rem; margin-bottom: 1rem; }
-          ul { padding-left: 1.25rem; line-height: 1.7; }
-          .badge { background: ${isDark ? '#0284c7' : '#e0f2fe'}; color: ${isDark ? '#ffffff' : '#0369a1'}; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        </style>
-      </head>
-      <body>
-        <div class="slide-box">
-          ${currentSlideContent}
-        </div>
-      </body>
-      </html>
-    `;
-  }
-
-  prevBtn.addEventListener('click', () => {
-    if (currentSlideIndex > 0) {
-      currentSlideIndex--;
-      updateSlideDisplay();
-    }
-  });
-
-  nextBtn.addEventListener('click', () => {
-    if (currentSlideIndex < slidesList.length - 1) {
-      currentSlideIndex++;
-      updateSlideDisplay();
-    }
-  });
-
-  themeBtn.addEventListener('click', () => {
-    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    themeBtn.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
-    updateSlideDisplay();
-  });
-
-  exportBtn.addEventListener('click', () => downloadPresentationHtml(slidesHtml));
-  fullscreenBtn.addEventListener('click', () => openPresentationPreviewModal(slidesHtml));
-
-  updateSlideDisplay();
-  element.insertBefore(widget, element.firstChild);
-}
-
-function convertMarkdownTextToHtmlSlides(text) {
-  const slideRegex = /Slide\s*(\d+)[\s:]*([^\n]*)/gi;
-  const sections = text.split(/Slide\s*\d+[\s:]*/i).filter(s => s.trim().length > 0);
-
-  if (!sections.length) return `<section class="slide"><div>${text}</div></section>`;
-
-  return sections.map((sec, idx) => {
-    const lines = sec.trim().split('\n').filter(l => l.trim().length > 0);
-    const title = lines[0] ? lines[0].replace(/^[#*\s-]+/, '') : `Slide ${idx + 1}`;
-    const bodyLines = lines.slice(1);
-
-    const keyPoints = [];
-    const notes = [];
-    let isNotes = false;
-
-    bodyLines.forEach(line => {
-      if (/speaker notes/i.test(line)) {
-        isNotes = true;
-        return;
-      }
-      if (isNotes) {
-        notes.push(line.replace(/^[#*\s-]+/, ''));
-      } else {
-        keyPoints.push(line.replace(/^[#*\s-]+/, ''));
-      }
-    });
-
-    return `
-      <section class="slide">
-        <div class="flex items-center gap-2 mb-3">
-          <span class="badge">Slide ${idx + 1}</span>
-        </div>
-        <h2 class="text-2xl font-extrabold mb-4">${escapeHtml(title)}</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
-          <div class="card">
-            <h3 class="text-xs font-bold uppercase tracking-wider mb-2 opacity-80">Key Points</h3>
-            <ul class="text-sm">
-              ${keyPoints.map(kp => `<li>${escapeHtml(kp)}</li>`).join('')}
-            </ul>
-          </div>
-          ${notes.length ? `
-            <div class="card">
-              <h3 class="text-xs font-bold uppercase tracking-wider mb-2 opacity-80">Speaker Notes</h3>
-              <ul class="text-sm">
-                ${notes.map(n => `<li>${escapeHtml(n)}</li>`).join('')}
-              </ul>
-            </div>
-          ` : ''}
-        </div>
-      </section>
-    `;
-  }).join('\n');
-}
-
-// --- PRESENTATION PREVIEW MODAL & DOWNLOAD HELPERS ---
-function openPresentationPreviewModal(htmlCode) {
-  let modal = document.getElementById('presentationPreviewModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'presentationPreviewModal';
-    modal.className = 'fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-md p-4';
-    modal.innerHTML = `
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <span>📊 JARVIS Presentation Live Preview</span>
-        </h3>
-        <div class="flex items-center gap-3">
-          <button id="downloadModalSlidesBtn" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            <span>Download Presentation (.html)</span>
-          </button>
-          <button id="closePresentationPreviewBtn" class="text-slate-400 hover:text-white p-1 text-lg font-bold">✕</button>
-        </div>
-      </div>
-      <div class="flex-1 my-3 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
-        <iframe id="presentationIframe" class="w-full h-full border-0"></iframe>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-
-  const iframe = modal.querySelector('#presentationIframe');
-  iframe.srcdoc = htmlCode;
-
-  const closeBtn = modal.querySelector('#closePresentationPreviewBtn');
-  closeBtn.onclick = () => modal.classList.add('hidden');
-
-  const downloadBtn = modal.querySelector('#downloadModalSlidesBtn');
-  downloadBtn.onclick = () => downloadPresentationHtml(htmlCode);
-
-  modal.classList.remove('hidden');
-  if (window.lucide) window.lucide.createIcons();
-}
-
-function downloadPresentationHtml(htmlCode, filename = 'jarvis-presentation.html') {
-  const blob = new Blob([htmlCode], { type: 'text/html;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
-// --- STREAMING CHAT COMPLETION (GROQ API ENGINE) ---
+// --- STREAMING CHAT COMPLETION WITH FILE PAYLOAD ATTACHMENT ---
 async function handleSendMessage() {
   const userInput = document.getElementById('userInput');
   const prompt = userInput ? userInput.value.trim() : '';
 
-  if (!prompt || state.isGenerating) return;
+  if ((!prompt && !state.attachedFile) || state.isGenerating) return;
+
+  if (state.isListening) stopVoiceWriting();
 
   userInput.value = '';
   userInput.style.height = 'auto';
 
   const currentSession = getActiveSession();
 
+  // Create prompt content including attached document text if present
+  let fullPrompt = prompt;
+  const currentAttachedFile = state.attachedFile;
+
+  if (currentAttachedFile && !currentAttachedFile.isImage && currentAttachedFile.textContent) {
+    fullPrompt += `\n\n[Attached File: ${currentAttachedFile.name}]\n\`\`\`\n${currentAttachedFile.textContent}\n\`\`\``;
+  }
+
   // Construct user message
   const userMsg = {
     id: 'msg_' + Date.now(),
     role: 'user',
-    content: prompt,
+    content: prompt || (currentAttachedFile ? `[Sent File: ${currentAttachedFile.name}]` : ''),
+    attachedFile: currentAttachedFile ? { ...currentAttachedFile } : null,
     timestamp: Date.now()
   };
 
+  clearAttachedFile();
+
   if (currentSession.messages.length === 0) {
-    currentSession.title = prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt;
+    currentSession.title = userMsg.content.length > 30 ? userMsg.content.substring(0, 30) + '...' : userMsg.content;
   }
 
   currentSession.messages.push(userMsg);
@@ -675,7 +452,12 @@ async function handleSendMessage() {
 
   const formattedMessages = [
     { role: 'system', content: state.settings.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION },
-    ...currentSession.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
+    ...currentSession.messages.slice(0, -1).map(m => ({
+      role: m.role,
+      content: m.role === 'user' && m.attachedFile && !m.attachedFile.isImage && m.attachedFile.textContent
+        ? `${m.content}\n\n[Attached File: ${m.attachedFile.name}]\n\`\`\`\n${m.attachedFile.textContent}\n\`\`\``
+        : m.content
+    }))
   ];
 
   try {
@@ -693,7 +475,6 @@ async function handleSendMessage() {
       })
     });
 
-    // Automatic fallback to default model if selected model is restricted
     if (!response.ok && state.selectedModel !== 'openai/gpt-oss-20b') {
       state.selectedModel = 'openai/gpt-oss-20b';
       const modelSelect = document.getElementById('modelSelect');
