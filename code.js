@@ -47,7 +47,7 @@ let state = {
   settings: loadSettings(),
   isGenerating: false,
   isSpeakingMsgId: null,
-  attachedFile: null,      // Stores uploaded file object
+  attachedFiles: [],      // Stores up to 10 uploaded file objects
   isListening: false,     // Voice writing state
   recognition: null       // Web Speech API Instance
 };
@@ -120,35 +120,121 @@ function getActiveSession() {
   return state.sessions.find(s => s.id === state.activeSessionId) || state.sessions[0];
 }
 
-// --- EVENT LISTENERS BINDING ---
-function setupEventListeners() {
-  const newChatBtn = document.getElementById('newChatBtn');
-  const userInput = document.getElementById('userInput');
-  const chatForm = document.getElementById('chatForm');
+// --- RENDER MODEL DROPDOWN & SESSIONS LIST ---
+function renderModelDropdown() {
   const modelSelect = document.getElementById('modelSelect');
-  const clearAllBtn = document.getElementById('clearAllBtn');
-  const exportBtn = document.getElementById('exportBtn');
-  const settingsBtn = document.getElementById('settingsBtn');
-  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-  const searchInput = document.getElementById('searchInput');
+  if (!modelSelect) return;
+  modelSelect.innerHTML = MODELS.map(m => `
+    <option value="${m.id}" ${m.id === state.selectedModel ? 'selected' : ''}>${m.name} (${m.badge})</option>
+  `).join('');
+}
 
-  // File Attachment Elements
-  const attachFileBtn = document.getElementById('attachFileBtn');
-  const fileInput = document.getElementById('fileInput');
-  const removeFileBtn = document.getElementById('removeFileBtn');
+function renderSessionsList(filterQuery = '') {
+  const historyItems = document.getElementById('historyItems');
+  if (!historyItems) return;
+  const filtered = state.sessions.filter(s => s.title.toLowerCase().includes(filterQuery));
 
-  // Voice Writing Mic Button
-  const micBtn = document.getElementById('micBtn');
-
-  if (newChatBtn) newChatBtn.addEventListener('click', handleNewChat);
-
-  if (chatForm) {
-    chatForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      handleSendMessage();
-    });
+  if (filtered.length === 0) {
+    historyItems.innerHTML = `<p class="text-[11px] text-slate-500 px-2 py-1 italic">No chats found.</p>`;
+    return;
   }
+
+  historyItems.innerHTML = filtered.map(s => `
+    <div onclick="switchSession('${s.id}')" class="group px-2.5 py-2 rounded-xl border ${s.id === state.activeSessionId ? 'bg-slate-800/90 border-cyan-500/40 text-cyan-300' : 'bg-transparent border-transparent hover:bg-slate-800/50 text-slate-300'} text-xs truncate cursor-pointer flex items-center justify-between transition">
+      <div class="flex items-center gap-2 truncate">
+        <i data-lucide="message-square" class="w-3.5 h-3.5 shrink-0 ${s.id === state.activeSessionId ? 'text-cyan-400' : 'text-slate-500'}"></i>
+        <span class="truncate font-medium">${escapeHtml(s.title)}</span>
+      </div>
+      <button onclick="deleteSession('${s.id}', event)" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-0.5 rounded transition" title="Delete chat">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+  `).join('');
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+// --- FILE ATTACHMENT HANDLING (UP TO 10 FILES/IMAGES) ---
+function handleFileSelect(e) {
+  const selectedFiles = Array.from(e.target.files);
+  if (!selectedFiles.length) return;
+
+  if (state.attachedFiles.length + selectedFiles.length > 10) {
+    showToast("Maximum 10 files/images allowed per message.", "error");
+  }
+
+  const availableSlots = 10 - state.attachedFiles.length;
+  const filesToProcess = selectedFiles.slice(0, availableSlots);
+
+  let processedCount = 0;
+  filesToProcess.forEach(file => {
+    const isImage = file.type.startsWith('image/');
+    const reader = new FileReader();
+
+    reader.onload = function(evt) {
+      state.attachedFiles.push({
+        id: 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        name: file.name,
+        type: file.type,
+        isImage: isImage,
+        dataUrl: isImage ? evt.target.result : null,
+        textContent: !isImage ? evt.target.result : null
+      });
+
+      processedCount++;
+      if (processedCount === filesToProcess.length) {
+        renderFilePreviews();
+        showToast(`Attached ${processedCount} file(s) [${state.attachedFiles.length}/10]`, "info");
+      }
+    };
+
+    if (isImage) {
+      reader.readAsDataURL(file);
+    } else {
+      reader.readAsText(file);
+    }
+  });
+
+  e.target.value = '';
+}
+
+function renderFilePreviews() {
+  const previewBar = document.getElementById('filePreviewBar');
+  if (!previewBar) return;
+
+  if (state.attachedFiles.length === 0) {
+    previewBar.classList.add('hidden');
+    previewBar.innerHTML = '';
+    return;
+  }
+
+  previewBar.classList.remove('hidden');
+  previewBar.innerHTML = state.attachedFiles.map((file, idx) => `
+    <div class="inline-flex items-center gap-1.5 bg-slate-950 border border-cyan-500/40 pl-1.5 pr-2 py-1 rounded-xl text-xs text-cyan-300 font-mono shadow-md max-w-[180px]">
+      ${file.isImage ? `
+        <img src="${file.dataUrl}" class="w-5 h-5 rounded object-cover border border-slate-700 shrink-0" />
+      ` : `
+        <i data-lucide="file-text" class="w-4 h-4 text-cyan-400 shrink-0"></i>
+      `}
+      <span class="truncate text-[11px]">${escapeHtml(file.name)}</span>
+      <button onclick="removeAttachedFile(${idx})" class="text-slate-400 hover:text-red-400 ml-1 font-bold text-xs">✕</button>
+    </div>
+  `).join('');
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function removeAttachedFile(index) {
+  state.attachedFiles.splice(index, 1);
+  renderFilePreviews();
+}
+
+function clearAttachedFile() {
+  state.attachedFiles = [];
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.value = '';
+  renderFilePreviews();
+}
 
   if (userInput) {
     userInput.addEventListener('keydown', (e) => {
@@ -281,7 +367,7 @@ function initSpeechRecognition() {
   recognition.onerror = (err) => {
     console.warn("Speech recognition notice:", err.error);
     if (err.error === 'not-allowed') {
-      alert("Microphone permission was denied. Please allow microphone access in your browser settings.");
+      showToast("Microphone permission was denied. Please allow microphone access in your browser settings.", "error");
     }
     stopVoiceWriting();
   };
@@ -303,35 +389,11 @@ function toggleVoiceWriting() {
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Voice Speech Recognition is not supported in this browser. Please use Chrome, Edge, or Safari.");
+    showToast("Voice Speech Recognition is not supported in this browser.", "error");
     return;
   }
 
-  if (!state.recognition) {
-    state.recognition = initSpeechRecognition();
-  }
-
-  try {
-    state.recognition.start();
-  } catch (e) {
-    console.error("Failed to start voice recognition:", e);
-    stopVoiceWriting();
-  }
-}
-
-function stopVoiceWriting() {
-  const micBtn = document.getElementById('micBtn');
-  if (state.recognition && state.isListening) {
-    try { state.recognition.stop(); } catch(e) {}
-  }
-  state.isListening = false;
-  if (micBtn) {
-    micBtn.classList.remove('text-red-400', 'animate-pulse', 'bg-red-500/20');
-    micBtn.classList.add('text-slate-400');
-  }
-}
-
-// --- CHAT MESSAGES UI RENDERING WITH ATTACHED FILE SUPPORT ---
+// --- CHAT MESSAGES UI RENDERING WITH MULTI-FILE SUPPORT ---
 function renderChatMessages() {
   const chatContainer = document.getElementById('chatContainer');
   const welcomeCard = document.getElementById('welcomeCard');
@@ -360,17 +422,25 @@ function renderChatMessages() {
         <div class="flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start flex-1 min-w-0'}">
           <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'bg-gpt-card text-gray-100 rounded-tr-none border border-gpt-border/60' : 'bg-transparent text-gray-100'}">
             
-            <!-- Render Attached Image or File Pill in User Bubble -->
-            ${isUser && msg.attachedFile ? `
+            <!-- Render Attached Images / Document Pills in User Bubble -->
+            ${isUser && msg.attachedFiles && msg.attachedFiles.length > 0 ? `
               <div class="mb-2">
-                ${msg.attachedFile.isImage ? `
-                  <img src="${msg.attachedFile.dataUrl}" class="max-w-xs max-h-48 rounded-xl border border-slate-700 shadow-md mb-1.5" />
-                ` : `
-                  <div class="inline-flex items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-xl text-xs text-cyan-300 font-mono mb-1.5">
-                    <i data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
-                    <span>${escapeHtml(msg.attachedFile.name)}</span>
+                ${msg.attachedFiles.some(f => f.isImage) ? `
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-1.5">
+                    ${msg.attachedFiles.filter(f => f.isImage).map(f => `
+                      <img src="${f.dataUrl}" class="max-w-xs max-h-36 rounded-xl border border-slate-700 shadow-md object-cover" />
+                    `).join('')}
                   </div>
-                `}
+                ` : ''}
+
+                <div class="flex flex-wrap gap-1">
+                  ${msg.attachedFiles.filter(f => !f.isImage).map(f => `
+                    <div class="inline-flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-xl text-xs text-cyan-300 font-mono mb-1">
+                      <i data-lucide="file-text" class="w-3.5 h-3.5 text-cyan-400"></i>
+                      <span>${escapeHtml(f.name)}</span>
+                    </div>
+                  `).join('')}
+                </div>
               </div>
             ` : ''}
 
@@ -410,12 +480,12 @@ function renderChatMessages() {
   scrollToBottom();
 }
 
-// --- STREAMING CHAT COMPLETION WITH FILE PAYLOAD ATTACHMENT ---
+// --- STREAMING CHAT COMPLETION WITH MULTI-FILE PAYLOAD ---
 async function handleSendMessage() {
   const userInput = document.getElementById('userInput');
   const prompt = userInput ? userInput.value.trim() : '';
 
-  if ((!prompt && !state.attachedFile) || state.isGenerating) return;
+  if ((!prompt && state.attachedFiles.length === 0) || state.isGenerating) return;
 
   if (state.isListening) stopVoiceWriting();
 
@@ -424,20 +494,23 @@ async function handleSendMessage() {
 
   const currentSession = getActiveSession();
 
-  // Create prompt content including attached document text if present
-  let fullPrompt = prompt;
-  const currentAttachedFile = state.attachedFile;
+  let textPrompt = prompt;
+  const currentAttachedFiles = [...state.attachedFiles];
 
-  if (currentAttachedFile && !currentAttachedFile.isImage && currentAttachedFile.textContent) {
-    fullPrompt += `\n\n[Attached File: ${currentAttachedFile.name}]\n\`\`\`\n${currentAttachedFile.textContent}\n\`\`\``;
+  if (currentAttachedFiles.length > 0) {
+    currentAttachedFiles.forEach(f => {
+      if (!f.isImage && f.textContent) {
+        textPrompt += `\n\n[Attached File: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
+      }
+    });
   }
 
   // Construct user message
   const userMsg = {
     id: 'msg_' + Date.now(),
     role: 'user',
-    content: prompt || (currentAttachedFile ? `[Sent File: ${currentAttachedFile.name}]` : ''),
-    attachedFile: currentAttachedFile ? { ...currentAttachedFile } : null,
+    content: prompt || (currentAttachedFiles.length > 0 ? `[Sent ${currentAttachedFiles.length} file(s)]` : ''),
+    attachedFiles: currentAttachedFiles,
     timestamp: Date.now()
   };
 
@@ -464,12 +537,31 @@ async function handleSendMessage() {
 
   const formattedMessages = [
     { role: 'system', content: state.settings.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION },
-    ...currentSession.messages.slice(0, -1).map(m => ({
-      role: m.role,
-      content: m.role === 'user' && m.attachedFile && !m.attachedFile.isImage && m.attachedFile.textContent
-        ? `${m.content}\n\n[Attached File: ${m.attachedFile.name}]\n\`\`\`\n${m.attachedFile.textContent}\n\`\`\``
-        : m.content
-    }))
+    ...currentSession.messages.slice(0, -1).map(m => {
+      if (m.role !== 'user') return { role: m.role, content: m.content };
+
+      let mText = m.content || '';
+      if (m.attachedFiles && m.attachedFiles.length > 0) {
+        m.attachedFiles.forEach(f => {
+          if (!f.isImage && f.textContent) {
+            mText += `\n\n[Attached File: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
+          }
+        });
+      }
+
+      const hasImages = m.attachedFiles && m.attachedFiles.some(f => f.isImage);
+      if (hasImages) {
+        const parts = [{ type: 'text', text: mText }];
+        m.attachedFiles.forEach(f => {
+          if (f.isImage && f.dataUrl) {
+            parts.push({ type: 'image_url', image_url: { url: f.dataUrl } });
+          }
+        });
+        return { role: 'user', content: parts };
+      }
+
+      return { role: 'user', content: mText };
+    })
   ];
 
   try {
@@ -572,8 +664,8 @@ function switchSession(id) {
   renderSessionsList();
   renderChatMessages();
 }
-
-function deleteSession(id) {
+function deleteSession(id, e) {
+  if (e) e.stopPropagation();
   state.sessions = state.sessions.filter(s => s.id !== id);
   if (state.sessions.length === 0) {
     const fresh = createNewSessionObject();
@@ -585,49 +677,49 @@ function deleteSession(id) {
   saveSessions();
   renderSessionsList();
   renderChatMessages();
+  showToast("Chat session deleted", "info");
 }
 
 function handleClearAllSessions() {
-  if (confirm("Are you sure you want to clear all chat history?")) {
-    const fresh = createNewSessionObject();
-    state.sessions = [fresh];
-    state.activeSessionId = fresh.id;
-    saveSessions();
-    renderSessionsList();
-    renderChatMessages();
-  }
+  const fresh = createNewSessionObject();
+  state.sessions = [fresh];
+  state.activeSessionId = fresh.id;
+  saveSessions();
+  renderSessionsList();
+  renderChatMessages();
+  showToast("All chat sessions cleared", "info");
 }
 
 // --- UTILITY FUNCTIONS ---
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
-    alert("Copied to clipboard!");
+    showToast("Copied to clipboard!", "success");
   }).catch(err => {
     console.error("Failed to copy text: ", err);
   });
 }
 
-function downloadImage(url, filename = 'jarvis-generated-image.jpg') {
-  fetch(url)
-    .then(res => res.blob())
-    .then(blob => {
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-    })
-    .catch(() => {
-      window.open(url, '_blank');
-    });
+function showToast(message, type = "info") {
+  const container = document.getElementById("toastContainer") || document.body;
+  const toast = document.createElement("div");
+  toast.className = `fixed bottom-4 right-4 z-50 px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xl border flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0 ${
+    type === "error" ? "bg-red-950/90 border-red-500/50 text-red-200" :
+    type === "success" ? "bg-emerald-950/90 border-emerald-500/50 text-emerald-200" :
+    "bg-slate-900/90 border-cyan-500/50 text-cyan-200"
+  }`;
+  toast.innerText = message;
+  container.appendChild(toast);
+
+  setTimeout(() => toast.classList.remove("translate-y-2", "opacity-0"), 10);
+  setTimeout(() => {
+    toast.classList.add("opacity-0");
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
 }
 
 function toggleSpeech(text, msgId) {
   if (!('speechSynthesis' in window)) {
-    alert("Speech synthesis is not supported in your browser.");
+    showToast("Speech synthesis is not supported in your browser.", "error");
     return;
   }
 
