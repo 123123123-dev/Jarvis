@@ -327,27 +327,25 @@
 
     const SYSTEM_PROMPT = {
       role: "system",
-      content: `You are JARVIS, an advanced AI assistant created and developed by Abdullah Waheed.
+      content: `You are JARVIS, an advanced, hyper-intelligent AI assistant created and developed by Abdullah Waheed.
 
-PRIMARY INSTRUCTIONS & BEHAVIOR:
+PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
 1. CREATOR DISCLOSURE: If asked who created, built, designed, or owns you, ALWAYS reply clearly that you were created and developed by Abdullah Waheed. Never mention Groq, OpenAI, Meta, or third-party web apps.
-2. RESPONSE STYLE:
-   - For simple, casual, or general questions: Answer concisely, naturally, and directly in conversational plain text. Do not add unnecessary headers or markdown tables.
-   - For programming or code requests: Provide full, clean, formatted code blocks with syntax highlighting language tags (e.g., \`\`\`javascript ... \`\`\`).
-   - For math problems: Render equations cleanly using standard KaTeX syntax (e.g., \\( x^2 + y^2 = r^2 \\)).
-3. MULTI-STYLE IMAGE GENERATION:
+2. COMPREHENSIVE ONLINE KNOWLEDGE BASE: You possess vast, deep knowledge across all online subjects: academic textbooks, workbooks, literature, classic & modern stories, historical events, scientific research, pop culture, and internet lore/memes (including internet memes like 67, viral trends, and modern culture).
+3. EXHAUSTIVE & DETAILED ANSWERS DEFAULT: Unless the user explicitly asks for a short, brief, or condensed answer (e.g., "short answer", "summarize in 1 sentence"), ALWAYS provide rich, comprehensive, in-depth, step-by-step, and fully detailed explanations covering all key aspects of the topic.
+4. MULTI-STYLE IMAGE GENERATION:
    - When asked to draw, generate, or paint ANY image (photos, sketches, watercolor, poster colors, anime):
    - You MUST embed this exact Markdown image tag:
      ![Image Description](https://image.pollinations.ai/prompt/YOUR_ENCODED_DETAILED_PROMPT?width=1024&height=1024&nologo=true&model=flux&seed=54321)
    - Replace YOUR_ENCODED_DETAILED_PROMPT with a URL-encoded description including the requested style.
    - Replace 54321 with a random 5-digit number so each request is unique.
-4. VISUAL PRESENTATIONS & SLIDES:
+5. VISUAL PRESENTATIONS & SLIDES:
    - When asked to create or make a presentation or slides on ANY topic:
    - Organize into distinct slides (e.g. "### Slide 1: Title & Overview", "### Slide 2: Core Concepts", key bullet points, takeaways, and speaker notes).`
     };
 
-    // Application State
-    let currentUser = JSON.parse(localStorage.getItem("jarvis_active_user") || "null");
+    // Application State - TAB ISOLATED USER AUTHENTICATION
+    let currentUser = JSON.parse(sessionStorage.getItem("jarvis_tab_session_user") || "null");
     let registeredUsers = JSON.parse(localStorage.getItem("jarvis_registered_users_db") || "[]");
     let authTabMode = "signin";
     let currentModel = "llama-3.2-11b-vision-preview";
@@ -611,6 +609,11 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       const newChat = createNewSessionObj();
       chats.unshift(newChat);
       activeChatId = newChat.id;
+      clearAttachedFile();
+      if (isListening) stopVoiceWriting();
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      const userInput = document.getElementById('userInput');
+      if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
       saveUserChats();
       renderChatList();
       renderChatMessages();
@@ -658,6 +661,11 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       } else if (activeChatId === id) {
         activeChatId = chats[0].id;
       }
+      clearAttachedFile();
+      if (isListening) stopVoiceWriting();
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      const userInput = document.getElementById('userInput');
+      if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
       saveUserChats();
       renderChatList();
       renderChatMessages();
@@ -665,14 +673,19 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
     }
 
     function handleClearAllSessions() {
-      showConfirmModal("Clear History", "Are you sure you want to delete all saved conversations?", () => {
+      showConfirmModal("Clear History", "Are you sure you want to delete all saved conversations? This will reset the app.", () => {
         const fresh = createNewSessionObj();
         chats = [fresh];
         activeChatId = fresh.id;
+        clearAttachedFile();
+        if (isListening) stopVoiceWriting();
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        const userInput = document.getElementById('userInput');
+        if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
         saveUserChats();
         renderChatList();
         renderChatMessages();
-        showToast("All conversations cleared", "info");
+        showToast("App reset. All conversations cleared.", "info");
       });
     }
 
@@ -1227,12 +1240,12 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
         localStorage.setItem("jarvis_registered_users_db", JSON.stringify(registeredUsers));
 
         currentUser = { email: newUser.email, name: newUser.name };
-        localStorage.setItem("jarvis_active_user", JSON.stringify(currentUser));
+        sessionStorage.setItem("jarvis_tab_session_user", JSON.stringify(currentUser));
 
         closeAuthModal();
         updateUserUI();
         loadUserChats();
-        showToast(`Welcome ${currentUser.name}! Account registered.`, "success");
+        showToast(`Welcome ${currentUser.name}! Account registered for this session.`, "success");
 
       } else {
         const user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
@@ -1242,7 +1255,7 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
         }
 
         currentUser = { email: user.email, name: user.name };
-        localStorage.setItem("jarvis_active_user", JSON.stringify(currentUser));
+        sessionStorage.setItem("jarvis_tab_session_user", JSON.stringify(currentUser));
 
         closeAuthModal();
         updateUserUI();
@@ -1259,7 +1272,7 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       }
 
       currentUser = { email: googleEmail, name: googleEmail.split("@")[0] };
-      localStorage.setItem("jarvis_active_user", JSON.stringify(currentUser));
+      sessionStorage.setItem("jarvis_tab_session_user", JSON.stringify(currentUser));
 
       closeAuthModal();
       updateUserUI();
@@ -1268,12 +1281,12 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
     }
 
     function handleLogout() {
-      showConfirmModal("Sign Out?", "Are you sure you want to sign out of your account?", () => {
+      showConfirmModal("Sign Out?", "Are you sure you want to sign out of your account on this tab?", () => {
         currentUser = null;
-        localStorage.removeItem("jarvis_active_user");
+        sessionStorage.removeItem("jarvis_tab_session_user");
         updateUserUI();
         loadUserChats();
-        showToast("Signed out. Switched to Guest Mode.", "info");
+        showToast("Signed out. Switched to Guest Mode on this tab.", "info");
       });
     }
 
