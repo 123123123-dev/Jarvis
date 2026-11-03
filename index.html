@@ -29,7 +29,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Highlight.js for Syntax Highlighting -->
+  <!-- Highlight.js for Code Highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
@@ -51,7 +51,7 @@
     .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
     .markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
 
-    /* Custom Scrollbar */
+    /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #090d16; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
@@ -167,7 +167,7 @@
           </div>
           <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">Hello, I am JARVIS</h2>
           <p class="text-sm text-slate-400 max-w-md leading-relaxed mb-6">
-            Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate multi-style artwork, solve math, or upload files!
+            Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate multi-style artwork, solve math, or upload up to 10 files!
           </p>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full text-left">
@@ -195,23 +195,19 @@
       <div class="p-3 md:p-4 border-t border-slate-800/80 bg-slate-950 shrink-0">
         <div class="max-w-4xl mx-auto">
           
-          <!-- ATTACHED FILE PREVIEW BADGE -->
-          <div id="filePreviewBar" class="hidden mb-2 inline-flex items-center gap-2 bg-slate-900 border border-cyan-500/40 px-3 py-1.5 rounded-xl text-xs text-cyan-300 font-mono shadow-md">
-            <i id="filePreviewIcon" data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
-            <span id="filePreviewName" class="max-w-xs truncate">file.txt</span>
-            <button id="removeFileBtn" class="text-slate-400 hover:text-red-400 ml-1">✕</button>
-          </div>
+          <!-- ATTACHED FILES PREVIEW CONTAINER (UP TO 10 FILES) -->
+          <div id="filePreviewBar" class="hidden mb-2 flex flex-wrap gap-2 max-h-28 overflow-y-auto p-1.5 bg-slate-900/80 border border-slate-800 rounded-xl"></div>
 
           <div class="relative bg-slate-900/90 border border-slate-800 focus-within:border-cyan-500/60 rounded-2xl p-2 transition shadow-2xl">
-            <!-- HIDDEN FILE INPUT -->
-            <input type="file" id="fileInput" class="hidden">
+            <!-- HIDDEN FILE INPUT (SUPPORTS UP TO 10 FILES AT ONCE) -->
+            <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.txt,.py,.js,.json,.csv,.md,.html,.css">
 
-            <textarea id="userInput" rows="1" placeholder="Ask JARVIS anything, attach a file, or say 'Create a presentation on...'" class="w-full bg-transparent text-slate-100 text-sm focus:outline-none resize-none px-3 py-1.5 max-h-40 placeholder-slate-500"></textarea>
+            <textarea id="userInput" rows="1" placeholder="Ask JARVIS anything, attach up to 10 images/files, or say 'Create a presentation on...'" class="w-full bg-transparent text-slate-100 text-sm focus:outline-none resize-none px-3 py-1.5 max-h-40 placeholder-slate-500"></textarea>
             
             <div class="flex items-center justify-between pt-1.5 border-t border-slate-800/60 mt-1 px-1">
               <div class="flex items-center gap-1">
                 <!-- FILE ATTACH BUTTON -->
-                <button id="attachFileBtn" class="p-1.5 text-slate-400 hover:text-cyan-400 rounded-lg hover:bg-slate-800 transition" title="Attach image or text/code document">
+                <button id="attachFileBtn" class="p-1.5 text-slate-400 hover:text-cyan-400 rounded-lg hover:bg-slate-800 transition" title="Attach up to 10 images or text/code documents">
                   <i data-lucide="paperclip" class="w-4 h-4"></i>
                 </button>
                 
@@ -294,19 +290,19 @@
     </div>
   </div>
 
-  <!-- CONFIRMATION MODAL (Replaces confirm()) -->
+  <!-- CONFIRMATION MODAL -->
   <div id="confirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5 shadow-2xl text-center">
       <h3 id="confirmTitle" class="text-sm font-bold text-white mb-2">Confirmation Required</h3>
       <p id="confirmMessage" class="text-xs text-slate-400 mb-4 leading-relaxed"></p>
       <div class="flex gap-2">
-        <button id="confirmCancelBtn" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl transition">Cancel</button>
+        <button onclick="hideConfirmModal()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl transition">Cancel</button>
         <button id="confirmOkBtn" class="flex-1 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs rounded-xl font-semibold transition">Confirm</button>
       </div>
     </div>
   </div>
 
-  <!-- TOAST CONTAINER (Replaces alert()) -->
+  <!-- TOAST CONTAINER -->
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- APPLICATION LOGIC SCRIPT -->
@@ -346,8 +342,8 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
     let isGenerating = false;
     let confirmCallback = null;
 
-    // File Attachment & Voice Input State
-    let attachedFile = null;
+    // File Attachment & Voice Input State (Supports up to 10 files)
+    let attachedFiles = [];
     let isListening = false;
     let speechRecognitionObj = null;
 
@@ -406,14 +402,10 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       // File Attacher Handlers
       const attachFileBtn = document.getElementById('attachFileBtn');
       const fileInput = document.getElementById('fileInput');
-      const removeFileBtn = document.getElementById('removeFileBtn');
 
       if (attachFileBtn && fileInput) {
         attachFileBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileSelect);
-      }
-      if (removeFileBtn) {
-        removeFileBtn.addEventListener('click', clearAttachedFile);
       }
 
       // Voice Writing Handler
@@ -421,70 +413,88 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       if (micBtn) {
         micBtn.addEventListener('click', toggleVoiceWriting);
       }
-
-      // Confirm Modal Listener
-      const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-      const confirmOkBtn = document.getElementById('confirmOkBtn');
-      if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', hideConfirmModal);
-      if (confirmOkBtn) confirmOkBtn.addEventListener('click', () => {
-        if (confirmCallback) confirmCallback();
-        hideConfirmModal();
-      });
-
-      // Shortcut Ctrl+K
-      window.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-          e.preventDefault();
-          createNewSession();
-        }
-      });
     }
 
-    // --- FILE ATTACHMENT LOGIC ---
+    // --- FILE ATTACHMENT LOGIC (UP TO 10 FILES/IMAGES) ---
     function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (!file) return;
+      const selectedFiles = Array.from(e.target.files);
+      if (!selectedFiles.length) return;
 
-      const isImage = file.type.startsWith('image/');
-      const reader = new FileReader();
+      if (attachedFiles.length + selectedFiles.length > 10) {
+        showToast("Maximum 10 files/images allowed per message.", "error");
+      }
 
-      reader.onload = function(evt) {
-        attachedFile = {
-          name: file.name,
-          type: file.type,
-          isImage: isImage,
-          dataUrl: isImage ? evt.target.result : null,
-          textContent: !isImage ? evt.target.result : null
+      const availableSlots = 10 - attachedFiles.length;
+      const filesToProcess = selectedFiles.slice(0, availableSlots);
+
+      let processedCount = 0;
+      filesToProcess.forEach(file => {
+        const isImage = file.type.startsWith('image/');
+        const reader = new FileReader();
+
+        reader.onload = function(evt) {
+          attachedFiles.push({
+            id: 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            name: file.name,
+            type: file.type,
+            isImage: isImage,
+            dataUrl: isImage ? evt.target.result : null,
+            textContent: !isImage ? evt.target.result : null
+          });
+
+          processedCount++;
+          if (processedCount === filesToProcess.length) {
+            renderFilePreviews();
+            showToast(`Attached ${processedCount} file(s) [${attachedFiles.length}/10]`, "info");
+          }
         };
 
-        const previewBar = document.getElementById('filePreviewBar');
-        const previewName = document.getElementById('filePreviewName');
-        const previewIcon = document.getElementById('filePreviewIcon');
-
-        if (previewBar && previewName) {
-          previewName.textContent = file.name;
-          if (previewIcon) {
-            previewIcon.setAttribute('data-lucide', isImage ? 'image' : 'file-text');
-            if (window.lucide) window.lucide.createIcons();
-          }
-          previewBar.classList.remove('hidden');
+        if (isImage) {
+          reader.readAsDataURL(file);
+        } else {
+          reader.readAsText(file);
         }
-        showToast(`Attached file: ${file.name}`, "info");
-      };
+      });
 
-      if (isImage) {
-        reader.readAsDataURL(file);
-      } else {
-        reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    function renderFilePreviews() {
+      const previewBar = document.getElementById('filePreviewBar');
+      if (!previewBar) return;
+
+      if (attachedFiles.length === 0) {
+        previewBar.classList.add('hidden');
+        previewBar.innerHTML = '';
+        return;
       }
+
+      previewBar.classList.remove('hidden');
+      previewBar.innerHTML = attachedFiles.map((file, idx) => `
+        <div class="inline-flex items-center gap-1.5 bg-slate-950 border border-cyan-500/40 pl-1.5 pr-2 py-1 rounded-xl text-xs text-cyan-300 font-mono shadow-md max-w-[180px]">
+          ${file.isImage ? `
+            <img src="${file.dataUrl}" class="w-5 h-5 rounded object-cover border border-slate-700 shrink-0" />
+          ` : `
+            <i data-lucide="file-text" class="w-4 h-4 text-cyan-400 shrink-0"></i>
+          `}
+          <span class="truncate text-[11px]">${escapeHtml(file.name)}</span>
+          <button onclick="removeAttachedFile(${idx})" class="text-slate-400 hover:text-red-400 ml-1 font-bold text-xs">✕</button>
+        </div>
+      `).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function removeAttachedFile(index) {
+      attachedFiles.splice(index, 1);
+      renderFilePreviews();
     }
 
     function clearAttachedFile() {
-      attachedFile = null;
+      attachedFiles = [];
       const fileInput = document.getElementById('fileInput');
-      const previewBar = document.getElementById('filePreviewBar');
       if (fileInput) fileInput.value = '';
-      if (previewBar) previewBar.classList.add('hidden');
+      renderFilePreviews();
     }
 
     // --- VOICE WRITING (SPEECH-TO-TEXT) LOGIC ---
@@ -667,7 +677,7 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
             </div>
             <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">Hello, I am JARVIS</h2>
             <p class="text-sm text-slate-400 max-w-md leading-relaxed mb-6">
-              Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate multi-style artwork, solve math, or upload files!
+              Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate multi-style artwork, solve math, or upload up to 10 files!
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full text-left">
               <button onclick="sendQuickPrompt('Create a 4-slide presentation on Artificial Intelligence')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
@@ -706,17 +716,29 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
             <div class="flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start flex-1 min-w-0'}">
               <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'bg-slate-800 text-slate-100 rounded-tr-none border border-slate-700/60 shadow-md' : 'bg-transparent text-slate-100'}">
                 
-                <!-- Render Attached File in User Bubble -->
-                ${isUser && msg.attachedFile ? `
-                  <div class="mb-2">
-                    ${msg.attachedFile.isImage ? `
-                      <img src="${msg.attachedFile.dataUrl}" class="max-w-xs max-h-48 rounded-xl border border-slate-700 shadow-md mb-1.5" />
-                    ` : `
-                      <div class="inline-flex items-center gap-2 bg-slate-950 border border-slate-700 px-3 py-1.5 rounded-xl text-xs text-cyan-300 font-mono mb-1.5">
-                        <i data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
-                        <span>${escapeHtml(msg.attachedFile.name)}</span>
+                <!-- Render Attached Files/Images Grid in User Bubble -->
+                ${isUser && msg.attachedFiles && msg.attachedFiles.length > 0 ? `
+                  <div class="mb-2.5">
+                    <!-- Image Gallery Grid (up to 10 images) -->
+                    ${msg.attachedFiles.some(f => f.isImage) ? `
+                      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-2">
+                        ${msg.attachedFiles.filter(f => f.isImage).map(f => `
+                          <div class="relative group rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-sm aspect-square">
+                            <img src="${f.dataUrl}" class="w-full h-full object-cover rounded-xl" />
+                          </div>
+                        `).join('')}
                       </div>
-                    `}
+                    ` : ''}
+
+                    <!-- Text / Code Document Pills -->
+                    <div class="flex flex-wrap gap-1.5">
+                      ${msg.attachedFiles.filter(f => !f.isImage).map(f => `
+                        <div class="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-700 px-2.5 py-1 rounded-xl text-xs text-cyan-300 font-mono">
+                          <i data-lucide="file-text" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
+                          <span>${escapeHtml(f.name)}</span>
+                        </div>
+                      `).join('')}
+                    </div>
                   </div>
                 ` : ''}
 
@@ -848,20 +870,18 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       const iframe = document.getElementById("presentationIframe");
       if (!modal || !iframe) return;
 
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <script src="https://cdn.tailwindcss.com"><\/script>
-          <style> body { background: #090d16; color: #f8fafc; font-family: sans-serif; padding: 2rem; } </style>
-        </head>
-        <body>
-          <div class="max-w-3xl mx-auto space-y-6">
-            ${marked.parse(rawText)}
+      const slideBlocks = rawText.split(/###?\s*Slide\s*\d+:?/i).filter(s => s.trim().length > 0);
+      const slidesHtml = slideBlocks.slice(1).map((slide, idx) => `
+        <div class="slide p-8 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl min-h-[350px] flex flex-col justify-center my-6 max-w-3xl mx-auto">
+          <div class="text-xs font-mono text-cyan-400 font-bold mb-3">SLIDE ${idx + 1} OF ${slideBlocks.length - 1}</div>
+          <div class="prose prose-invert max-w-none text-slate-100 text-sm leading-relaxed">
+            ${window.marked ? marked.parse(slide) : slide}
           </div>
-        </body>
-        </html>
-      `;
+        </div>
+      `).join('');
+
+      const htmlContent = `<!DOCTYPE html><html class="dark"><head><script src="https://cdn.tailwindcss.com"></` + `script><style>body { background-color: #090d16; color: #f8fafc; font-family: ui-sans-serif, system-ui, sans-serif; padding: 2rem; } h1, h2, h3 { color: #38bdf8; font-weight: bold; margin-bottom: 0.75rem; } p { margin-bottom: 0.75rem; line-height: 1.6; } ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; } ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }</style></head><body><div class="max-w-4xl mx-auto">${slidesHtml}</div></body></html>`;
+
       iframe.srcdoc = htmlContent;
       modal.classList.remove("hidden");
     }
@@ -871,12 +891,12 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       if (modal) modal.classList.add("hidden");
     }
 
-    // --- REAL-TIME CHAT STREAMING ---
+    // --- REAL-TIME CHAT STREAMING WITH MULTI-IMAGE / FILE ATTACHMENTS ---
     async function handleSendMessage() {
       const userInput = document.getElementById('userInput');
       const text = userInput ? userInput.value.trim() : '';
 
-      if ((!text && !attachedFile) || isGenerating) return;
+      if ((!text && attachedFiles.length === 0) || isGenerating) return;
 
       if (isListening) stopVoiceWriting();
 
@@ -884,21 +904,17 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       userInput.style.height = 'auto';
 
       const activeChat = getActiveChat();
-      const currentAttachedFile = attachedFile;
-
-      let fullPromptText = text;
-      if (currentAttachedFile && !currentAttachedFile.isImage && currentAttachedFile.textContent) {
-        fullPromptText += `\n\n[Attached File: ${currentAttachedFile.name}]\n\`\`\`\n${currentAttachedFile.textContent}\n\`\`\``;
-      }
+      const currentAttachedFiles = [...attachedFiles];
 
       if (activeChat.messages.length === 0) {
-        activeChat.title = (text || currentAttachedFile?.name || 'New Conversation').substring(0, 24) + '...';
+        const firstFileName = currentAttachedFiles.length > 0 ? currentAttachedFiles[0].name : '';
+        activeChat.title = (text || firstFileName || 'New Conversation').substring(0, 24) + '...';
       }
 
       activeChat.messages.push({
         role: 'user',
-        content: text || (currentAttachedFile ? `[Sent File: ${currentAttachedFile.name}]` : ''),
-        attachedFile: currentAttachedFile ? { ...currentAttachedFile } : null
+        content: text || (currentAttachedFiles.length > 0 ? `[Sent ${currentAttachedFiles.length} file(s)]` : ''),
+        attachedFiles: currentAttachedFiles
       });
 
       clearAttachedFile();
@@ -914,12 +930,34 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
 
       const formattedMessages = [
         SYSTEM_PROMPT,
-        ...activeChat.messages.slice(0, -1).map(m => ({
-          role: m.role,
-          content: m.role === 'user' && m.attachedFile && !m.attachedFile.isImage && m.attachedFile.textContent
-            ? `${m.content}\n\n[Attached File: ${m.attachedFile.name}]\n\`\`\`\n${m.attachedFile.textContent}\n\`\`\``
-            : m.content
-        }))
+        ...activeChat.messages.slice(0, -1).map(m => {
+          if (m.role !== 'user') return { role: m.role, content: m.content };
+
+          let textPrompt = m.content || '';
+          if (m.attachedFiles && m.attachedFiles.length > 0) {
+            m.attachedFiles.forEach(f => {
+              if (!f.isImage && f.textContent) {
+                textPrompt += `\n\n[Attached Document: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
+              }
+            });
+          }
+
+          const hasImages = m.attachedFiles && m.attachedFiles.some(f => f.isImage);
+          if (hasImages) {
+            const contentParts = [{ type: 'text', text: textPrompt }];
+            m.attachedFiles.forEach(f => {
+              if (f.isImage && f.dataUrl) {
+                contentParts.push({
+                  type: 'image_url',
+                  image_url: { url: f.dataUrl }
+                });
+              }
+            });
+            return { role: 'user', content: contentParts };
+          }
+
+          return { role: 'user', content: textPrompt };
+        })
       ];
 
       try {
@@ -1211,18 +1249,23 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       const modal = document.getElementById("confirmModal");
       const titleElem = document.getElementById("confirmTitle");
       const msgElem = document.getElementById("confirmMessage");
+      const okBtn = document.getElementById("confirmOkBtn");
       if (!modal) return;
 
       if (titleElem) titleElem.innerText = title;
       if (msgElem) msgElem.innerText = message;
-      confirmCallback = onConfirm;
+      
+      okBtn.onclick = () => {
+        if (onConfirm) onConfirm();
+        hideConfirmModal();
+      };
+      
       modal.classList.remove("hidden");
     }
 
     function hideConfirmModal() {
       const modal = document.getElementById("confirmModal");
       if (modal) modal.classList.add("hidden");
-      confirmCallback = null;
     }
 
     function scrollToBottom() {
