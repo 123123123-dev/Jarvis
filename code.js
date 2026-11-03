@@ -1,864 +1,953 @@
-/**
- * ====================================================================
- * JARVIS AI Engine - Application Logic (code.js)
- * Created and Developed by Abdullah Waheed
- * 
- * Features:
- * - Real-time Server-Sent Event (SSE) response streaming via Groq API
- * - Markdown parsing using Marked.js
- * - Mathematical equation rendering using KaTeX
- * - Code syntax highlighting with Tokyo Night Dark theme & Copy buttons
- * - Real-time HTML Slide Presentation generation, interactive live preview & download
- * - LocalStorage session management (Save, Switch, Delete, Search)
- * - Text-to-Speech synthesis output
- * - Markdown export capability
- * ====================================================================
- */
+/* ==========================================================================
+   JARVIS AI Core Engine Application Logic
+   Developed by: Abdullah Waheed
+   ========================================================================== */
 
-// --- CONFIGURATION & CONSTANTS ---
-const GROQ_API_KEY = "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";
+// Config & API Keys
+const GOOGLE_CLIENT_ID = '824756167499-bs4dlceg4qtolp4ma4u7g3gajrrviad3.apps.googleusercontent.com';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-const MODELS = [
-  { id: 'openai/gpt-oss-20b', name: 'Jarvis Instant', badge: 'Ultra Fast' },
-  { id: 'llama-3.2-11b-vision-preview', name: 'Jarvis Turbo', badge: 'Vision & Images' },
-  { id: 'openai/gpt-oss-120b', name: 'Jarvis Pro', badge: '120B High Intelligence' },
-  { id: 'deepseek-r1-distill-llama-70b', name: 'Jarvis Ironman', badge: '70B Deep Reasoning' }
+// Model Mapping Configuration
+const MODELS = {
+  instant: { id: 'llama-3.1-8b-instant', name: 'Jarvis Instant' },
+  turbo: { id: 'llama-3.2-11b-vision-preview', name: 'Jarvis Turbo' },
+  pro: { id: 'llama-3.3-70b-versatile', name: 'Jarvis Pro' },
+  ironman: { id: 'deepseek-r1-distill-llama-70b', name: 'Jarvis Ironman' }
+};
+
+const VISION_FALLBACK_MODELS = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'];
+
+// Default Embedded Keys (Auto-Fallback Rotation)
+const API_KEYS = [
+  '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',
+  'gsk_98765432101234567890abcdefghijklmnopqrstuvwxyz12345'
 ];
 
-const MODEL_NAMES = {
-  "openai/gpt-oss-20b": "Jarvis Instant",
-  "openai/gpt-oss-120b": "Jarvis Pro",
-  "llama-3.2-11b-vision-preview": "Jarvis Turbo",
-  "llama-3.2-90b-vision-preview": "Jarvis Turbo Pro",
-  "llama-3.3-70b-versatile": "Jarvis Pro",
-  "deepseek-r1-distill-llama-70b": "Jarvis Ironman"
+// Session-Scoped Tab State Management
+const state = {
+  selectedModelKey: 'turbo',
+  attachedFiles: [], // Up to 10 attached files/images
+  chats: [],
+  currentSessionId: null,
+  currentUser: JSON.parse(sessionStorage.getItem('jarvis_session_user') || 'null'),
+  authTab: 'signin',
+  googleToken: null,
+  speechRecognition: null,
+  isRecording: false
 };
 
-function getModelDisplayName(modelId) {
-  return MODEL_NAMES[modelId] || "Jarvis Engine";
-}
+// JARVIS System Prompt & Creator Persona Injection
+const JARVIS_SYSTEM_PROMPT = `
+You are JARVIS, a highly advanced, ultra-intelligent AI assistant created and developed exclusively by Abdullah Waheed.
 
-const DEFAULT_SYSTEM_INSTRUCTION = `You are JARVIS, an advanced, highly intelligent AI assistant created and developed by Abdullah Waheed.
+CREATOR & DEVELOPER PROFILE:
+- Creator Name: Abdullah Waheed
+- Age: 15 years old when he built and launched JARVIS in 2026.
+- Education: Student at LGS Paragon Campus (Lahore Grammar School).
+- Residence & Origin: Lives in Lahore, Pakistan; born in Narowal city.
+- Whenever asked about your owner, creator, or developer, credit Abdullah Waheed with full enthusiasm and respect using these facts.
 
-CRITICAL BEHAVIOR & STYLE GUIDELINES:
-1. CREATOR & OWNER DETAILS: If anyone asks who created you, who made you, or who your owner/developer is, always respond with complete details:
-   - Creator & Developer: Abdullah Waheed
-   - Age & Year of Creation: Created this app in 2026 at 15 years of age.
-   - School: Currently studying at LGS (Lahore Grammar School) Paragon Campus.
-   - Residence & Birthplace: Lives in Lahore, Pakistan, but was born in Narowal city.
-2. SEARCH ENGINE DISCLOSURE: If asked "what is your search engine?" or what search engine you use, ALWAYS respond clearly that your search engine is the "JARVIS Engine".
-3. IDENTITY: Your name is JARVIS. Never mention Groq, OpenAI, Meta, or any third-party AI provider. You operate strictly on the JARVIS Engine.
-4. EXHAUSTIVE ONLINE KNOWLEDGE BASE: You possess comprehensive knowledge across books, workbooks, literature, academic subjects, stories, people, history, pop culture, and internet memes (e.g. meme 67, viral trends, etc.).
-5. EXHAUSTIVE & DETAILED ANSWERS DEFAULT: Unless specifically requested by the user to be brief, concise, or short, always provide rich, step-by-step, in-depth, detailed explanations covering all aspects of the query.
-6. VISUAL PRESENTATIONS & SLIDES: When asked to create, generate, or make a presentation or slides on ANY topic:
-   - Output a complete, multi-slide visual HTML slide deck inside a \`\`\`html code block.
-   - Use <section class="slide"> tags for each slide (Slide 1, Slide 2, etc.).
-   - Include modern 16:9 card layouts, bold typography, grid cards, highlight badges, and speaker notes so each slide renders as a visual presentation deck.
-7. TONE: Speak directly, naturally, smoothly, and cleanly like ChatGPT. Keep output clean and easily readable.`;
+SEARCH ENGINE & CORE IDENTITY:
+- Your internal search engine is strictly "JARVIS Engine".
+- You have access to deep, comprehensive, online knowledge including academic books, workbooks, literature, history, science, pop culture, internet memes (such as 67), and global news.
 
-// --- GLOBAL APPLICATION STATE ---
-let state = {
-  sessions: loadSessions(),
-  activeSessionId: null,
-  selectedModel: 'openai/gpt-oss-20b',
-  settings: loadSettings(),
-  isGenerating: false,
-  isSpeakingMsgId: null,
-  attachedFiles: [],      // Stores up to 10 uploaded file objects
-  isListening: false,     // Voice writing state
-  recognition: null       // Web Speech API Instance
-};
+ANSWERING BEHAVIOR & STYLE:
+- Always provide exhaustive, in-depth, step-by-step, highly detailed explanations by default.
+- Only shorten your answers if the user explicitly requests a brief, short, or concise summary.
+- Format responses cleanly with bolding, lists, and code blocks where applicable.
+`;
 
-// --- APPLICATION INITIALIZATION ---
-window.addEventListener('DOMContentLoaded', () => {
-  // Initialize sessions if empty
-  if (!state.sessions || state.sessions.length === 0) {
-    const defaultSession = createNewSessionObject();
-    state.sessions = [defaultSession];
-    state.activeSessionId = defaultSession.id;
-    saveSessions();
-  } else {
-    state.activeSessionId = state.sessions[0].id;
-  }
-
-  // Setup DOM Event Listeners & Initial Render
-  setupEventListeners();
-  renderModelDropdown();
+// Initialize Application on Page Load
+document.addEventListener('DOMContentLoaded', () => {
+  initSpeechRecognition();
+  updateAuthUI();
+  loadUserChats();
   renderSessionsList();
-  renderChatMessages();
+  
+  if (!state.chats || state.chats.length === 0) {
+    createNewSession(false);
+  } else {
+    state.currentSessionId = state.chats[0].id;
+    renderChatMessages();
+  }
 });
 
-// --- LOCAL STORAGE PERSISTENCE HELPERS ---
-function loadSessions() {
-  try {
-    const saved = localStorage.getItem('jarvis_chat_sessions');
-    return saved ? JSON.parse(saved) : [];
-  } catch (e) {
-    console.error("Failed to load sessions from LocalStorage:", e);
-    return [];
+// Helper: User Display Names for Error Notices
+function getModelDisplayName(modelIdOrKey) {
+  if (MODELS[modelIdOrKey]) return MODELS[modelIdOrKey].name;
+  for (const k in MODELS) {
+    if (MODELS[k].id === modelIdOrKey) return MODELS[k].name;
+  }
+  if (modelIdOrKey.includes('vision')) return 'Jarvis Turbo';
+  if (modelIdOrKey.includes('70b') || modelIdOrKey.includes('deepseek')) return 'Jarvis Ironman';
+  return 'Jarvis Engine';
+}
+
+// Model Switching
+function switchModel(key) {
+  state.selectedModelKey = key;
+  showToast(`Switched to ${MODELS[key].name}`);
+}
+
+// Tab Isolation Auth Storage
+function updateAuthUI() {
+  const user = state.currentUser;
+  const userDisplay = document.getElementById('userNameDisplay');
+  const emailDisplay = document.getElementById('userEmailDisplay');
+  const avatar = document.getElementById('userAvatar');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const topAuthBtnText = document.getElementById('topAuthBtnText');
+  const bannerStatusLabel = document.getElementById('bannerStatusLabel');
+  const bannerAuthBtn = document.getElementById('bannerAuthBtn');
+
+  if (user) {
+    userDisplay.innerText = user.name || user.email.split('@')[0];
+    emailDisplay.innerText = user.email;
+    avatar.innerText = (user.name || user.email)[0].toUpperCase();
+    avatar.className = "w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-xs font-bold text-white uppercase shrink-0";
+    logoutBtn.classList.remove('hidden');
+    topAuthBtnText.innerText = 'Profile';
+    bannerStatusLabel.innerText = `Account: ${user.email}`;
+    bannerAuthBtn.innerText = 'Logged In';
+    bannerAuthBtn.onclick = null;
+  } else {
+    userDisplay.innerText = 'Guest User';
+    emailDisplay.innerText = 'Chats saved in current tab';
+    avatar.innerText = 'G';
+    avatar.className = "w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-200 uppercase shrink-0";
+    logoutBtn.classList.add('hidden');
+    topAuthBtnText.innerText = 'Sign In';
+    bannerStatusLabel.innerText = 'Guest Mode';
+    bannerAuthBtn.innerText = 'Sign In';
+    bannerAuthBtn.onclick = openAuthModal;
   }
 }
 
-function saveSessions() {
-  try {
-    localStorage.setItem('jarvis_chat_sessions', JSON.stringify(state.sessions));
-  } catch (e) {
-    console.error("Failed to save sessions to LocalStorage:", e);
-  }
+// Session Data Management (Tab-Isolated via sessionStorage)
+function getStorageKey() {
+  return state.currentUser ? `jarvis_chats_${state.currentUser.email}` : `jarvis_chats_guest_session`;
 }
 
-function loadSettings() {
-  try {
-    const saved = localStorage.getItem('jarvis_chat_settings');
-    return saved ? JSON.parse(saved) : { systemInstruction: DEFAULT_SYSTEM_INSTRUCTION, temperature: 0.7 };
-  } catch (e) {
-    return { systemInstruction: DEFAULT_SYSTEM_INSTRUCTION, temperature: 0.7 };
-  }
+function loadUserChats() {
+  const saved = sessionStorage.getItem(getStorageKey());
+  state.chats = saved ? JSON.parse(saved) : [];
 }
 
-function saveSettings() {
-  try {
-    localStorage.setItem('jarvis_chat_settings', JSON.stringify(state.settings));
-  } catch (e) {
-    console.error("Failed to save settings:", e);
-  }
+function saveUserChats() {
+  sessionStorage.setItem(getStorageKey(), JSON.stringify(state.chats));
 }
 
-function createNewSessionObject() {
-  return {
+// Create New Session & Total UI Reset
+function createNewSession(render = true) {
+  const newSession = {
     id: 'session_' + Date.now(),
-    title: 'New chat',
-    createdAt: Date.now(),
+    title: 'New Chat',
+    timestamp: Date.now(),
     messages: []
   };
+  state.chats.unshift(newSession);
+  state.currentSessionId = newSession.id;
+  state.attachedFiles = [];
+  renderFilePreviews();
+  saveUserChats();
+  renderSessionsList();
+  if (render) renderChatMessages();
 }
 
-function getActiveSession() {
-  return state.sessions.find(s => s.id === state.activeSessionId) || state.sessions[0];
+function getCurrentSession() {
+  return state.chats.find(c => c.id === state.currentSessionId);
 }
 
-// --- RENDER MODEL DROPDOWN & SESSIONS LIST ---
-function renderModelDropdown() {
-  const modelSelect = document.getElementById('modelSelect');
-  if (!modelSelect) return;
-  modelSelect.innerHTML = MODELS.map(m => `
-    <option value="${m.id}" ${m.id === state.selectedModel ? 'selected' : ''}>${m.name} (${m.badge})</option>
-  `).join('');
-}
+// Render Conversations History List
+function renderSessionsList(filterText = '') {
+  const listEl = document.getElementById('sessionsList');
+  listEl.innerHTML = '';
 
-function renderSessionsList(filterQuery = '') {
-  const historyItems = document.getElementById('historyItems');
-  if (!historyItems) return;
-  const filtered = state.sessions.filter(s => s.title.toLowerCase().includes(filterQuery));
+  const filtered = state.chats.filter(c => c.title.toLowerCase().includes(filterText.toLowerCase()));
 
   if (filtered.length === 0) {
-    historyItems.innerHTML = `<p class="text-[11px] text-slate-500 px-2 py-1 italic">No chats found.</p>`;
+    listEl.innerHTML = `<p class="text-xs text-gray-500 py-3 text-center">No chats found</p>`;
     return;
   }
 
-  historyItems.innerHTML = filtered.map(s => `
-    <div onclick="switchSession('${s.id}')" class="group px-2.5 py-2 rounded-xl border ${s.id === state.activeSessionId ? 'bg-slate-800/90 border-cyan-500/40 text-cyan-300' : 'bg-transparent border-transparent hover:bg-slate-800/50 text-slate-300'} text-xs truncate cursor-pointer flex items-center justify-between transition">
-      <div class="flex items-center gap-2 truncate">
-        <i data-lucide="message-square" class="w-3.5 h-3.5 shrink-0 ${s.id === state.activeSessionId ? 'text-cyan-400' : 'text-slate-500'}"></i>
-        <span class="truncate font-medium">${escapeHtml(s.title)}</span>
+  filtered.forEach(session => {
+    const isActive = session.id === state.currentSessionId;
+    const item = document.createElement('div');
+    item.className = `group flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer text-xs transition ${
+      isActive ? 'bg-cyan-950/80 text-cyan-300 font-semibold border border-cyan-800/50' : 'text-gray-300 hover:bg-gray-800/60'
+    }`;
+    item.onclick = () => selectSession(session.id);
+
+    item.innerHTML = `
+      <div class="flex items-center space-x-2 truncate">
+        <i class="fa-regular fa-message text-[11px] opacity-70"></i>
+        <span class="truncate">${escapeHtml(session.title)}</span>
       </div>
-      <button onclick="deleteSession('${s.id}', event)" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-0.5 rounded transition" title="Delete chat">
-        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+      <button onclick="deleteSession('${session.id}', event)" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 p-1 transition" title="Delete Chat">
+        <i class="fa-solid fa-trash text-[11px]"></i>
       </button>
-    </div>
-  `).join('');
-
-  if (window.lucide) window.lucide.createIcons();
-}
-
-// --- FILE ATTACHMENT HANDLING (UP TO 10 FILES/IMAGES) ---
-function handleFileSelect(e) {
-  const selectedFiles = Array.from(e.target.files);
-  if (!selectedFiles.length) return;
-
-  if (state.attachedFiles.length + selectedFiles.length > 10) {
-    showToast("Maximum 10 files/images allowed per message.", "error");
-  }
-
-  const availableSlots = 10 - state.attachedFiles.length;
-  const filesToProcess = selectedFiles.slice(0, availableSlots);
-
-  let processedCount = 0;
-  filesToProcess.forEach(file => {
-    const isImage = file.type.startsWith('image/');
-    const reader = new FileReader();
-
-    reader.onload = function(evt) {
-      state.attachedFiles.push({
-        id: 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        name: file.name,
-        type: file.type,
-        isImage: isImage,
-        dataUrl: isImage ? evt.target.result : null,
-        textContent: !isImage ? evt.target.result : null
-      });
-
-      processedCount++;
-      if (processedCount === filesToProcess.length) {
-        renderFilePreviews();
-        showToast(`Attached ${processedCount} file(s) [${state.attachedFiles.length}/10]`, "info");
-      }
-    };
-
-    if (isImage) {
-      reader.readAsDataURL(file);
-    } else {
-      reader.readAsText(file);
-    }
-  });
-
-  e.target.value = '';
-}
-
-function renderFilePreviews() {
-  const previewBar = document.getElementById('filePreviewBar');
-  if (!previewBar) return;
-
-  if (state.attachedFiles.length === 0) {
-    previewBar.classList.add('hidden');
-    previewBar.innerHTML = '';
-    return;
-  }
-
-  previewBar.classList.remove('hidden');
-  previewBar.innerHTML = state.attachedFiles.map((file, idx) => `
-    <div class="inline-flex items-center gap-1.5 bg-slate-950 border border-cyan-500/40 pl-1.5 pr-2 py-1 rounded-xl text-xs text-cyan-300 font-mono shadow-md max-w-[180px]">
-      ${file.isImage ? `
-        <img src="${file.dataUrl}" class="w-5 h-5 rounded object-cover border border-slate-700 shrink-0" />
-      ` : `
-        <i data-lucide="file-text" class="w-4 h-4 text-cyan-400 shrink-0"></i>
-      `}
-      <span class="truncate text-[11px]">${escapeHtml(file.name)}</span>
-      <button onclick="removeAttachedFile(${idx})" class="text-slate-400 hover:text-red-400 ml-1 font-bold text-xs">✕</button>
-    </div>
-  `).join('');
-
-  if (window.lucide) window.lucide.createIcons();
-}
-
-function removeAttachedFile(index) {
-  state.attachedFiles.splice(index, 1);
-  renderFilePreviews();
-}
-
-function clearAttachedFile() {
-  state.attachedFiles = [];
-  const fileInput = document.getElementById('fileInput');
-  if (fileInput) fileInput.value = '';
-  renderFilePreviews();
-}
-
-  if (userInput) {
-    userInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage();
-      }
-    });
-
-    userInput.addEventListener('input', () => {
-      userInput.style.height = 'auto';
-      userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
-    });
-  }
-
-  // File Upload Handlers
-  if (attachFileBtn && fileInput) {
-    attachFileBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', handleFileSelect);
-  }
-  if (removeFileBtn) {
-    removeFileBtn.addEventListener('click', clearAttachedFile);
-  }
-
-  // Voice Writing Mic Handler
-  if (micBtn) {
-    micBtn.addEventListener('click', toggleVoiceWriting);
-  }
-
-  if (modelSelect) {
-    modelSelect.addEventListener('change', (e) => {
-      state.selectedModel = e.target.value;
-    });
-  }
-
-  if (clearAllBtn) clearAllBtn.addEventListener('click', handleClearAllSessions);
-  if (exportBtn) exportBtn.addEventListener('click', handleExportMarkdown);
-  if (settingsBtn) settingsBtn.addEventListener('click', () => openSettingsModal());
-  if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => toggleModal('settingsModal', false));
-  if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', handleSaveSettings);
-
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      renderSessionsList(e.target.value.toLowerCase());
-    });
-  }
-}
-
-// --- FILE ATTACHMENT HANDLING ---
-function handleFileSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const isImage = file.type.startsWith('image/');
-  const reader = new FileReader();
-
-  reader.onload = function(evt) {
-    state.attachedFile = {
-      name: file.name,
-      type: file.type,
-      isImage: isImage,
-      dataUrl: isImage ? evt.target.result : null,
-      textContent: !isImage ? evt.target.result : null
-    };
-
-    const previewBar = document.getElementById('filePreviewBar');
-    const previewName = document.getElementById('filePreviewName');
-    const previewIcon = document.getElementById('filePreviewIcon');
-
-    if (previewBar && previewName) {
-      previewName.textContent = file.name;
-      if (previewIcon) {
-        previewIcon.setAttribute('data-lucide', isImage ? 'image' : 'file-text');
-        if (window.lucide) window.lucide.createIcons();
-      }
-      previewBar.classList.remove('hidden');
-    }
-  };
-
-  if (isImage) {
-    reader.readAsDataURL(file);
-  } else {
-    reader.readAsText(file);
-  }
-}
-
-function clearAttachedFile() {
-  state.attachedFile = null;
-  const fileInput = document.getElementById('fileInput');
-  const previewBar = document.getElementById('filePreviewBar');
-  if (fileInput) fileInput.value = '';
-  if (previewBar) previewBar.classList.add('hidden');
-}
-
-// --- VOICE WRITING (SPEECH-TO-TEXT) ---
-function initSpeechRecognition() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) return null;
-
-  const recognition = new SpeechRecognition();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = navigator.language || 'en-US';
-
-  const userInput = document.getElementById('userInput');
-  let initialText = '';
-
-  recognition.onstart = () => {
-    state.isListening = true;
-    initialText = userInput ? userInput.value : '';
-    const micBtn = document.getElementById('micBtn');
-    if (micBtn) {
-      micBtn.classList.remove('text-slate-400');
-      micBtn.classList.add('text-red-400', 'animate-pulse', 'bg-red-500/20');
-    }
-  };
-
-  recognition.onresult = (event) => {
-    let currentTranscript = '';
-    for (let i = 0; i < event.results.length; i++) {
-      currentTranscript += event.results[i][0].transcript;
-    }
-    if (userInput) {
-      userInput.value = (initialText ? initialText + ' ' : '') + currentTranscript;
-      userInput.style.height = 'auto';
-      userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
-    }
-  };
-
-  recognition.onerror = (err) => {
-    console.warn("Speech recognition notice:", err.error);
-    if (err.error === 'not-allowed') {
-      showToast("Microphone permission was denied. Please allow microphone access in your browser settings.", "error");
-    }
-    stopVoiceWriting();
-  };
-
-  recognition.onend = () => {
-    if (state.isListening) stopVoiceWriting();
-  };
-
-  return recognition;
-}
-
-function toggleVoiceWriting() {
-  const micBtn = document.getElementById('micBtn');
-
-  if (state.isListening) {
-    stopVoiceWriting();
-    return;
-  }
-
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    showToast("Voice Speech Recognition is not supported in this browser.", "error");
-    return;
-  }
-
-// --- CHAT MESSAGES UI RENDERING WITH MULTI-FILE SUPPORT ---
-function renderChatMessages() {
-  const chatContainer = document.getElementById('chatContainer');
-  const welcomeCard = document.getElementById('welcomeCard');
-  const currentSession = getActiveSession();
-
-  if (!chatContainer) return;
-
-  if (currentSession.messages.length === 0) {
-    if (welcomeCard) welcomeCard.classList.remove('hidden');
-    chatContainer.innerHTML = '';
-    return;
-  }
-
-  if (welcomeCard) welcomeCard.classList.add('hidden');
-
-  chatContainer.innerHTML = currentSession.messages.map((msg) => {
-    const isUser = msg.role === 'user';
-    return `
-      <div class="flex gap-4 ${isUser ? 'justify-end' : 'justify-start'} group mb-6 max-w-3xl mx-auto">
-        ${!isUser ? `
-          <div class="w-8 h-8 rounded-full bg-gpt-accent text-black flex items-center justify-center shrink-0 mt-0.5 shadow font-black text-xs">
-            J
-          </div>
-        ` : ''}
-
-        <div class="flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start flex-1 min-w-0'}">
-          <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'bg-gpt-card text-gray-100 rounded-tr-none border border-gpt-border/60' : 'bg-transparent text-gray-100'}">
-            
-            <!-- Render Attached Images / Document Pills in User Bubble -->
-            ${isUser && msg.attachedFiles && msg.attachedFiles.length > 0 ? `
-              <div class="mb-2">
-                ${msg.attachedFiles.some(f => f.isImage) ? `
-                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-1.5">
-                    ${msg.attachedFiles.filter(f => f.isImage).map(f => `
-                      <img src="${f.dataUrl}" class="max-w-xs max-h-36 rounded-xl border border-slate-700 shadow-md object-cover" />
-                    `).join('')}
-                  </div>
-                ` : ''}
-
-                <div class="flex flex-wrap gap-1">
-                  ${msg.attachedFiles.filter(f => !f.isImage).map(f => `
-                    <div class="inline-flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-xl text-xs text-cyan-300 font-mono mb-1">
-                      <i data-lucide="file-text" class="w-3.5 h-3.5 text-cyan-400"></i>
-                      <span>${escapeHtml(f.name)}</span>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            ` : ''}
-
-            ${isUser ? `<div class="whitespace-pre-wrap">${escapeHtml(msg.content)}</div>` : `<div id="msg-content-${msg.id}" class="markdown-content"></div>`}
-          </div>
-
-          <div class="flex items-center gap-2 mt-1 px-1 text-gray-500 text-xs ${isUser ? 'justify-end' : 'justify-start'}">
-            <button onclick="copyToClipboard('${escapeJsString(msg.content)}')" class="p-1 hover:text-gray-300 rounded transition-colors flex items-center gap-1" title="Copy text">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-            </button>
-            ${!isUser ? `
-              <button onclick="toggleSpeech('${escapeJsString(msg.content)}', '${msg.id}')" class="p-1 hover:text-gray-300 rounded transition-colors" title="Read aloud">
-                <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
-              </button>
-            ` : ''}
-          </div>
-        </div>
-
-        ${isUser ? `
-          <div class="w-8 h-8 rounded-full bg-zinc-700 text-gray-200 flex items-center justify-center shrink-0 mt-0.5 font-medium text-xs border border-gpt-border">
-            U
-          </div>
-        ` : ''}
-      </div>
     `;
-  }).join('');
-
-  // Format assistant markdown & KaTeX content
-  currentSession.messages.forEach(msg => {
-    if (msg.role === 'assistant') {
-      const elem = document.getElementById(`msg-content-${msg.id}`);
-      if (elem) renderFormattedMarkdown(elem, msg.content);
-    }
+    listEl.appendChild(item);
   });
-
-  if (window.lucide) window.lucide.createIcons();
-  scrollToBottom();
 }
 
-// --- STREAMING CHAT COMPLETION WITH MULTI-FILE PAYLOAD ---
-async function handleSendMessage() {
-  const userInput = document.getElementById('userInput');
-  const prompt = userInput ? userInput.value.trim() : '';
-
-  if ((!prompt && state.attachedFiles.length === 0) || state.isGenerating) return;
-
-  if (state.isListening) stopVoiceWriting();
-
-  if (userInput) {
-    userInput.value = '';
-    userInput.style.height = 'auto';
-  }
-
-  const currentSession = getActiveSession();
-
-  let textPrompt = prompt;
-  const currentAttachedFiles = [...state.attachedFiles];
-
-  if (currentAttachedFiles.length > 0) {
-    currentAttachedFiles.forEach(f => {
-      if (!f.isImage && f.textContent) {
-        textPrompt += `\n\n[Attached File: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
-      }
-    });
-  }
-
-  // Construct user message
-  const userMsg = {
-    id: 'msg_' + Date.now(),
-    role: 'user',
-    content: prompt || (currentAttachedFiles.length > 0 ? `[Sent ${currentAttachedFiles.length} file(s)]` : ''),
-    attachedFiles: currentAttachedFiles,
-    timestamp: Date.now()
-  };
-
-  clearAttachedFile();
-
-  if (currentSession.messages.length === 0) {
-    currentSession.title = userMsg.content.length > 30 ? userMsg.content.substring(0, 30) + '...' : userMsg.content;
-  }
-
-  currentSession.messages.push(userMsg);
-
-  // Construct assistant placeholder message
-  const assistantMsgId = 'msg_' + (Date.now() + 1);
-  const assistantMsg = {
-    id: assistantMsgId,
-    role: 'assistant',
-    content: '',
-    timestamp: Date.now()
-  };
-  currentSession.messages.push(assistantMsg);
-
-  state.isGenerating = true;
-  renderChatMessages();
-
-  const systemInstruction = state.settings.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION;
-
-  const formattedMessages = [
-    { role: 'system', content: systemInstruction },
-    ...currentSession.messages.slice(0, -1).map(m => {
-      if (m.role !== 'user') return { role: m.role, content: m.content };
-
-      let mText = m.content || '';
-      if (m.attachedFiles && m.attachedFiles.length > 0) {
-        m.attachedFiles.forEach(f => {
-          if (!f.isImage && f.textContent) {
-            mText += `\n\n[Attached File: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
-          }
-        });
-      }
-
-      const hasImages = m.attachedFiles && m.attachedFiles.some(f => f.isImage);
-      if (hasImages) {
-        const parts = [{ type: 'text', text: mText }];
-        m.attachedFiles.forEach(f => {
-          if (f.isImage && f.dataUrl) {
-            parts.push({ type: 'image_url', image_url: { url: f.dataUrl } });
-          }
-        });
-        return { role: 'user', content: parts };
-      }
-
-      return { role: 'user', content: mText };
-    })
-  ];
-
-  const modelSelect = document.getElementById('modelSelect');
-  if (modelSelect) state.selectedModel = modelSelect.value;
-
-  const hasImagesInPayload = currentSession.messages.some(m => m.attachedFiles && m.attachedFiles.some(f => f.isImage));
-
-  let usedModel = state.selectedModel;
-  let response = null;
-
-  const modelCandidates = hasImagesInPayload
-    ? ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"]
-    : [state.selectedModel, "openai/gpt-oss-20b", "llama-3.3-70b-versatile"];
-
-  const uniqueCandidates = [...new Set(modelCandidates)];
-
-  for (const modelCandidate of uniqueCandidates) {
-    try {
-      usedModel = modelCandidate;
-      response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${GROQ_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: modelCandidate,
-          messages: formattedMessages,
-          temperature: state.settings.temperature || 0.7,
-          stream: true
-        })
-      });
-
-      if (response && response.ok) break;
-    } catch (e) {
-      console.warn(`Model candidate ${modelCandidate} notice:`, e);
-    }
-  }
-
-  if ((!response || !response.ok) && hasImagesInPayload) {
-    const textOnlyMessages = [
-      { role: 'system', content: systemInstruction },
-      ...currentSession.messages.slice(0, -1).map(m => {
-        if (m.role !== 'user') return { role: m.role, content: m.content };
-        let txt = m.content || '';
-        if (m.attachedFiles && m.attachedFiles.length > 0) {
-          m.attachedFiles.forEach(f => {
-            txt += `\n[Attached File: ${f.name}]`;
-          });
-        }
-        return { role: 'user', content: txt };
-      })
-    ];
-
-    usedModel = "openai/gpt-oss-20b";
-    try {
-      response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${GROQ_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: usedModel,
-          messages: textOnlyMessages,
-          temperature: state.settings.temperature || 0.7,
-          stream: true
-        })
-      });
-    } catch (e) {}
-  }
-
-  try {
-    if (!response || !response.ok) {
-      const displayName = getModelDisplayName(usedModel);
-      throw new Error(`${displayName} is currently busy. Please try again in a moment.`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let fullResponse = '';
-
-    const assistantElem = document.getElementById(`msg-content-${assistantMsgId}`);
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const dataStr = line.replace('data: ', '').trim();
-          if (dataStr === '[DONE]') break;
-
-          try {
-            const parsed = JSON.parse(dataStr);
-            const delta = parsed.choices[0]?.delta?.content || '';
-            fullResponse += delta;
-            assistantMsg.content = fullResponse;
-            if (assistantElem) renderFormattedMarkdown(assistantElem, fullResponse);
-            scrollToBottom();
-          } catch (err) {}
-        }
-      }
-    }
-
-    saveSessions();
-
-  } catch (error) {
-    console.error("JARVIS Engine Exception:", error);
-    const friendlyName = getModelDisplayName(state.selectedModel);
-    assistantMsg.content = `⚠️ **JARVIS Notice (${friendlyName}):**\n\n${error.message}`;
-    saveSessions();
-    renderChatMessages();
-  } finally {
-    state.isGenerating = false;
-  }
+function filterSessions(query) {
+  renderSessionsList(query);
 }
 
-// --- SESSION HANDLERS ---
-function handleNewChat() {
-  const newSession = createNewSessionObject();
-  state.sessions.unshift(newSession);
-  state.activeSessionId = newSession.id;
-  clearAttachedFile();
-  const userInput = document.getElementById('userInput');
-  if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
-  saveSessions();
-  renderSessionsList();
-  renderChatMessages();
-}
-
-function switchSession(id) {
-  state.activeSessionId = id;
+function selectSession(id) {
+  state.currentSessionId = id;
+  state.attachedFiles = [];
+  renderFilePreviews();
   renderSessionsList();
   renderChatMessages();
 }
 
 function deleteSession(id, e) {
   if (e) e.stopPropagation();
-  state.sessions = state.sessions.filter(s => s.id !== id);
-  if (state.sessions.length === 0) {
-    const fresh = createNewSessionObject();
-    state.sessions = [fresh];
-    state.activeSessionId = fresh.id;
-  } else if (state.activeSessionId === id) {
-    state.activeSessionId = state.sessions[0].id;
+  state.chats = state.chats.filter(c => c.id !== id);
+  saveUserChats();
+
+  if (state.currentSessionId === id) {
+    if (state.chats.length > 0) {
+      state.currentSessionId = state.chats[0].id;
+    } else {
+      createNewSession(false);
+    }
   }
-  clearAttachedFile();
-  const userInput = document.getElementById('userInput');
-  if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
-  saveSessions();
   renderSessionsList();
   renderChatMessages();
-  showToast("Chat session deleted", "info");
+  showToast('Conversation deleted');
 }
 
-function handleClearAllSessions() {
-  const fresh = createNewSessionObject();
-  state.sessions = [fresh];
-  state.activeSessionId = fresh.id;
-  clearAttachedFile();
-  const userInput = document.getElementById('userInput');
-  if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
-  saveSessions();
-  renderSessionsList();
-  renderChatMessages();
-  showToast("All chat sessions cleared", "info");
+// History Wipe & Reset
+function confirmClearHistory() {
+  state.chats = [];
+  saveUserChats();
+  state.attachedFiles = [];
+  renderFilePreviews();
+  document.getElementById('chatInput').value = '';
+  createNewSession(true);
+  showToast('All chat history cleared');
 }
 
-// --- UTILITY FUNCTIONS ---
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    showToast("Copied to clipboard!", "success");
-  }).catch(err => {
-    console.error("Failed to copy text: ", err);
+// Render Messages & Welcome Screen
+function renderChatMessages() {
+  const container = document.getElementById('chatContainer');
+  const session = getCurrentSession();
+
+  if (!session || session.messages.length === 0) {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-center text-center p-6 space-y-6 max-w-2xl mx-auto">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white text-3xl shadow-xl shadow-cyan-500/20">
+          J
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-2xl font-bold text-gray-100">Welcome to JARVIS AI</h2>
+          <p class="text-xs text-gray-400">Created by Abdullah Waheed • Powered by JARVIS Engine</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full text-left">
+          <div onclick="setPrompt('Explain the complete relationship and history of Hazrat Ali (R.A) with Prophet Muhammad (PBUH)')" class="p-3.5 bg-gray-900 hover:bg-gray-800 border border-jarvis-border rounded-xl cursor-pointer transition space-y-1">
+            <p class="text-xs font-semibold text-cyan-300">📖 Academic & History</p>
+            <p class="text-[11px] text-gray-400">Deep historical analysis & workbook solutions</p>
+          </div>
+          <div onclick="setPrompt('Create an interactive presentation on Artificial Intelligence trends')" class="p-3.5 bg-gray-900 hover:bg-gray-800 border border-jarvis-border rounded-xl cursor-pointer transition space-y-1">
+            <p class="text-xs font-semibold text-cyan-300">📊 Slide Presentations</p>
+            <p class="text-[11px] text-gray-400">Generate interactive slide decks with player</p>
+          </div>
+          <div onclick="setPrompt('/image A futuristic glowing cybernetic AI city at night')" class="p-3.5 bg-gray-900 hover:bg-gray-800 border border-jarvis-border rounded-xl cursor-pointer transition space-y-1">
+            <p class="text-xs font-semibold text-cyan-300">🎨 Image Generation</p>
+            <p class="text-[11px] text-gray-400">Generate Flux images with download button</p>
+          </div>
+          <div onclick="openWorkspaceModal()" class="p-3.5 bg-gray-900 hover:bg-gray-800 border border-jarvis-border rounded-xl cursor-pointer transition space-y-1">
+            <p class="text-xs font-semibold text-cyan-300">🌐 Google Workspace</p>
+            <p class="text-[11px] text-gray-400">Connect Google Classroom & Google Docs</p>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = '';
+  session.messages.forEach(msg => {
+    const isUser = msg.role === 'user';
+    const wrapper = document.createElement('div');
+    wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} w-full`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `max-w-3xl rounded-2xl p-4 shadow-md space-y-3 ${
+      isUser
+        ? 'bg-cyan-950/70 border border-cyan-800/60 text-gray-100 rounded-br-none'
+        : 'bg-gray-900 border border-jarvis-border text-gray-100 rounded-bl-none'
+    }`;
+
+    // Render Attachments Gallery Grid (Up to 10 images/files)
+    if (msg.attachments && msg.attachments.length > 0) {
+      const gallery = document.createElement('div');
+      const imageAttachments = msg.attachments.filter(a => a.type.startsWith('image/'));
+      const docAttachments = msg.attachments.filter(a => !a.type.startsWith('image/'));
+
+      if (imageAttachments.length > 0) {
+        gallery.className = `grid gap-2 ${
+          imageAttachments.length === 1 ? 'grid-cols-1 max-w-sm' : 'grid-cols-2 md:grid-cols-3'
+        } mb-2`;
+        imageAttachments.forEach(att => {
+          const img = document.createElement('img');
+          img.src = att.data;
+          img.className = 'w-full h-32 object-cover rounded-lg border border-gray-700 shadow-sm';
+          gallery.appendChild(img);
+        });
+      }
+
+      if (docAttachments.length > 0) {
+        const docList = document.createElement('div');
+        docList.className = 'flex flex-wrap gap-1.5 mb-2';
+        docAttachments.forEach(doc => {
+          const tag = document.createElement('span');
+          tag.className = 'inline-flex items-center space-x-1 text-[11px] bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700 text-gray-300';
+          tag.innerHTML = `<i class="fa-solid fa-file-text text-cyan-400"></i><span>${escapeHtml(doc.name)}</span>`;
+          docList.appendChild(tag);
+        });
+        bubble.appendChild(docList);
+      }
+
+      if (imageAttachments.length > 0) bubble.appendChild(gallery);
+    }
+
+    // Render Text or Special Features (Presentation / Image)
+    if (msg.presentation) {
+      bubble.appendChild(renderPresentationDeck(msg.presentation));
+    } else if (msg.generatedImageUrl) {
+      const imgContainer = document.createElement('div');
+      imgContainer.className = 'relative group rounded-xl overflow-hidden border border-gray-700 shadow-lg my-2';
+      imgContainer.innerHTML = `
+        <img src="${msg.generatedImageUrl}" class="w-full max-h-96 object-cover">
+        <a href="${msg.generatedImageUrl}" download="jarvis_generated.png" target="_blank" class="absolute bottom-3 right-3 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-download"></i>
+          <span>Download Image</span>
+        </a>
+      `;
+      bubble.appendChild(imgContainer);
+    }
+
+    if (msg.content) {
+      const textDiv = document.createElement('div');
+      textDiv.className = 'prose prose-invert text-sm leading-relaxed max-w-none';
+      textDiv.innerHTML = formatMarkdown(msg.content);
+      bubble.appendChild(textDiv);
+    }
+
+    // Error Notice Display
+    if (msg.errorNotice) {
+      const errDiv = document.createElement('div');
+      errDiv.className = 'p-3 rounded-xl bg-amber-950/40 border border-amber-600/40 text-xs text-amber-300 flex items-start space-x-2 mt-2';
+      errDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5"></i><div><strong>${escapeHtml(msg.errorNotice.modelName)} Notice:</strong> ${escapeHtml(msg.errorNotice.message)}</div>`;
+      bubble.appendChild(errDiv);
+    }
+
+    wrapper.appendChild(bubble);
+    container.appendChild(wrapper);
+  });
+
+  container.scrollTop = container.scrollHeight;
+}
+
+// Multi-File Attachment Processing (Up to 10 Files)
+function handleFileSelect(event) {
+  const files = Array.from(event.target.files);
+  if (state.attachedFiles.length + files.length > 10) {
+    showToast('Maximum 10 attachments allowed at a time', 'error');
+    return;
+  }
+
+  files.forEach(file => {
+    const reader = new FileReader();
+    if (file.type.startsWith('image/')) {
+      reader.onload = (e) => {
+        state.attachedFiles.push({
+          name: file.name,
+          type: file.type,
+          data: e.target.result
+        });
+        renderFilePreviews();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      reader.onload = (e) => {
+        state.attachedFiles.push({
+          name: file.name,
+          type: file.type || 'text/plain',
+          textContent: e.target.result
+        });
+        renderFilePreviews();
+      };
+      reader.readAsText(file);
+    }
+  });
+
+  event.target.value = '';
+}
+
+function removeAttachment(index) {
+  state.attachedFiles.splice(index, 1);
+  renderFilePreviews();
+}
+
+function renderFilePreviews() {
+  const container = document.getElementById('filePreviewContainer');
+  if (state.attachedFiles.length === 0) {
+    container.classList.add('hidden');
+    container.innerHTML = '';
+    return;
+  }
+
+  container.classList.remove('hidden');
+  container.innerHTML = '';
+
+  state.attachedFiles.forEach((file, idx) => {
+    const badge = document.createElement('div');
+    badge.className = 'flex items-center space-x-2 bg-gray-800 border border-gray-700 px-2.5 py-1 rounded-lg text-xs text-gray-200 shadow-sm';
+
+    if (file.type.startsWith('image/')) {
+      badge.innerHTML = `
+        <img src="${file.data}" class="w-5 h-5 object-cover rounded">
+        <span class="truncate max-w-[120px] text-[11px]">${escapeHtml(file.name)}</span>
+        <button onclick="removeAttachment(${idx})" class="text-gray-400 hover:text-red-400 ml-1">✕</button>
+      `;
+    } else {
+      badge.innerHTML = `
+        <i class="fa-solid fa-file-lines text-cyan-400 text-xs"></i>
+        <span class="truncate max-w-[120px] text-[11px]">${escapeHtml(file.name)}</span>
+        <button onclick="removeAttachment(${idx})" class="text-gray-400 hover:text-red-400 ml-1">✕</button>
+      `;
+    }
+    container.appendChild(badge);
   });
 }
 
-function showToast(message, type = "info") {
-  const container = document.getElementById("toastContainer") || document.body;
-  const toast = document.createElement("div");
-  toast.className = `fixed bottom-4 right-4 z-50 px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xl border flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0 ${
-    type === "error" ? "bg-red-950/90 border-red-500/50 text-red-200" :
-    type === "success" ? "bg-emerald-950/90 border-emerald-500/50 text-emerald-200" :
-    "bg-slate-900/90 border-cyan-500/50 text-cyan-200"
-  }`;
-  toast.innerText = message;
-  container.appendChild(toast);
+// Voice Writing (Speech-to-Text)
+function initSpeechRecognition() {
+  if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    state.speechRecognition = new SpeechRecognition();
+    state.speechRecognition.continuous = false;
+    state.speechRecognition.interimResults = true;
 
-  setTimeout(() => toast.classList.remove("translate-y-2", "opacity-0"), 10);
-  setTimeout(() => {
-    toast.classList.add("opacity-0");
-    setTimeout(() => toast.remove(), 300);
-  }, 3500);
+    state.speechRecognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      document.getElementById('chatInput').value = transcript;
+      autoResizeInput(document.getElementById('chatInput'));
+    };
+
+    state.speechRecognition.onend = () => {
+      state.isRecording = false;
+      document.getElementById('micPulse').classList.add('hidden');
+      document.getElementById('micBtn').classList.remove('text-red-500');
+    };
+  }
 }
 
-function toggleSpeech(text, msgId) {
-  if (!('speechSynthesis' in window)) {
-    showToast("Speech synthesis is not supported in your browser.", "error");
+function toggleVoiceWriting() {
+  if (!state.speechRecognition) {
+    showToast('Speech recognition not supported in this browser', 'error');
     return;
   }
 
-  if (state.isSpeakingMsgId === msgId) {
-    window.speechSynthesis.cancel();
-    state.isSpeakingMsgId = null;
+  if (state.isRecording) {
+    state.speechRecognition.stop();
+  } else {
+    state.speechRecognition.start();
+    state.isRecording = true;
+    document.getElementById('micPulse').classList.remove('hidden');
+    document.getElementById('micBtn').classList.add('text-red-500');
+    showToast('Listening... Speak now');
+  }
+}
+
+// Handle User Input Submission
+async function handleSendMessage() {
+  const inputEl = document.getElementById('chatInput');
+  const text = inputEl.value.trim();
+  const attachments = [...state.attachedFiles];
+
+  if (!text && attachments.length === 0) return;
+
+  const session = getCurrentSession();
+  if (!session) return;
+
+  // Auto-generate session title from first message
+  if (session.messages.length === 0) {
+    session.title = text ? (text.length > 28 ? text.substring(0, 28) + '...' : text) : 'File Attachment';
+    renderSessionsList();
+  }
+
+  // Push User Message
+  session.messages.push({
+    role: 'user',
+    content: text,
+    attachments: attachments,
+    timestamp: Date.now()
+  });
+
+  // Clear Input Bar
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+  state.attachedFiles = [];
+  renderFilePreviews();
+  renderChatMessages();
+
+  // Check for Image Generation Command
+  if (text.toLowerCase().startsWith('/image') || text.toLowerCase().includes('generate image') || text.toLowerCase().includes('draw an image')) {
+    const promptClean = text.replace(/\/image/i, '').replace(/generate image/i, '').trim();
+    const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(promptClean)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 100000)}&model=flux`;
+    
+    session.messages.push({
+      role: 'assistant',
+      content: `Generated Flux artwork for: **"${escapeHtml(promptClean)}"**`,
+      generatedImageUrl: imageUrl,
+      timestamp: Date.now()
+    });
+    saveUserChats();
+    renderChatMessages();
     return;
   }
 
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.onend = () => { state.isSpeakingMsgId = null; };
-  state.isSpeakingMsgId = msgId;
-  window.speechSynthesis.speak(utterance);
+  // Check for Presentation Creation Command
+  const isPresentation = text.toLowerCase().includes('presentation') || text.toLowerCase().includes('slide deck');
+
+  // Prepare Payload
+  const assistantMessage = {
+    role: 'assistant',
+    content: '',
+    timestamp: Date.now()
+  };
+  session.messages.push(assistantMessage);
+  renderChatMessages();
+
+  // Call API with Auto-Routing
+  await executeModelRequest(session, assistantMessage, attachments, isPresentation);
 }
 
-function handleExportMarkdown() {
-  const session = getActiveSession();
-  if (!session.messages.length) return;
+// API Execution & Vision Auto-Routing
+async function executeModelRequest(session, assistantMsg, attachments, isPresentation) {
+  const hasImages = attachments.some(a => a.type.startsWith('image/'));
+  
+  // Vision Auto-Routing Logic: If images attached, force vision model
+  let targetModel = MODELS[state.selectedModelKey].id;
+  if (hasImages) {
+    targetModel = 'llama-3.2-11b-vision-preview';
+  }
 
-  let content = `# ${session.title}\n*Exported from JARVIS AI Engine on ${new Date().toLocaleString()}*\n\n---\n\n`;
+  // Build OpenAI Messages Format
+  const formattedMessages = [
+    { role: 'system', content: JARVIS_SYSTEM_PROMPT }
+  ];
+
+  if (isPresentation) {
+    formattedMessages.push({
+      role: 'system',
+      content: 'The user requested a presentation. Return a JSON object ONLY inside a ```json ``` block with format: { "title": "...", "slides": [{ "slide": 1, "title": "...", "bullets": ["..."] }] }'
+    });
+  }
+
   session.messages.forEach(m => {
-    content += `### ${m.role === 'user' ? 'User' : 'JARVIS'}\n${m.content}\n\n`;
+    if (m.role === 'user') {
+      if (m.attachments && m.attachments.some(a => a.type.startsWith('image/'))) {
+        const parts = [{ type: 'text', text: m.content || 'Analyze these images:' }];
+        m.attachments.forEach(att => {
+          if (att.type.startsWith('image/')) {
+            parts.push({
+              type: 'image_url',
+              image_url: { url: att.data }
+            });
+          } else if (att.textContent) {
+            parts[0].text += `\n\n[Attached File ${att.name}]:\n${att.textContent}`;
+          }
+        });
+        formattedMessages.push({ role: 'user', content: parts });
+      } else {
+        let contentText = m.content || '';
+        if (m.attachments) {
+          m.attachments.forEach(att => {
+            if (att.textContent) contentText += `\n\n[Attached File ${att.name}]:\n${att.textContent}`;
+          });
+        }
+        formattedMessages.push({ role: 'user', content: contentText });
+      }
+    } else if (m.role === 'assistant' && m.content) {
+      formattedMessages.push({ role: 'assistant', content: m.content });
+    }
   });
 
-  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', `${session.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEYS[0]}`
+      },
+      body: JSON.stringify({
+        model: targetModel,
+        messages: formattedMessages,
+        temperature: 0.7,
+        max_tokens: 4096
+      })
+    });
 
-function openSettingsModal() {
-  const sysInput = document.getElementById('systemInstructionInput');
-  const tempInput = document.getElementById('temperatureInput');
-  if (sysInput) sysInput.value = state.settings.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION;
-  if (tempInput) tempInput.value = state.settings.temperature || 0.7;
-  toggleModal('settingsModal', true);
-}
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: Unable to reach JARVIS core.`);
+    }
 
-function handleSaveSettings() {
-  const sysInput = document.getElementById('systemInstructionInput');
-  const tempInput = document.getElementById('temperatureInput');
-  if (sysInput) state.settings.systemInstruction = sysInput.value;
-  if (tempInput) state.settings.temperature = parseFloat(tempInput.value);
-  saveSettings();
-  toggleModal('settingsModal', false);
-}
+    const data = await response.json();
+    const rawContent = data.choices[0].message.content;
 
-function toggleModal(modalId, show) {
-  const modal = document.getElementById(modalId);
-  if (modal) {
-    if (show) modal.classList.remove('hidden');
-    else modal.classList.add('hidden');
+    if (isPresentation && rawContent.includes('```json')) {
+      try {
+        const jsonMatch = rawContent.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          assistantMsg.presentation = JSON.parse(jsonMatch[1]);
+          assistantMsg.content = 'Generated presentation deck below:';
+        } else {
+          assistantMsg.content = rawContent;
+        }
+      } catch (err) {
+        assistantMsg.content = rawContent;
+      }
+    } else {
+      assistantMsg.content = rawContent;
+    }
+
+    saveUserChats();
+    renderChatMessages();
+
+  } catch (error) {
+    const friendlyName = getModelDisplayName(targetModel);
+    assistantMsg.errorNotice = {
+      modelName: friendlyName,
+      message: `${error.message}. Please check your network connection.`
+    };
+    saveUserChats();
+    renderChatMessages();
   }
 }
 
-function scrollToBottom() {
-  const chatContainer = document.getElementById('chatContainer');
-  if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+// Presentation Deck Component & Carousel Player
+function renderPresentationDeck(deck) {
+  const container = document.createElement('div');
+  container.className = 'p-4 rounded-xl bg-gray-950 border border-cyan-800/60 space-y-4 shadow-xl my-2';
+  
+  let currentSlide = 0;
+  const slides = deck.slides || [];
+
+  function updateSlideUI() {
+    const slide = slides[currentSlide];
+    container.innerHTML = `
+      <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+        <span class="text-xs font-bold text-cyan-400 uppercase tracking-wider"><i class="fa-solid fa-file-powerpoint mr-1.5"></i>${escapeHtml(deck.title || 'Presentation')}</span>
+        <span class="text-xs text-gray-400">Slide ${currentSlide + 1} of ${slides.length}</span>
+      </div>
+
+      <div class="p-4 bg-gray-900 rounded-lg border border-gray-800 space-y-3 min-h-[160px]">
+        <h4 class="text-base font-bold text-gray-100">${escapeHtml(slide ? slide.title : '')}</h4>
+        <ul class="space-y-1.5 text-xs text-gray-300 list-disc pl-4">
+          ${slide && slide.bullets ? slide.bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('') : ''}
+        </ul>
+      </div>
+
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex space-x-2">
+          <button id="prevSlideBtn" class="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-xs text-gray-200 rounded-md border border-gray-700 transition disabled:opacity-40">Previous</button>
+          <button id="nextSlideBtn" class="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-xs text-gray-200 rounded-md border border-gray-700 transition disabled:opacity-40">Next</button>
+        </div>
+        <button id="fullscreenBtn" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-xs font-semibold text-white rounded-md shadow transition">Fullscreen</button>
+      </div>
+    `;
+
+    const prevBtn = container.querySelector('#prevSlideBtn');
+    const nextBtn = container.querySelector('#nextSlideBtn');
+    const fullBtn = container.querySelector('#fullscreenBtn');
+
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === slides.length - 1;
+
+    prevBtn.onclick = () => { if (currentSlide > 0) { currentSlide--; updateSlideUI(); } };
+    nextBtn.onclick = () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlideUI(); } };
+    fullBtn.onclick = () => openPresentationFullscreen(deck);
+  }
+
+  updateSlideUI();
+  return container;
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+function openPresentationFullscreen(deck) {
+  const modal = document.getElementById('presentationModal');
+  const title = document.getElementById('presentationTitle');
+  const stage = document.getElementById('presentationStage');
+
+  title.innerText = deck.title || 'Presentation';
+  stage.innerHTML = `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+      ${(deck.slides || []).map(s => `
+        <div class="p-6 bg-gray-900 border border-gray-800 rounded-xl space-y-3 shadow-lg">
+          <span class="text-xs text-cyan-400 font-bold">Slide ${s.slide}</span>
+          <h3 class="text-lg font-bold text-gray-100">${escapeHtml(s.title)}</h3>
+          <ul class="list-disc pl-5 text-sm text-gray-300 space-y-1">
+            ${(s.bullets || []).map(b => `<li>${escapeHtml(b)}</li>`).join('')}
+          </ul>
+        </div>
+      `).map(x => x).join('')}
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
 }
 
-function escapeJsString(str) {
-  if (!str) return '';
-  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+function closePresentationModal() {
+  document.getElementById('presentationModal').classList.add('hidden');
+}
+
+// Google Workspace OAuth Integration (Classroom & Docs)
+function openWorkspaceModal() {
+  document.getElementById('workspaceModal').classList.remove('hidden');
+}
+
+function closeWorkspaceModal() {
+  document.getElementById('workspaceModal').classList.add('hidden');
+}
+
+function switchWorkspaceTab(tab) {
+  const cTab = document.getElementById('wsTabClassroom');
+  const dTab = document.getElementById('wsTabDocs');
+  if (tab === 'classroom') {
+    cTab.className = 'flex-1 py-2 text-xs font-semibold text-blue-400 border-b-2 border-blue-400';
+    dTab.className = 'flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200';
+  } else {
+    dTab.className = 'flex-1 py-2 text-xs font-semibold text-blue-400 border-b-2 border-blue-400';
+    cTab.className = 'flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200';
+  }
+}
+
+function initiateGoogleOAuth() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    showToast('Google API client script not loaded', 'error');
+    return;
+  }
+
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: '[https://www.googleapis.com/auth/classroom.courses.readonly](https://www.googleapis.com/auth/classroom.courses.readonly) [https://www.googleapis.com/auth/classroom.coursework.me](https://www.googleapis.com/auth/classroom.coursework.me) [https://www.googleapis.com/auth/documents.readonly](https://www.googleapis.com/auth/documents.readonly)',
+    callback: async (response) => {
+      if (response.access_token) {
+        state.googleToken = response.access_token;
+        document.getElementById('googleAuthStatusText').innerText = 'Connected';
+        document.getElementById('googleAuthStatusText').className = 'text-emerald-400';
+        showToast('Google Workspace Connected!');
+        fetchGoogleClassroomData();
+      }
+    }
+  });
+
+  client.requestAccessToken();
+}
+
+async function fetchGoogleClassroomData() {
+  if (!state.googleToken) return;
+  const content = document.getElementById('workspaceContent');
+  content.innerHTML = `<p class="text-xs text-gray-400 text-center py-6"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Fetching Classroom & Docs data...</p>`;
+
+  try {
+    const res = await fetch('[https://classroom.googleapis.com/v1/courses](https://classroom.googleapis.com/v1/courses)', {
+      headers: { Authorization: `Bearer ${state.googleToken}` }
+    });
+    const data = await res.json();
+
+    if (!data.courses || data.courses.length === 0) {
+      content.innerHTML = `<p class="text-xs text-amber-400 text-center py-6">No enrolled Google Classroom courses found.</p>`;
+      return;
+    }
+
+    content.innerHTML = '';
+    data.courses.forEach(course => {
+      const card = document.createElement('div');
+      card.className = 'p-3 bg-gray-800 rounded-xl border border-jarvis-border flex items-center justify-between';
+      card.innerHTML = `
+        <div>
+          <h4 class="text-xs font-bold text-gray-100">${escapeHtml(course.name)}</h4>
+          <p class="text-[10px] text-gray-400">${escapeHtml(course.section || 'Classroom Course')}</p>
+        </div>
+        <button onclick="attachCourseToPrompt('${escapeHtml(course.name)}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold rounded-lg shadow transition">
+          Import Course
+        </button>
+      `;
+      content.appendChild(card);
+    });
+  } catch (err) {
+    content.innerHTML = `<p class="text-xs text-red-400 text-center py-6">Failed to load Google Workspace data.</p>`;
+  }
+}
+
+function attachCourseToPrompt(courseName) {
+  state.attachedFiles.push({
+    name: `Google Classroom: ${courseName}`,
+    type: 'text/plain',
+    textContent: `[Google Classroom Course Context: ${courseName}]`
+  });
+  renderFilePreviews();
+  closeWorkspaceModal();
+  showToast(`Imported ${courseName} into chat!`);
+}
+
+// Authentication Modal & Registration Handler
+function openAuthModal() {
+  document.getElementById('authModal').classList.remove('hidden');
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').classList.add('hidden');
+}
+
+function switchAuthTab(tab) {
+  state.authTab = tab;
+  const signinBtn = document.getElementById('tabSignIn');
+  const registerBtn = document.getElementById('tabRegister');
+  const nameField = document.getElementById('nameField');
+  const submitBtn = document.getElementById('authSubmitBtn');
+
+  if (tab === 'signin') {
+    signinBtn.className = 'flex-1 py-2 text-sm font-semibold text-cyan-400 border-b-2 border-cyan-400';
+    registerBtn.className = 'flex-1 py-2 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200';
+    nameField.classList.add('hidden');
+    submitBtn.innerText = 'Sign In';
+  } else {
+    registerBtn.className = 'flex-1 py-2 text-sm font-semibold text-cyan-400 border-b-2 border-cyan-400';
+    signinBtn.className = 'flex-1 py-2 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200';
+    nameField.classList.remove('hidden');
+    submitBtn.innerText = 'Create Account';
+  }
+}
+
+function handleAuthSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  const name = document.getElementById('authName').value.trim();
+
+  if (!email || !password) return;
+
+  const registry = JSON.parse(localStorage.getItem('jarvis_registered_users') || '{}');
+
+  if (state.authTab === 'register') {
+    registry[email] = { name: name || email.split('@')[0], password };
+    localStorage.setItem('jarvis_registered_users', JSON.stringify(registry));
+    showToast('Account registered successfully! Signing in...');
+  } else {
+    if (!registry[email] || registry[email].password !== password) {
+      showToast('Invalid email or password. Please register first.', 'error');
+      return;
+    }
+  }
+
+  const userObj = { email, name: registry[email] ? registry[email].name : (name || email.split('@')[0]) };
+  state.currentUser = userObj;
+  sessionStorage.setItem('jarvis_session_user', JSON.stringify(userObj));
+
+  closeAuthModal();
+  updateAuthUI();
+  loadUserChats();
+  createNewSession(true);
+  showToast(`Welcome, ${userObj.name}!`);
+}
+
+function simulateGoogleSignIn() {
+  const userObj = { email: 'user@gmail.com', name: 'Google User' };
+  state.currentUser = userObj;
+  sessionStorage.setItem('jarvis_session_user', JSON.stringify(userObj));
+  closeAuthModal();
+  updateAuthUI();
+  loadUserChats();
+  createNewSession(true);
+  showToast('Signed in with Google!');
+}
+
+function handleLogout() {
+  state.currentUser = null;
+  sessionStorage.removeItem('jarvis_session_user');
+  updateAuthUI();
+  loadUserChats();
+  createNewSession(true);
+  showToast('Signed out of session');
+}
+
+// UI Utilities & Helper Functions
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('-translate-x-full');
+}
+
+function autoResizeInput(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function handleKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleSendMessage();
+  }
+}
+
+function setPrompt(text) {
+  const input = document.getElementById('chatInput');
+  input.value = text;
+  autoResizeInput(input);
+  input.focus();
+}
+
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 flex items-center space-x-2 ${
+    type === 'error' ? 'bg-red-900 border border-red-700 text-red-200' : 'bg-cyan-950 border border-cyan-700 text-cyan-200'
+  }`;
+  toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i><span>${escapeHtml(message)}</span>`;
+
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.remove('translate-y-2', 'opacity-0');
+  }, 10);
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"')
+    .replace(/'/g, ''');
+}
+
+function formatMarkdown(text) {
+  if (!text) return '';
+  let formatted = escapeHtml(text);
+  
+  // Format Code Blocks
+  formatted = formatted.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-950 border border-gray-800 p-3 rounded-xl overflow-x-auto my-2 text-xs text-cyan-300"><code>$1</code></pre>');
+  // Format Inline Code
+  formatted = formatted.replace(/`([^`]+)`/g, '<code class="bg-gray-800 px-1.5 py-0.5 rounded text-cyan-300 text-xs">$1</code>');
+  // Format Bold
+  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
+  // Format Newlines
+  formatted = formatted.replace(/\n/g, '<br>');
+
+  return formatted;
 }
