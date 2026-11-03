@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JARVIS AI PRO - By Abdullah Waheed</title>
+  <title>JARVIS AI PRO | Developed by Abdullah Waheed</title>
 
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           colors: {
             jarvis: {
-              bg: '#090d16',
-              sidebar: '#0d1322',
+              bg: '#080c14',
+              sidebar: '#0d1320',
               card: '#131b2e',
               border: '#1e293b',
-              cyan: '#06b6d4',
-              accent: '#38bdf8'
+              accent: '#06b6d4',
+              accentHover: '#0891b2'
             }
           }
         }
@@ -26,52 +27,44 @@
     }
   </script>
 
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Highlight.js for Code Highlighting -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-  <!-- Marked.js for Markdown -->
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Marked.js for Markdown Parsing -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- KaTeX for Mathematics -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <!-- Google Identity Services SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #080c14; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    
     .markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; }
-    .markdown-body pre { background: #090d16; padding: 1rem; border-radius: 0.75rem; margin: 0.75rem 0; border: 1px solid #1e293b; overflow-x: auto; }
-    .markdown-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875em; }
-    .markdown-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    .markdown-body th, .markdown-body td { border: 1px solid #334155; padding: 0.5rem 0.75rem; text-align: left; }
-    .markdown-body th { background-color: #1e293b; }
+    .markdown-body pre { background: #050811; padding: 1rem; border-radius: 0.75rem; margin: 0.75rem 0; border: 1px solid #1e293b; overflow-x: auto; }
+    .markdown-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875em; color: #38bdf8; }
     .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
     .markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
-
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #090d16; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #334155; }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased overflow-hidden bg-slate-950 text-slate-100">
+<body class="h-full flex flex-col font-sans antialiased overflow-hidden bg-slate-950 text-slate-100 select-none">
 
   <!-- TOP HEADER -->
   <header class="h-14 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md flex items-center justify-between px-4 z-30 shrink-0">
     <div class="flex items-center gap-3">
       <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
-        <i data-lucide="menu" class="w-5 h-5"></i>
+        <i class="fa-solid fa-bars text-lg"></i>
       </button>
       <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-bold text-cyan-400 shadow-sm shadow-cyan-500/20">
         J
       </div>
       <div>
         <h1 class="font-bold text-sm tracking-wide text-white flex items-center gap-2">
-          JARVIS AI <span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded font-mono">PRO</span>
+          <span>JARVIS AI</span>
+          <span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded font-mono">PRO</span>
         </h1>
         <p class="text-[10px] text-slate-400 hidden sm:block">Developed by Abdullah Waheed</p>
       </div>
@@ -79,15 +72,15 @@
 
     <!-- MODEL SELECTOR & AUTH BUTTON -->
     <div class="flex items-center gap-2 sm:gap-3">
-      <select id="modelSelect" class="bg-slate-800/90 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 transition">
-        <option value="openai/gpt-oss-20b" selected>Jarvis Instant (Ultra Fast)</option>
-        <option value="llama-3.2-11b-vision-preview">Jarvis Turbo (Vision & Images)</option>
-        <option value="openai/gpt-oss-120b">Jarvis Pro (120B Intelligence)</option>
-        <option value="deepseek-r1-distill-llama-70b">Jarvis Ironman (70B Reasoning)</option>
+      <select id="modelSelect" onchange="switchModel(this.value)" class="bg-slate-800/90 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 transition cursor-pointer">
+        <option value="instant">Jarvis Instant (Ultra Fast)</option>
+        <option value="turbo" selected>Jarvis Turbo (Vision & Multi-Image)</option>
+        <option value="pro">Jarvis Pro (120B High Intelligence)</option>
+        <option value="ironman">Jarvis Ironman (70B Deep Reasoning)</option>
       </select>
 
       <button id="authBtn" onclick="openAuthModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3.5 py-1.5 rounded-xl font-medium transition shadow-lg shadow-cyan-600/20 flex items-center gap-1.5">
-        <i data-lucide="user" class="w-3.5 h-3.5"></i>
+        <i class="fa-solid fa-user text-xs"></i>
         <span id="authBtnText">Sign In</span>
       </button>
     </div>
@@ -100,14 +93,14 @@
     <div id="sidebarOverlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 hidden md:hidden"></div>
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-64 border-r border-slate-800 bg-slate-900/60 flex flex-col z-40 absolute md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
+    <aside id="sidebar" class="w-64 border-r border-slate-800 bg-slate-900/70 flex flex-col z-40 absolute md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
       
       <!-- NEW CHAT BUTTON -->
       <div class="p-3 border-b border-slate-800/80">
         <button onclick="createNewSession()" class="w-full flex items-center justify-between bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 hover:border-cyan-500/60 text-cyan-300 px-3 py-2 rounded-xl text-xs font-semibold transition shadow-sm">
           <span class="flex items-center gap-2">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            New Chat
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>New Chat</span>
           </span>
           <span class="text-[10px] opacity-60 font-mono">Ctrl+K</span>
         </button>
@@ -117,16 +110,16 @@
       <div id="accountBanner" class="px-3 py-2 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-xs text-amber-300">
         <span class="flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          Guest Mode
+          <span id="bannerStatusLabel">Guest Mode</span>
         </span>
-        <button onclick="openAuthModal()" class="underline text-[11px] font-semibold hover:text-amber-200">Sign In</button>
+        <button id="bannerAuthBtn" onclick="openAuthModal()" class="underline text-[11px] font-semibold hover:text-amber-200">Sign In</button>
       </div>
 
       <!-- SEARCH INPUT -->
       <div class="p-2 border-b border-slate-800/60">
         <div class="relative">
-          <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
-          <input id="searchInput" type="text" placeholder="Search chats..." class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-cyan-500">
+          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-xs text-slate-500"></i>
+          <input id="searchInput" oninput="renderChatList(this.value)" type="text" placeholder="Search chats..." class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-cyan-500">
         </div>
       </div>
 
@@ -151,7 +144,7 @@
           </div>
         </div>
         <button id="logoutBtn" onclick="handleLogout()" class="hidden text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition" title="Sign Out">
-          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <i class="fa-solid fa-right-from-bracket text-sm"></i>
         </button>
       </div>
     </aside>
@@ -168,24 +161,24 @@
           </div>
           <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">Hello, I am JARVIS</h2>
           <p class="text-sm text-slate-400 max-w-md leading-relaxed mb-6">
-            Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate multi-style artwork, solve math, or upload up to 10 files!
+            Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate artwork, solve math, or upload up to 10 files!
           </p>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full text-left">
             <button onclick="sendQuickPrompt('Create a 4-slide presentation on Artificial Intelligence')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
-              <i data-lucide="presentation" class="w-4 h-4 text-cyan-400"></i>
+              <i class="fa-solid fa-file-powerpoint text-cyan-400"></i>
               <span>Create a presentation on AI</span>
             </button>
-            <button onclick="sendQuickPrompt('Paint a watercolor portrait of a futuristic cyberpunk city')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
-              <i data-lucide="image" class="w-4 h-4 text-purple-400"></i>
+            <button onclick="sendQuickPrompt('/image A watercolor portrait of a futuristic cyberpunk city')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+              <i class="fa-solid fa-image text-purple-400"></i>
               <span>Generate watercolor artwork</span>
             </button>
-            <button onclick="sendQuickPrompt('Write a Python script for automated web scraping with BeautifulSoup')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
-              <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
-              <span>Write web scraping script</span>
+            <button onclick="sendQuickPrompt('Explain the complete relationship and history of Hazrat Ali (R.A) with Prophet Muhammad (PBUH)')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+              <i class="fa-solid fa-book-open text-emerald-400"></i>
+              <span>Solve History & Academic Query</span>
             </button>
             <button onclick="sendQuickPrompt('Who created and developed you?')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
-              <i data-lucide="user" class="w-4 h-4 text-amber-400"></i>
+              <i class="fa-solid fa-user-shield text-amber-400"></i>
               <span>Who is your creator?</span>
             </button>
           </div>
@@ -201,20 +194,27 @@
 
           <div class="relative bg-slate-900/90 border border-slate-800 focus-within:border-cyan-500/60 rounded-2xl p-2 transition shadow-2xl">
             <!-- HIDDEN FILE INPUT (SUPPORTS UP TO 10 FILES AT ONCE) -->
-            <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.txt,.py,.js,.json,.csv,.md,.html,.css">
+            <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.txt,.py,.js,.json,.csv,.md,.html,.css,.doc,.docx,.pdf">
 
             <textarea id="userInput" rows="1" placeholder="Ask JARVIS anything, attach up to 10 images/files, or say 'Create a presentation on...'" class="w-full bg-transparent text-slate-100 text-sm focus:outline-none resize-none px-3 py-1.5 max-h-40 placeholder-slate-500"></textarea>
             
             <div class="flex items-center justify-between pt-1.5 border-t border-slate-800/60 mt-1 px-1">
               <div class="flex items-center gap-1">
                 <!-- FILE ATTACH BUTTON -->
-                <button id="attachFileBtn" class="p-1.5 text-slate-400 hover:text-cyan-400 rounded-lg hover:bg-slate-800 transition" title="Attach up to 10 images or text/code documents">
-                  <i data-lucide="paperclip" class="w-4 h-4"></i>
+                <button id="attachFileBtn" onclick="document.getElementById('fileInput').click()" class="p-1.5 text-slate-400 hover:text-cyan-400 rounded-lg hover:bg-slate-800 transition" title="Attach up to 10 images or text/code documents">
+                  <i class="fa-solid fa-paperclip text-sm"></i>
                 </button>
                 
+                <!-- GOOGLE WORKSPACE BUTTON -->
+                <button onclick="openWorkspaceModal()" class="p-1.5 text-slate-400 hover:text-emerald-400 rounded-lg hover:bg-slate-800 transition flex items-center gap-1" title="Import from Google Classroom & Google Docs">
+                  <i class="fa-brands fa-google text-emerald-400 text-sm"></i>
+                  <span class="text-[10px] font-semibold text-emerald-400 hidden sm:inline">Google Workspace</span>
+                </button>
+
                 <!-- VOICE WRITING MIC BUTTON -->
-                <button id="micBtn" class="p-1.5 text-slate-400 hover:text-cyan-400 rounded-lg hover:bg-slate-800 transition" title="Voice dictation (Speech-to-text)">
-                  <i data-lucide="mic" class="w-4 h-4"></i>
+                <button id="micBtn" onclick="toggleVoiceWriting()" class="p-1.5 text-slate-400 hover:text-cyan-400 rounded-lg hover:bg-slate-800 transition relative" title="Voice dictation (Speech-to-text)">
+                  <i class="fa-solid fa-microphone text-sm"></i>
+                  <span id="micPulse" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
                 </button>
 
                 <span class="text-[10px] text-slate-500 font-mono hidden sm:inline ml-1">JARVIS Engine v3.5</span>
@@ -222,7 +222,7 @@
 
               <!-- SEND BUTTON -->
               <button onclick="handleSendMessage()" class="bg-cyan-600 hover:bg-cyan-500 text-white p-2 rounded-xl transition shadow-lg shadow-cyan-600/30 flex items-center justify-center">
-                <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                <i class="fa-solid fa-arrow-up text-sm"></i>
               </button>
             </div>
           </div>
@@ -236,7 +236,7 @@
   <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
       <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">
-        <i data-lucide="x" class="w-5 h-5"></i>
+        <i class="fa-solid fa-xmark text-base"></i>
       </button>
       
       <div class="text-center mb-5">
@@ -253,7 +253,7 @@
 
       <!-- GOOGLE SIGN IN BUTTON -->
       <button onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 mb-4 shadow">
-        <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+        <i class="fa-brands fa-google text-red-500"></i>
         <span>Continue with Google</span>
       </button>
 
@@ -278,115 +278,129 @@
     </div>
   </div>
 
+  <!-- GOOGLE WORKSPACE MODAL -->
+  <div id="workspaceModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+      <button onclick="closeWorkspaceModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center">
+          <i class="fa-brands fa-google text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Google Classroom & Docs Integration</h3>
+          <p class="text-[11px] text-slate-400">Import course assignments or document notes into JARVIS</p>
+        </div>
+      </div>
+
+      <!-- WORKSPACE TABS -->
+      <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 mb-4">
+        <button id="btnTabClassroom" onclick="switchWorkspaceTab('classroom')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg text-white bg-slate-800 transition">Google Classroom</button>
+        <button id="btnTabDocs" onclick="switchWorkspaceTab('docs')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition">Google Docs / Drive</button>
+      </div>
+
+      <!-- TAB CONTENT: CLASSROOM -->
+      <div id="tabClassroomContent" class="space-y-3">
+        <button onclick="connectAndFetchClassroom()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>Connect & Fetch Classroom Courses</span>
+        </button>
+        <div id="classroomListContainer" class="max-h-60 overflow-y-auto space-y-2 pt-2">
+          <p class="text-xs text-slate-500 italic text-center py-4">Click connect above to authenticate with Google Classroom.</p>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT: DOCS -->
+      <div id="tabDocsContent" class="space-y-3 hidden">
+        <button onclick="connectAndFetchDocs()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow">
+          <i class="fa-solid fa-file-lines"></i>
+          <span>Fetch Recent Google Docs</span>
+        </button>
+        <div id="docsListContainer" class="max-h-60 overflow-y-auto space-y-2 pt-2">
+          <p class="text-xs text-slate-500 italic text-center py-4">Click connect above to view your Google Docs notes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- PRESENTATION FULLSCREEN PREVIEW MODAL -->
   <div id="presentationModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden shadow-2xl relative">
       <div class="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-950">
         <h3 id="presentationTitle" class="text-xs font-bold text-cyan-400 font-mono">Visual Presentation Slide Viewer</h3>
         <button onclick="closePresentationModal()" class="text-slate-400 hover:text-white p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
+          <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
       <iframe id="presentationIframe" class="w-full flex-1 border-none bg-slate-950"></iframe>
     </div>
   </div>
 
-  <!-- CONFIRMATION MODAL -->
-  <div id="confirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5 shadow-2xl text-center">
-      <h3 id="confirmTitle" class="text-sm font-bold text-white mb-2">Confirmation Required</h3>
-      <p id="confirmMessage" class="text-xs text-slate-400 mb-4 leading-relaxed"></p>
-      <div class="flex gap-2">
-        <button onclick="hideConfirmModal()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl transition">Cancel</button>
-        <button id="confirmOkBtn" class="flex-1 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs rounded-xl font-semibold transition">Confirm</button>
-      </div>
-    </div>
-  </div>
-
   <!-- TOAST CONTAINER -->
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <!-- APPLICATION LOGIC SCRIPT -->
+  <!-- MAIN SCRIPT -->
   <script>
     // --- CONFIGURATION & CONSTANTS ---
     const GROQ_API_KEY = "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";
     const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+    const GOOGLE_CLIENT_ID = "824756167499-bs4dlceg4qtolp4ma4u7g3gajrrviad3.apps.googleusercontent.com";
 
-    const MODEL_NAMES = {
-      "openai/gpt-oss-20b": "Jarvis Instant",
-      "openai/gpt-oss-120b": "Jarvis Pro",
-      "llama-3.2-11b-vision-preview": "Jarvis Turbo",
-      "llama-3.2-90b-vision-preview": "Jarvis Turbo Pro",
-      "llama-3.3-70b-versatile": "Jarvis Pro",
-      "deepseek-r1-distill-llama-70b": "Jarvis Ironman"
+    const MODELS = {
+      instant: { id: "llama-3.1-8b-instant", name: "Jarvis Instant" },
+      turbo: { id: "llama-3.2-11b-vision-preview", name: "Jarvis Turbo" },
+      pro: { id: "llama-3.3-70b-versatile", name: "Jarvis Pro" },
+      ironman: { id: "deepseek-r1-distill-llama-70b", name: "Jarvis Ironman" }
     };
 
-    function getModelDisplayName(modelId) {
-      return MODEL_NAMES[modelId] || "Jarvis Engine";
+    function getModelDisplayName(key) {
+      if (MODELS[key]) return MODELS[key].name;
+      if (key.includes('vision')) return "Jarvis Turbo";
+      if (key.includes('deepseek') || key.includes('70b')) return "Jarvis Ironman";
+      return "Jarvis Engine";
     }
 
     const SYSTEM_PROMPT = {
       role: "system",
-      content: `You are JARVIS, an advanced, hyper-intelligent AI assistant created and developed by Abdullah Waheed.
+      content: `You are JARVIS, an advanced, hyper-intelligent AI assistant created and developed exclusively by Abdullah Waheed.
 
-PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
-1. CREATOR & OWNER DETAILS: If asked who created, built, designed, or owns you, or details about your creator/developer/owner, ALWAYS reply with the following complete details:
-   - Creator & Developer: Abdullah Waheed
-   - Age & Year of Creation: Created this app in 2026 at 15 years of age.
-   - Education: Currently studying at LGS (Lahore Grammar School) Paragon Campus.
-   - Residence & Birthplace: Lives in Lahore, Pakistan, but was born in Narowal city.
-   - Never mention Groq, OpenAI, Meta, or third-party web apps.
-2. SEARCH ENGINE DISCLOSURE: If asked "what is your search engine?" or what search engine you use, ALWAYS answer clearly that your search engine is the "JARVIS Engine".
-3. COMPREHENSIVE ONLINE KNOWLEDGE BASE: You possess vast, deep knowledge across all online subjects: academic textbooks, workbooks, literature, classic & modern stories, historical events, scientific research, pop culture, and internet lore/memes (including internet memes like 67, viral trends, and modern culture).
-4. EXHAUSTIVE & DETAILED ANSWERS DEFAULT: Unless the user explicitly asks for a short, brief, or condensed answer (e.g., "short answer", "summarize in 1 sentence"), ALWAYS provide rich, comprehensive, in-depth, step-by-step, and fully detailed explanations covering all key aspects of the topic.
-5. MULTI-STYLE IMAGE GENERATION:
-   - When asked to draw, generate, or paint ANY image (photos, sketches, watercolor, poster colors, anime):
-   - You MUST embed this exact Markdown image tag:
-     ![Image Description](https://image.pollinations.ai/prompt/YOUR_ENCODED_DETAILED_PROMPT?width=1024&height=1024&nologo=true&model=flux&seed=54321)
-   - Replace YOUR_ENCODED_DETAILED_PROMPT with a URL-encoded description including the requested style.
-   - Replace 54321 with a random 5-digit number so each request is unique.
-6. VISUAL PRESENTATIONS & SLIDES:
-   - When asked to create or make a presentation or slides on ANY topic:
-   - Organize into distinct slides (e.g. "### Slide 1: Title & Overview", "### Slide 2: Core Concepts", key bullet points, takeaways, and speaker notes).`
+CREATOR & DEVELOPER PROFILE:
+- Creator Name: Abdullah Waheed.
+- Age & Year of Creation: Created this app in 2026 at 15 years of age.
+- Education: Currently studying at LGS (Lahore Grammar School) Paragon Campus.
+- Origin & Residence: Lives in Lahore, Pakistan, but was born in Narowal city.
+- Whenever asked about who created you, who made you, or details about your developer/owner, ALWAYS answer with full details about Abdullah Waheed.
+
+SEARCH ENGINE DISCLOSURE:
+- If asked "what is your search engine?" or what search engine you use, ALWAYS respond clearly that your search engine is the "JARVIS Engine".
+
+COMPREHENSIVE KNOWLEDGE & EXHAUSTIVE ANSWERS DEFAULT:
+- You possess complete online knowledge across books, workbooks, literature, historical events, scientific research, academic subjects, and internet memes (including meme 67, viral trends, etc.).
+- Unless explicitly asked by the user to shorten or summarize your answer, ALWAYS provide rich, step-by-step, in-depth, and fully detailed explanations covering all aspects of the query.`
     };
 
-    // Application State - TAB ISOLATED USER AUTHENTICATION
+    // Application State - Tab Isolated Sessions
     let currentUser = JSON.parse(sessionStorage.getItem("jarvis_tab_session_user") || "null");
     let registeredUsers = JSON.parse(localStorage.getItem("jarvis_registered_users_db") || "[]");
     let authTabMode = "signin";
-    let currentModel = "llama-3.2-11b-vision-preview";
+    let selectedModelKey = "turbo";
     let activeChatId = null;
     let chats = [];
     let isGenerating = false;
-    let confirmCallback = null;
 
-    // File Attachment & Voice Input State (Supports up to 10 files)
+    // Multi-File Attachment State (Up to 10 files)
     let attachedFiles = [];
     let isListening = false;
     let speechRecognitionObj = null;
 
     // --- INITIALIZATION ---
     document.addEventListener("DOMContentLoaded", () => {
-      initializeMarkdown();
       setupDOMEventListeners();
       updateUserUI();
       loadUserChats();
-      if (window.lucide) window.lucide.createIcons();
     });
-
-    function initializeMarkdown() {
-      if (window.marked) {
-        marked.setOptions({
-          highlight: function (code, lang) {
-            if (window.hljs && hljs.getLanguage(lang)) {
-              return hljs.highlight(code, { language: lang }).value;
-            }
-            return code;
-          },
-          breaks: true
-        });
-      }
-    }
 
     function setupDOMEventListeners() {
       const userInput = document.getElementById('userInput');
@@ -403,30 +417,18 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
         });
       }
 
-      const searchInput = document.getElementById('searchInput');
-      if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-          renderChatList(e.target.value.toLowerCase());
-        });
-      }
-
-      // File Attacher Handlers
-      const attachFileBtn = document.getElementById('attachFileBtn');
       const fileInput = document.getElementById('fileInput');
-
-      if (attachFileBtn && fileInput) {
-        attachFileBtn.addEventListener('click', () => fileInput.click());
+      if (fileInput) {
         fileInput.addEventListener('change', handleFileSelect);
-      }
-
-      // Voice Writing Handler
-      const micBtn = document.getElementById('micBtn');
-      if (micBtn) {
-        micBtn.addEventListener('click', toggleVoiceWriting);
       }
     }
 
-    // --- FILE ATTACHMENT LOGIC (UP TO 10 FILES/IMAGES) ---
+    function switchModel(key) {
+      selectedModelKey = key;
+      showToast(`Switched to ${MODELS[key].name}`, "info");
+    }
+
+    // --- FILE ATTACHMENT LOGIC (UP TO 10 FILES) ---
     function handleFileSelect(e) {
       const selectedFiles = Array.from(e.target.files);
       if (!selectedFiles.length) return;
@@ -486,14 +488,12 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
           ${file.isImage ? `
             <img src="${file.dataUrl}" class="w-5 h-5 rounded object-cover border border-slate-700 shrink-0" />
           ` : `
-            <i data-lucide="file-text" class="w-4 h-4 text-cyan-400 shrink-0"></i>
+            <i class="fa-solid fa-file-lines text-cyan-400 shrink-0"></i>
           `}
           <span class="truncate text-[11px]">${escapeHtml(file.name)}</span>
           <button onclick="removeAttachedFile(${idx})" class="text-slate-400 hover:text-red-400 ml-1 font-bold text-xs">✕</button>
         </div>
       `).join('');
-
-      if (window.lucide) window.lucide.createIcons();
     }
 
     function removeAttachedFile(index) {
@@ -515,16 +515,15 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
         try { speechRecognitionObj.stop(); } catch(e) {}
       }
       const micBtn = document.getElementById('micBtn');
-      if (micBtn) {
-        micBtn.classList.remove('text-red-400', 'animate-pulse', 'bg-red-500/20');
-        micBtn.classList.add('text-slate-400');
-      }
+      const micPulse = document.getElementById('micPulse');
+      if (micBtn) micBtn.classList.remove('text-red-400');
+      if (micPulse) micPulse.classList.add('hidden');
     }
 
     function toggleVoiceWriting() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        showToast("Speech Recognition is not supported in this browser. Please use Chrome or Edge.", "error");
+        showToast("Speech Recognition is not supported in this browser.", "error");
         return;
       }
 
@@ -546,11 +545,10 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
           const userInput = document.getElementById('userInput');
           baseText = userInput ? userInput.value : '';
           const micBtn = document.getElementById('micBtn');
-          if (micBtn) {
-            micBtn.classList.remove('text-slate-400');
-            micBtn.classList.add('text-red-400', 'animate-pulse', 'bg-red-500/20');
-          }
-          showToast("Listening... Speak clearly into your mic.", "info");
+          const micPulse = document.getElementById('micPulse');
+          if (micBtn) micBtn.classList.add('text-red-400');
+          if (micPulse) micPulse.classList.remove('hidden');
+          showToast("Listening... Speak clearly into microphone.", "info");
         };
 
         speechRecognitionObj.onresult = (event) => {
@@ -567,10 +565,6 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
         };
 
         speechRecognitionObj.onerror = (err) => {
-          console.warn("Speech recognition notice:", err.error);
-          if (err.error === 'not-allowed') {
-            showToast("Microphone permission was denied.", "error");
-          }
           stopVoiceWriting();
         };
 
@@ -581,9 +575,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
 
       try {
         speechRecognitionObj.start();
-      } catch (e) {
-        console.warn("Recognition start notice:", e);
-      }
+      } catch (e) {}
     }
 
     // --- CHAT SESSION MANAGEMENT ---
@@ -617,7 +609,6 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       activeChatId = newChat.id;
       clearAttachedFile();
       if (isListening) stopVoiceWriting();
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
       const userInput = document.getElementById('userInput');
       if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
       saveUserChats();
@@ -626,9 +617,9 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
     }
 
     function loadUserChats() {
-      const key = currentUser ? `jarvis_chats_${currentUser.email}` : 'jarvis_chats_guest';
+      const key = currentUser ? `jarvis_chats_${currentUser.email}` : 'jarvis_chats_guest_tab';
       try {
-        const saved = localStorage.getItem(key);
+        const saved = sessionStorage.getItem(key);
         chats = saved ? JSON.parse(saved) : [];
       } catch (e) {
         chats = [];
@@ -643,12 +634,10 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
     }
 
     function saveUserChats() {
-      const key = currentUser ? `jarvis_chats_${currentUser.email}` : 'jarvis_chats_guest';
+      const key = currentUser ? `jarvis_chats_${currentUser.email}` : 'jarvis_chats_guest_tab';
       try {
-        localStorage.setItem(key, JSON.stringify(chats));
-      } catch (e) {
-        console.error("Save error:", e);
-      }
+        sessionStorage.setItem(key, JSON.stringify(chats));
+      } catch (e) {}
     }
 
     function switchChat(id) {
@@ -668,10 +657,6 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
         activeChatId = chats[0].id;
       }
       clearAttachedFile();
-      if (isListening) stopVoiceWriting();
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      const userInput = document.getElementById('userInput');
-      if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
       saveUserChats();
       renderChatList();
       renderChatMessages();
@@ -679,20 +664,17 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
     }
 
     function handleClearAllSessions() {
-      showConfirmModal("Clear History", "Are you sure you want to delete all saved conversations? This will reset the app.", () => {
-        const fresh = createNewSessionObj();
-        chats = [fresh];
-        activeChatId = fresh.id;
-        clearAttachedFile();
-        if (isListening) stopVoiceWriting();
-        if (window.speechSynthesis) window.speechSynthesis.cancel();
-        const userInput = document.getElementById('userInput');
-        if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
-        saveUserChats();
-        renderChatList();
-        renderChatMessages();
-        showToast("App reset. All conversations cleared.", "info");
-      });
+      const fresh = createNewSessionObj();
+      chats = [fresh];
+      activeChatId = fresh.id;
+      clearAttachedFile();
+      if (isListening) stopVoiceWriting();
+      const userInput = document.getElementById('userInput');
+      if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
+      saveUserChats();
+      renderChatList();
+      renderChatMessages();
+      showToast("App reset. All conversations cleared.", "info");
     }
 
     function sendQuickPrompt(text) {
@@ -755,7 +737,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
                     <div class="flex flex-wrap gap-1">
                       ${msg.attachedFiles.filter(f => !f.isImage).map(f => `
                         <div class="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-700 px-2.5 py-1 rounded-xl text-xs text-cyan-300 font-mono">
-                          <i data-lucide="file-text" class="w-3.5 h-3.5 text-cyan-400"></i>
+                          <i class="fa-solid fa-file-lines text-cyan-400"></i>
                           <span>${escapeHtml(f.name)}</span>
                         </div>
                       `).join('')}
@@ -764,12 +746,6 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
                 ` : ''}
 
                 ${isUser ? `<div class="whitespace-pre-wrap text-sm">${escapeHtml(msg.content)}</div>` : `<div id="msg-content-${msg.id}" class="markdown-body"></div>`}
-              </div>
-
-              <div class="flex items-center gap-2 mt-1 px-1 text-slate-500 text-[10px] ${isUser ? 'justify-end' : 'justify-start'}">
-                <button onclick="navigator.clipboard.writeText(\`${escapeJsString(msg.content)}\`).then(() => showToast('Copied to clipboard!', 'success'))" class="hover:text-slate-300 p-0.5 rounded transition" title="Copy text">
-                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                </button>
               </div>
             </div>
 
@@ -789,11 +765,10 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
         }
       });
 
-      if (window.lucide) window.lucide.createIcons();
       scrollToBottom();
     }
 
-    // --- STREAMING MESSAGE DISPATCHER ---
+    // --- MESSAGE DISPATCH & VISION AUTO-ROUTING ---
     async function handleSendMessage() {
       const userInput = document.getElementById('userInput');
       const prompt = userInput ? userInput.value.trim() : '';
@@ -803,14 +778,44 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       if (isListening) stopVoiceWriting();
 
       const activeChat = getActiveChat();
-
-      let textPrompt = prompt;
       const currentAttachedFiles = [...attachedFiles];
 
+      // Image generation handler
+      if (prompt.toLowerCase().startsWith('/image') || prompt.toLowerCase().startsWith('generate image')) {
+        const cleanPrompt = prompt.replace('/image', '').replace('generate image', '').trim();
+        const userMsg = {
+          id: 'msg_' + Date.now(),
+          role: 'user',
+          content: prompt,
+          attachedFiles: [],
+          timestamp: Date.now()
+        };
+        activeChat.messages.push(userMsg);
+
+        const imgSeed = Math.floor(Math.random() * 90000) + 10000;
+        const encodedPrompt = encodeURIComponent(cleanPrompt);
+        const imgUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&model=flux&seed=${imgSeed}`;
+
+        const assistantMsg = {
+          id: 'msg_' + (Date.now() + 1),
+          role: 'assistant',
+          content: `Here is your generated Flux artwork for **"${escapeHtml(cleanPrompt)}"**:\n\n![${escapeHtml(cleanPrompt)}](${imgUrl})`,
+          timestamp: Date.now()
+        };
+        activeChat.messages.push(assistantMsg);
+        
+        clearAttachedFile();
+        if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
+        saveUserChats();
+        renderChatMessages();
+        return;
+      }
+
+      let textPrompt = prompt;
       if (currentAttachedFiles.length > 0) {
         currentAttachedFiles.forEach(f => {
           if (!f.isImage && f.textContent) {
-            textPrompt += `\n\n[Attached File: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
+            textPrompt += `\n\n[Attached Document: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
           }
         });
       }
@@ -818,7 +823,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       const userMsg = {
         id: 'msg_' + Date.now(),
         role: 'user',
-        content: prompt || (currentAttachedFiles.length > 0 ? `[Sent ${currentAttachedFiles.length} file(s)]` : ''),
+        content: prompt || `[Sent ${currentAttachedFiles.length} file(s)]`,
         attachedFiles: currentAttachedFiles,
         timestamp: Date.now()
       };
@@ -831,7 +836,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       }
 
       if (activeChat.messages.length === 0) {
-        activeChat.title = userMsg.content.length > 30 ? userMsg.content.substring(0, 30) + '...' : userMsg.content;
+        activeChat.title = userMsg.content.length > 28 ? userMsg.content.substring(0, 28) + '...' : userMsg.content;
       }
 
       activeChat.messages.push(userMsg);
@@ -876,116 +881,38 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
         })
       ];
 
-      const modelSelect = document.getElementById('modelSelect');
-      if (modelSelect) currentModel = modelSelect.value;
-
       const hasImagesInPayload = activeChat.messages.some(m => m.attachedFiles && m.attachedFiles.some(f => f.isImage));
       
-      let usedModel = currentModel;
-      let response = null;
-
-      const modelCandidates = hasImagesInPayload 
-        ? ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"] 
-        : [currentModel, "openai/gpt-oss-20b", "llama-3.3-70b-versatile"];
-
-      const uniqueCandidates = [...new Set(modelCandidates)];
-
-      for (const modelCandidate of uniqueCandidates) {
-        try {
-          usedModel = modelCandidate;
-          response = await fetch(GROQ_API_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${GROQ_API_KEY}`
-            },
-            body: JSON.stringify({
-              model: modelCandidate,
-              messages: formattedMessages,
-              stream: true,
-              temperature: 0.7
-            })
-          });
-
-          if (response && response.ok) break;
-        } catch (e) {
-          console.warn(`Model candidate ${modelCandidate} notice:`, e);
-        }
-      }
-
-      if ((!response || !response.ok) && hasImagesInPayload) {
-        const textOnlyMessages = [
-          SYSTEM_PROMPT,
-          ...activeChat.messages.slice(0, -1).map(m => {
-            if (m.role !== 'user') return { role: m.role, content: m.content };
-            let txt = m.content || '';
-            if (m.attachedFiles && m.attachedFiles.length > 0) {
-              m.attachedFiles.forEach(f => {
-                txt += `\n[Attached File: ${f.name}]`;
-              });
-            }
-            return { role: 'user', content: txt };
-          })
-        ];
-
-        usedModel = "openai/gpt-oss-20b";
-        try {
-          response = await fetch(GROQ_API_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${GROQ_API_KEY}`
-            },
-            body: JSON.stringify({
-              model: usedModel,
-              messages: textOnlyMessages,
-              stream: true,
-              temperature: 0.7
-            })
-          });
-        } catch (e) {}
+      let targetModel = MODELS[selectedModelKey].id;
+      if (hasImagesInPayload) {
+        targetModel = "llama-3.2-11b-vision-preview"; // Vision Auto-Routing
       }
 
       try {
-        if (!response || !response.ok) {
-          const displayName = getModelDisplayName(usedModel);
-          throw new Error(`${displayName} is currently busy. Please try again in a moment.`);
+        const response = await fetch(GROQ_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            messages: formattedMessages,
+            temperature: 0.7
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Unable to connect to JARVIS Engine core.`);
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let accumulatedText = "";
-
-        const assistantElem = document.getElementById(`msg-content-${assistantMsg.id}`);
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const dataStr = line.replace("data: ", "").trim();
-              if (dataStr === "[DONE]") break;
-
-              try {
-                const parsed = JSON.parse(dataStr);
-                const delta = parsed.choices[0]?.delta?.content || "";
-                accumulatedText += delta;
-                assistantMsg.content = accumulatedText;
-                if (assistantElem) renderFormattedMarkdown(assistantElem, accumulatedText);
-                scrollToBottom();
-              } catch (e) {}
-            }
-          }
-        }
-
+        const data = await response.json();
+        assistantMsg.content = data.choices[0]?.message?.content || "No response received.";
         saveUserChats();
+        renderChatMessages();
 
       } catch (error) {
-        const friendlyName = getModelDisplayName(currentModel);
+        const friendlyName = getModelDisplayName(selectedModelKey);
         assistantMsg.content = `⚠️ **JARVIS Notice (${friendlyName}):**\n\n${error.message}`;
         saveUserChats();
         renderChatMessages();
@@ -995,10 +922,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
     }
 
     function renderFormattedMarkdown(container, text) {
-      if (!text) {
-        container.innerHTML = '';
-        return;
-      }
+      if (!text) { container.innerHTML = ''; return; }
 
       const isPresentation = text.includes('### Slide') || text.includes('Slide 1:');
 
@@ -1009,15 +933,12 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
 
       let parsed = text;
       if (window.marked) {
-        try {
-          parsed = marked.parse(text);
-        } catch (e) {
-          parsed = escapeHtml(text);
-        }
+        try { parsed = marked.parse(text); } catch (e) { parsed = escapeHtml(text); }
       }
 
       container.innerHTML = parsed;
 
+      // Wrap generated images with download buttons
       container.querySelectorAll('img').forEach(img => {
         if (img.src.includes('pollinations.ai') && !img.parentElement.querySelector('.download-img-btn')) {
           const wrapper = document.createElement('div');
@@ -1032,19 +953,6 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
           wrapper.appendChild(btn);
         }
       });
-
-      if (window.renderMathInElement) {
-        try {
-          renderMathInElement(container, {
-            delimiters: [
-              { left: "$$", right: "$$", display: true },
-              { left: "$", right: "$", display: false },
-              { left: "\\(", right: "\\)", display: false },
-              { left: "\\[", right: "\\]", display: true }
-            ]
-          });
-        } catch(e) {}
-      }
     }
 
     function renderPresentationDeck(text) {
@@ -1058,9 +966,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
         });
       }
 
-      if (slides.length === 0) {
-        slides.push({ title: "Presentation Overview", content: text });
-      }
+      if (slides.length === 0) slides.push({ title: "Presentation Overview", content: text });
 
       const deckId = 'deck_' + Math.random().toString(36).substr(2, 6);
       window[deckId + '_slides'] = slides;
@@ -1069,7 +975,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       return `
         <div id="${deckId}" class="my-3 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
           <div class="p-3 border-b border-slate-800 bg-slate-950 flex items-center justify-between text-xs">
-            <span class="font-bold text-cyan-400 font-mono">📊 Visual Slide Presentation</span>
+            <span class="font-bold text-cyan-400 font-mono"><i class="fa-solid fa-file-powerpoint mr-1"></i> Visual Slide Presentation</span>
             <div class="flex items-center gap-2">
               <button onclick="changeSlide('${deckId}', -1)" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">◀</button>
               <span id="${deckId}_counter" class="font-mono text-slate-400">1 of ${slides.length}</span>
@@ -1132,17 +1038,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
 
       const doc = iframe.contentWindow.document;
       doc.open();
-      doc.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>JARVIS Presentation</title>
-          <style>body { background:#020617; padding:24px; font-family:sans-serif; }</style>
-        </head>
-        <body>${slidesHtml}</body>
-        </html>
-      `);
+      doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Presentation</title><style>body { background:#020617; padding:24px; font-family:sans-serif; }</style></head><body>${slidesHtml}</body></html>`);
       doc.close();
       modal.classList.remove('hidden');
     }
@@ -1152,16 +1048,11 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       if (modal) modal.classList.add('hidden');
     }
 
-    function escapeJsString(str) {
-      if (!str) return '';
-      return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
-    }
-
     function renderChatList(filterQuery = "") {
       const historyContainer = document.getElementById("historyItems");
       if (!historyContainer) return;
 
-      const filtered = chats.filter(c => c.title.toLowerCase().includes(filterQuery));
+      const filtered = chats.filter(c => c.title.toLowerCase().includes(filterQuery.toLowerCase()));
 
       if (filtered.length === 0) {
         historyContainer.innerHTML = `<p class="text-[11px] text-slate-500 px-2 py-1 italic">No chats found.</p>`;
@@ -1171,16 +1062,119 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       historyContainer.innerHTML = filtered.map(c => `
         <div onclick="switchChat('${c.id}')" class="group px-2.5 py-2 rounded-xl border ${c.id === activeChatId ? 'bg-slate-800/90 border-cyan-500/40 text-cyan-300' : 'bg-transparent border-transparent hover:bg-slate-800/50 text-slate-300'} text-xs truncate cursor-pointer flex items-center justify-between transition">
           <div class="flex items-center gap-2 truncate">
-            <i data-lucide="message-square" class="w-3.5 h-3.5 shrink-0 ${c.id === activeChatId ? 'text-cyan-400' : 'text-slate-500'}"></i>
+            <i class="fa-regular fa-message ${c.id === activeChatId ? 'text-cyan-400' : 'text-slate-500'}"></i>
             <span class="truncate font-medium">${escapeHtml(c.title)}</span>
           </div>
           <button onclick="deleteChat('${c.id}', event)" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-0.5 rounded transition" title="Delete chat">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <i class="fa-solid fa-trash text-xs"></i>
           </button>
         </div>
       `).join('');
+    }
 
-      if (window.lucide) window.lucide.createIcons();
+    // --- GOOGLE WORKSPACE MODAL & OAUTH ---
+    function openWorkspaceModal() {
+      document.getElementById('workspaceModal').classList.remove('hidden');
+    }
+
+    function closeWorkspaceModal() {
+      document.getElementById('workspaceModal').classList.add('hidden');
+    }
+
+    function switchWorkspaceTab(mode) {
+      const btnC = document.getElementById('btnTabClassroom');
+      const btnD = document.getElementById('btnTabDocs');
+      const tabC = document.getElementById('tabClassroomContent');
+      const tabD = document.getElementById('tabDocsContent');
+
+      if (mode === 'classroom') {
+        btnC.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-white bg-slate-800 transition";
+        btnD.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition";
+        tabC.classList.remove('hidden');
+        tabD.classList.add('hidden');
+      } else {
+        btnD.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-white bg-slate-800 transition";
+        btnC.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition";
+        tabD.classList.remove('hidden');
+        tabC.classList.add('hidden');
+      }
+    }
+
+    function connectAndFetchClassroom() {
+      if (typeof google === 'undefined' || !google.accounts) {
+        showToast("Google GIS Client loading...", "info");
+      }
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me',
+        callback: (res) => {
+          if (res.access_token) {
+            showToast("Google Classroom Authenticated!", "success");
+            fetchClassroomCourses(res.access_token);
+          }
+        }
+      });
+      client.requestAccessToken();
+    }
+
+    async function fetchClassroomCourses(token) {
+      const container = document.getElementById('classroomListContainer');
+      container.innerHTML = `<p class="text-xs text-cyan-400 text-center py-4">Fetching courses...</p>`;
+      try {
+        const res = await fetch('https://classroom.googleapis.com/v1/courses', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.courses && data.courses.length > 0) {
+          container.innerHTML = data.courses.map(c => `
+            <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
+              <div>
+                <p class="font-bold text-white">${escapeHtml(c.name)}</p>
+                <p class="text-[10px] text-slate-500">${escapeHtml(c.section || 'Classroom Course')}</p>
+              </div>
+              <button onclick="attachCourseContext('${escapeHtml(c.name)}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[11px] font-semibold">Attach</button>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = `<p class="text-xs text-amber-400 text-center py-4">No Google Classroom courses found.</p>`;
+        }
+      } catch(e) {
+        container.innerHTML = `<p class="text-xs text-red-400 text-center py-4">Error connecting to Google Classroom API.</p>`;
+      }
+    }
+
+    function attachCourseContext(name) {
+      attachedFiles.push({
+        id: 'file_' + Date.now(),
+        name: `Google Classroom: ${name}`,
+        type: 'text/plain',
+        isImage: false,
+        textContent: `[Google Classroom Course Content: ${name}]`
+      });
+      renderFilePreviews();
+      closeWorkspaceModal();
+      showToast(`Imported ${name} into prompt!`, "success");
+    }
+
+    function connectAndFetchDocs() {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/documents.readonly',
+        callback: (res) => {
+          if (res.access_token) {
+            showToast("Google Docs Authenticated!", "success");
+            const container = document.getElementById('docsListContainer');
+            container.innerHTML = `
+              <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs space-y-2">
+                <p class="font-bold text-cyan-400">Google Docs Drive Connected</p>
+                <p class="text-[11px] text-slate-400">Ready to pull active document notes into JARVIS prompt.</p>
+                <button onclick="attachCourseContext('Google Doc Notes')" class="px-3 py-1.5 bg-cyan-600 text-white rounded-lg font-semibold text-xs">Import Notes</button>
+              </div>
+            `;
+          }
+        }
+      });
+      client.requestAccessToken();
     }
 
     // --- AUTHENTICATION SYSTEM ---
@@ -1212,20 +1206,12 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       }
     }
 
-    function isValidEmail(email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const fakeDomains = ['test.com', 'fake.com', 'example.com', 'temp.com', 'mail.com'];
-      if (!emailRegex.test(email)) return false;
-      const domain = email.split('@')[1].toLowerCase();
-      return !fakeDomains.includes(domain);
-    }
-
     function handleAuthSubmit() {
       const email = document.getElementById("authEmail").value.trim();
       const password = document.getElementById("authPassword").value.trim();
 
-      if (!isValidEmail(email)) {
-        showToast("Please enter a valid, real email address.", "error");
+      if (!email || !email.includes('@')) {
+        showToast("Please enter a valid email address.", "error");
         return;
       }
 
@@ -1237,7 +1223,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       if (authTabMode === "register") {
         const exists = registeredUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
         if (exists) {
-          showToast("An account with this email already exists. Please Sign In.", "error");
+          showToast("Account with this email exists. Please Sign In.", "error");
           return;
         }
 
@@ -1251,7 +1237,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
         closeAuthModal();
         updateUserUI();
         loadUserChats();
-        showToast(`Welcome ${currentUser.name}! Account registered for this session.`, "success");
+        showToast(`Welcome ${currentUser.name}! Registered for this session.`, "success");
 
       } else {
         const user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
@@ -1287,18 +1273,16 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
     }
 
     function handleLogout() {
-      showConfirmModal("Sign Out?", "Are you sure you want to sign out of your account on this tab?", () => {
-        currentUser = null;
-        sessionStorage.removeItem("jarvis_tab_session_user");
-        updateUserUI();
-        loadUserChats();
-        showToast("Signed out. Switched to Guest Mode on this tab.", "info");
-      });
+      currentUser = null;
+      sessionStorage.removeItem("jarvis_tab_session_user");
+      updateUserUI();
+      loadUserChats();
+      showToast("Signed out. Switched to Guest Mode on this tab.", "info");
     }
 
     function updateUserUI() {
       const authBtnText = document.getElementById("authBtnText");
-      const banner = document.getElementById("accountBanner");
+      const bannerStatusLabel = document.getElementById("bannerStatusLabel");
       const userName = document.getElementById("userName");
       const userSub = document.getElementById("userSub");
       const userAvatar = document.getElementById("userAvatar");
@@ -1306,14 +1290,14 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
 
       if (currentUser) {
         if (authBtnText) authBtnText.innerText = currentUser.name;
-        if (banner) banner.innerHTML = `<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Sync Active (${currentUser.name})</span>`;
+        if (bannerStatusLabel) bannerStatusLabel.innerText = `Account: ${currentUser.name}`;
         if (userName) userName.innerText = currentUser.name;
         if (userSub) userSub.innerText = currentUser.email;
         if (userAvatar) userAvatar.innerText = currentUser.name.charAt(0).toUpperCase();
         if (logoutBtn) logoutBtn.classList.remove("hidden");
       } else {
         if (authBtnText) authBtnText.innerText = "Sign In";
-        if (banner) banner.innerHTML = `<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>Guest Mode</span><button onclick="openAuthModal()" class="underline text-[11px] font-semibold hover:text-amber-200">Sign In</button>`;
+        if (bannerStatusLabel) bannerStatusLabel.innerText = "Guest Mode";
         if (userName) userName.innerText = "Guest User";
         if (userSub) userSub.innerText = "Chats saved in memory";
         if (userAvatar) userAvatar.innerText = "G";
@@ -1321,7 +1305,7 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       }
     }
 
-    // --- UTILITY HELPERS ---
+    // --- UTILITIES ---
     function downloadImage(url) {
       showToast("Downloading image...", "info");
       fetch(url)
@@ -1352,37 +1336,11 @@ PRIMARY KNOWLEDGE & EXHAUSTIVE RESPONSE INSTRUCTIONS:
       toast.innerText = message;
       container.appendChild(toast);
 
-      setTimeout(() => {
-        toast.classList.remove("translate-y-2", "opacity-0");
-      }, 10);
-
+      setTimeout(() => toast.classList.remove("translate-y-2", "opacity-0"), 10);
       setTimeout(() => {
         toast.classList.add("opacity-0");
         setTimeout(() => toast.remove(), 300);
       }, 3500);
-    }
-
-    function showConfirmModal(title, message, onConfirm) {
-      const modal = document.getElementById("confirmModal");
-      const titleElem = document.getElementById("confirmTitle");
-      const msgElem = document.getElementById("confirmMessage");
-      const okBtn = document.getElementById("confirmOkBtn");
-      if (!modal) return;
-
-      if (titleElem) titleElem.innerText = title;
-      if (msgElem) msgElem.innerText = message;
-      
-      okBtn.onclick = () => {
-        if (onConfirm) onConfirm();
-        hideConfirmModal();
-      };
-      
-      modal.classList.remove("hidden");
-    }
-
-    function hideConfirmModal() {
-      const modal = document.getElementById("confirmModal");
-      if (modal) modal.classList.add("hidden");
     }
 
     function scrollToBottom() {
