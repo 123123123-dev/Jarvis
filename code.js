@@ -251,24 +251,38 @@ function initSpeechRecognition() {
   const recognition = new SpeechRecognition();
   recognition.continuous = true;
   recognition.interimResults = true;
-  recognition.lang = 'en-US';
+  recognition.lang = navigator.language || 'en-US';
 
   const userInput = document.getElementById('userInput');
+  let initialText = '';
+
+  recognition.onstart = () => {
+    state.isListening = true;
+    initialText = userInput ? userInput.value : '';
+    const micBtn = document.getElementById('micBtn');
+    if (micBtn) {
+      micBtn.classList.remove('text-slate-400');
+      micBtn.classList.add('text-red-400', 'animate-pulse', 'bg-red-500/20');
+    }
+  };
 
   recognition.onresult = (event) => {
-    let transcript = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript;
+    let currentTranscript = '';
+    for (let i = 0; i < event.results.length; i++) {
+      currentTranscript += event.results[i][0].transcript;
     }
     if (userInput) {
-      userInput.value = transcript;
+      userInput.value = (initialText ? initialText + ' ' : '') + currentTranscript;
       userInput.style.height = 'auto';
       userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
     }
   };
 
   recognition.onerror = (err) => {
-    console.warn("Speech recognition error:", err);
+    console.warn("Speech recognition notice:", err.error);
+    if (err.error === 'not-allowed') {
+      alert("Microphone permission was denied. Please allow microphone access in your browser settings.");
+    }
     stopVoiceWriting();
   };
 
@@ -284,26 +298,24 @@ function toggleVoiceWriting() {
 
   if (state.isListening) {
     stopVoiceWriting();
-  } else {
-    if (!state.recognition) {
-      state.recognition = initSpeechRecognition();
-    }
+    return;
+  }
 
-    if (!state.recognition) {
-      alert("Voice speech recognition is not supported in this browser. Please use Chrome or Edge.");
-      return;
-    }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Voice Speech Recognition is not supported in this browser. Please use Chrome, Edge, or Safari.");
+    return;
+  }
 
-    try {
-      state.recognition.start();
-      state.isListening = true;
-      if (micBtn) {
-        micBtn.classList.remove('text-slate-400');
-        micBtn.classList.add('text-red-400', 'animate-pulse', 'bg-red-500/20');
-      }
-    } catch (e) {
-      console.error("Failed to start voice recognition:", e);
-    }
+  if (!state.recognition) {
+    state.recognition = initSpeechRecognition();
+  }
+
+  try {
+    state.recognition.start();
+  } catch (e) {
+    console.error("Failed to start voice recognition:", e);
+    stopVoiceWriting();
   }
 }
 
