@@ -81,8 +81,9 @@
     <div class="flex items-center gap-2 sm:gap-3">
       <select id="modelSelect" class="bg-slate-800/90 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 transition">
         <option value="openai/gpt-oss-20b" selected>Jarvis Instant (Ultra Fast)</option>
+        <option value="llama-3.2-11b-vision-preview">Jarvis Turbo (Vision & Images)</option>
         <option value="openai/gpt-oss-120b">Jarvis Pro (120B Intelligence)</option>
-        <option value="deepseek-r1-distill-llama-70b">Ironman Jarvis (70B Reasoning)</option>
+        <option value="deepseek-r1-distill-llama-70b">Jarvis Ironman (70B Reasoning)</option>
       </select>
 
       <button id="authBtn" onclick="openAuthModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3.5 py-1.5 rounded-xl font-medium transition shadow-lg shadow-cyan-600/20 flex items-center gap-1.5">
@@ -311,6 +312,19 @@
     const GROQ_API_KEY = "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";
     const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
+    const MODEL_NAMES = {
+      "openai/gpt-oss-20b": "Jarvis Instant",
+      "openai/gpt-oss-120b": "Jarvis Pro",
+      "llama-3.2-11b-vision-preview": "Jarvis Turbo",
+      "llama-3.2-90b-vision-preview": "Jarvis Turbo Pro",
+      "llama-3.3-70b-versatile": "Jarvis Pro",
+      "deepseek-r1-distill-llama-70b": "Jarvis Ironman"
+    };
+
+    function getModelDisplayName(modelId) {
+      return MODEL_NAMES[modelId] || "Jarvis Engine";
+    }
+
     const SYSTEM_PROMPT = {
       role: "system",
       content: `You are JARVIS, an advanced AI assistant created and developed by Abdullah Waheed.
@@ -336,7 +350,7 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
     let currentUser = JSON.parse(localStorage.getItem("jarvis_active_user") || "null");
     let registeredUsers = JSON.parse(localStorage.getItem("jarvis_registered_users_db") || "[]");
     let authTabMode = "signin";
-    let currentModel = "openai/gpt-oss-20b";
+    let currentModel = "llama-3.2-11b-vision-preview";
     let activeChatId = null;
     let chats = [];
     let isGenerating = false;
@@ -382,13 +396,6 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
         userInput.addEventListener('input', function() {
           this.style.height = 'auto';
           this.style.height = Math.min(this.scrollHeight, 160) + 'px';
-        });
-      }
-
-      const modelSelect = document.getElementById('modelSelect');
-      if (modelSelect) {
-        modelSelect.addEventListener('change', (e) => {
-          currentModel = e.target.value;
         });
       }
 
@@ -498,6 +505,18 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
     }
 
     // --- VOICE WRITING (SPEECH-TO-TEXT) LOGIC ---
+    function stopVoiceWriting() {
+      isListening = false;
+      if (speechRecognitionObj) {
+        try { speechRecognitionObj.stop(); } catch(e) {}
+      }
+      const micBtn = document.getElementById('micBtn');
+      if (micBtn) {
+        micBtn.classList.remove('text-red-400', 'animate-pulse', 'bg-red-500/20');
+        micBtn.classList.add('text-slate-400');
+      }
+    }
+
     function toggleVoiceWriting() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -559,99 +578,102 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       try {
         speechRecognitionObj.start();
       } catch (e) {
-        stopVoiceWriting();
+        console.warn("Recognition start notice:", e);
       }
-    }
-
-    function stopVoiceWriting() {
-      if (speechRecognitionObj && isListening) {
-        try { speechRecognitionObj.stop(); } catch(e) {}
-      }
-      isListening = false;
-      const micBtn = document.getElementById('micBtn');
-      if (micBtn) {
-        micBtn.classList.remove('text-red-400', 'animate-pulse', 'bg-red-500/20');
-        micBtn.classList.add('text-slate-400');
-      }
-    }
-
-    function toggleMobileSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebarOverlay');
-      sidebar.classList.toggle('-translate-x-full');
-      overlay.classList.toggle('hidden');
     }
 
     // --- CHAT SESSION MANAGEMENT ---
-    function loadUserChats() {
-      const storageKey = currentUser ? `jarvis_chats_${currentUser.email}` : `jarvis_chats_guest`;
-      chats = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      
-      if (chats.length === 0) {
-        createNewSession(false);
-      } else {
-        activeChatId = chats[0].id;
-        renderChatList();
-        renderChatMessages();
+    function getActiveChat() {
+      let chat = chats.find(c => c.id === activeChatId);
+      if (!chat) {
+        if (chats.length > 0) {
+          chat = chats[0];
+          activeChatId = chat.id;
+        } else {
+          chat = createNewSessionObj();
+          chats = [chat];
+          activeChatId = chat.id;
+        }
       }
+      return chat;
     }
 
-    function saveUserChats() {
-      const storageKey = currentUser ? `jarvis_chats_${currentUser.email}` : `jarvis_chats_guest`;
-      localStorage.setItem(storageKey, JSON.stringify(chats));
-      renderChatList();
-    }
-
-    function createNewSession(shouldRender = true) {
-      const newChat = {
-        id: "chat_" + Date.now(),
-        title: "New Conversation",
-        updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    function createNewSessionObj() {
+      return {
+        id: 'chat_' + Date.now(),
+        title: 'New Chat',
+        createdAt: Date.now(),
         messages: []
       };
+    }
+
+    function createNewSession() {
+      const newChat = createNewSessionObj();
       chats.unshift(newChat);
       activeChatId = newChat.id;
       saveUserChats();
-
-      if (shouldRender) {
-        renderChatMessages();
-      }
-    }
-
-    function switchChat(chatId) {
-      activeChatId = chatId;
       renderChatList();
       renderChatMessages();
-      const sidebar = document.getElementById('sidebar');
-      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
-        toggleMobileSidebar();
+    }
+
+    function loadUserChats() {
+      const key = currentUser ? `jarvis_chats_${currentUser.email}` : 'jarvis_chats_guest';
+      try {
+        const saved = localStorage.getItem(key);
+        chats = saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        chats = [];
+      }
+      if (chats.length === 0) {
+        const defaultChat = createNewSessionObj();
+        chats = [defaultChat];
+      }
+      activeChatId = chats[0].id;
+      renderChatList();
+      renderChatMessages();
+    }
+
+    function saveUserChats() {
+      const key = currentUser ? `jarvis_chats_${currentUser.email}` : 'jarvis_chats_guest';
+      try {
+        localStorage.setItem(key, JSON.stringify(chats));
+      } catch (e) {
+        console.error("Save error:", e);
       }
     }
 
-    function deleteChat(chatId, e) {
-      e.stopPropagation();
-      showConfirmModal("Delete Conversation?", "Are you sure you want to delete this chat session?", () => {
-        chats = chats.filter(c => c.id !== chatId);
-        if (chats.length === 0) {
-          createNewSession(false);
-        } else if (activeChatId === chatId) {
-          activeChatId = chats[0].id;
-        }
-        saveUserChats();
-        renderChatMessages();
-      });
+    function switchChat(id) {
+      activeChatId = id;
+      renderChatList();
+      renderChatMessages();
+    }
+
+    function deleteChat(id, e) {
+      if (e) e.stopPropagation();
+      chats = chats.filter(c => c.id !== id);
+      if (chats.length === 0) {
+        const fresh = createNewSessionObj();
+        chats = [fresh];
+        activeChatId = fresh.id;
+      } else if (activeChatId === id) {
+        activeChatId = chats[0].id;
+      }
+      saveUserChats();
+      renderChatList();
+      renderChatMessages();
+      showToast("Chat deleted", "info");
     }
 
     function handleClearAllSessions() {
-      showConfirmModal("Clear All Conversations?", "This will permanently remove all your saved chat history.", () => {
-        chats = [];
-        createNewSession(true);
-        showToast("All chats cleared", "info");
+      showConfirmModal("Clear History", "Are you sure you want to delete all saved conversations?", () => {
+        const fresh = createNewSessionObj();
+        chats = [fresh];
+        activeChatId = fresh.id;
+        saveUserChats();
+        renderChatList();
+        renderChatMessages();
+        showToast("All conversations cleared", "info");
       });
-    }
-
-    function getActiveChat() {
-      return chats.find(c => c.id === activeChatId) || chats[0];
     }
 
     function sendQuickPrompt(text) {
@@ -662,79 +684,59 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       }
     }
 
-    // --- RENDER CHAT MESSAGES & SLIDES ---
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (sidebar && overlay) {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+      }
+    }
+
+    // --- RENDER CHAT MESSAGES ---
     function renderChatMessages() {
       const chatContainer = document.getElementById('chatContainer');
+      const welcomeCard = document.getElementById('welcomeCard');
       const activeChat = getActiveChat();
 
       if (!chatContainer) return;
 
-      if (!activeChat || activeChat.messages.length === 0) {
-        chatContainer.innerHTML = `
-          <div id="welcomeCard" class="flex flex-col items-center justify-center min-h-[60vh] text-center py-12">
-            <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4 shadow-xl shadow-cyan-500/5">
-              <span class="text-cyan-400 font-bold text-3xl">J</span>
-            </div>
-            <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">Hello, I am JARVIS</h2>
-            <p class="text-sm text-slate-400 max-w-md leading-relaxed mb-6">
-              Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate multi-style artwork, solve math, or upload up to 10 files!
-            </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full text-left">
-              <button onclick="sendQuickPrompt('Create a 4-slide presentation on Artificial Intelligence')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
-                <i data-lucide="presentation" class="w-4 h-4 text-cyan-400"></i>
-                <span>Create a presentation on AI</span>
-              </button>
-              <button onclick="sendQuickPrompt('Paint a watercolor portrait of a futuristic cyberpunk city')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
-                <i data-lucide="image" class="w-4 h-4 text-purple-400"></i>
-                <span>Generate watercolor artwork</span>
-              </button>
-              <button onclick="sendQuickPrompt('Write a Python script for automated web scraping with BeautifulSoup')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
-                <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
-                <span>Write web scraping script</span>
-              </button>
-              <button onclick="sendQuickPrompt('Who created and developed you?')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
-                <i data-lucide="user" class="w-4 h-4 text-amber-400"></i>
-                <span>Who is your creator?</span>
-              </button>
-            </div>
-          </div>
-        `;
-        if (window.lucide) window.lucide.createIcons();
+      if (activeChat.messages.length === 0) {
+        if (welcomeCard) welcomeCard.classList.remove('hidden');
+        chatContainer.innerHTML = '';
+        if (welcomeCard) chatContainer.appendChild(welcomeCard);
         return;
       }
 
-      chatContainer.innerHTML = activeChat.messages.map((msg, index) => {
+      if (welcomeCard) welcomeCard.classList.add('hidden');
+
+      chatContainer.innerHTML = activeChat.messages.map((msg) => {
         const isUser = msg.role === 'user';
         return `
-          <div class="flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} my-4 max-w-3xl mx-auto">
+          <div class="flex gap-3.5 ${isUser ? 'justify-end' : 'justify-start'} mb-5 max-w-3xl mx-auto w-full">
             ${!isUser ? `
-              <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-sm shadow-cyan-500/20">
+              <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center shrink-0 mt-0.5 text-xs shadow-sm shadow-cyan-500/20">
                 J
               </div>
             ` : ''}
 
             <div class="flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start flex-1 min-w-0'}">
-              <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'bg-slate-800 text-slate-100 rounded-tr-none border border-slate-700/60 shadow-md' : 'bg-transparent text-slate-100'}">
+              <div class="rounded-2xl px-4 py-3 text-xs leading-relaxed ${isUser ? 'bg-slate-800 text-slate-100 rounded-tr-none border border-slate-700' : 'bg-slate-900/90 text-slate-100 rounded-tl-none border border-slate-800 shadow-xl'}">
                 
-                <!-- Render Attached Files/Images Grid in User Bubble -->
                 ${isUser && msg.attachedFiles && msg.attachedFiles.length > 0 ? `
-                  <div class="mb-2.5">
-                    <!-- Image Gallery Grid (up to 10 images) -->
+                  <div class="mb-2">
                     ${msg.attachedFiles.some(f => f.isImage) ? `
-                      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-2">
+                      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-1.5">
                         ${msg.attachedFiles.filter(f => f.isImage).map(f => `
-                          <div class="relative group rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-sm aspect-square">
-                            <img src="${f.dataUrl}" class="w-full h-full object-cover rounded-xl" />
-                          </div>
+                          <img src="${f.dataUrl}" class="max-w-full max-h-36 rounded-xl border border-slate-700 shadow-md object-cover" />
                         `).join('')}
                       </div>
                     ` : ''}
 
-                    <!-- Text / Code Document Pills -->
-                    <div class="flex flex-wrap gap-1.5">
+                    <div class="flex flex-wrap gap-1">
                       ${msg.attachedFiles.filter(f => !f.isImage).map(f => `
                         <div class="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-700 px-2.5 py-1 rounded-xl text-xs text-cyan-300 font-mono">
-                          <i data-lucide="file-text" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
+                          <i data-lucide="file-text" class="w-3.5 h-3.5 text-cyan-400"></i>
                           <span>${escapeHtml(f.name)}</span>
                         </div>
                       `).join('')}
@@ -742,12 +744,18 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
                   </div>
                 ` : ''}
 
-                ${isUser ? `<div class="whitespace-pre-wrap">${escapeHtml(msg.content)}</div>` : `<div id="msg-content-${index}" class="markdown-body space-y-2"></div>`}
+                ${isUser ? `<div class="whitespace-pre-wrap text-sm">${escapeHtml(msg.content)}</div>` : `<div id="msg-content-${msg.id}" class="markdown-body"></div>`}
+              </div>
+
+              <div class="flex items-center gap-2 mt-1 px-1 text-slate-500 text-[10px] ${isUser ? 'justify-end' : 'justify-start'}">
+                <button onclick="navigator.clipboard.writeText(\`${escapeJsString(msg.content)}\`).then(() => showToast('Copied to clipboard!', 'success'))" class="hover:text-slate-300 p-0.5 rounded transition" title="Copy text">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                </button>
               </div>
             </div>
 
             ${isUser ? `
-              <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-slate-700">
+              <div class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
                 U
               </div>
             ` : ''}
@@ -755,13 +763,10 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
         `;
       }).join('');
 
-      // Render Markdown, Math, Images & Presentation Visual Cards for Assistant Messages
-      activeChat.messages.forEach((msg, index) => {
+      activeChat.messages.forEach(msg => {
         if (msg.role === 'assistant') {
-          const elem = document.getElementById(`msg-content-${index}`);
-          if (elem) {
-            renderFormattedMarkdown(elem, msg.content);
-          }
+          const elem = document.getElementById(`msg-content-${msg.id}`);
+          if (elem) renderFormattedMarkdown(elem, msg.content);
         }
       });
 
@@ -769,161 +774,56 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       scrollToBottom();
     }
 
-    function renderFormattedMarkdown(element, rawText) {
-      if (!rawText) {
-        element.innerHTML = `<span class="inline-block w-2 h-4 bg-cyan-400 animate-pulse"></span>`;
-        return;
-      }
-
-      let parsedHtml = rawText;
-      if (window.marked) {
-        parsedHtml = marked.parse(rawText);
-      }
-
-      element.innerHTML = parsedHtml;
-
-      // Render KaTeX Math
-      if (window.renderMathInElement) {
-        try {
-          renderMathInElement(element, {
-            delimiters: [
-              { left: "$$", right: "$$", display: true },
-              { left: "\\[", right: "\\]", display: true },
-              { left: "$", right: "$", display: false },
-              { left: "\\(", right: "\\)", display: false }
-            ],
-            throwOnError: false
-          });
-        } catch (e) {}
-      }
-
-      // Format Images with Download Button
-      element.querySelectorAll("img").forEach((img) => {
-        const src = img.getAttribute("src");
-        if (src && !img.parentElement.classList.contains("image-wrap")) {
-          const wrapper = document.createElement("div");
-          wrapper.className = "image-wrap relative group my-4 rounded-xl overflow-hidden border border-slate-800 shadow-xl inline-block max-w-full";
-          
-          img.className = "rounded-xl max-w-full h-auto block";
-          img.parentNode.insertBefore(wrapper, img);
-          wrapper.appendChild(img);
-
-          const dlBtn = document.createElement("button");
-          dlBtn.className = "absolute bottom-3 right-3 bg-slate-900/90 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 backdrop-blur-md shadow-lg transition flex items-center gap-1.5 opacity-90 hover:opacity-100";
-          dlBtn.innerHTML = `📥 Download Image`;
-          dlBtn.onclick = () => downloadImage(src);
-          wrapper.appendChild(dlBtn);
-        }
-      });
-
-      // Detect Presentation Content and inject Visual Slide Player
-      if (rawText.includes("Slide 1:") || rawText.includes("### Slide 1")) {
-        injectVisualSlidePlayer(element, rawText);
-      }
-    }
-
-    // --- VISUAL SLIDE PLAYER FOR PRESENTATIONS ---
-    function injectVisualSlidePlayer(containerElem, rawText) {
-      if (containerElem.querySelector(".slide-player")) return;
-
-      const slideBlocks = rawText.split(/###?\s*Slide\s*\d+:?/i).filter(s => s.trim().length > 0);
-      if (slideBlocks.length < 2) return;
-
-      let currentSlideIdx = 0;
-      const playerDiv = document.createElement("div");
-      playerDiv.className = "slide-player my-4 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl max-w-2xl";
-
-      function renderSlideCard() {
-        const slideContent = marked.parse("### Slide " + (currentSlideIdx + 1) + slideBlocks[currentSlideIdx + 1]);
-        playerDiv.innerHTML = `
-          <div class="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
-            <span class="text-cyan-400 font-bold flex items-center gap-1.5">
-              <span>📊 Slide Deck</span>
-            </span>
-            <div class="flex items-center gap-2">
-              <button id="prevSlideBtn" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-300">◀</button>
-              <span class="text-slate-400">${currentSlideIdx + 1} / ${slideBlocks.length - 1}</span>
-              <button id="nextSlideBtn" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-300">▶</button>
-              <button id="previewSlideBtn" class="ml-2 px-2.5 py-0.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-sans font-medium">Fullscreen</button>
-            </div>
-          </div>
-          <div class="p-6 bg-slate-900/90 text-slate-100 min-h-[220px] markdown-body">
-            ${slideContent}
-          </div>
-        `;
-
-        playerDiv.querySelector("#prevSlideBtn").onclick = () => {
-          if (currentSlideIdx > 0) { currentSlideIdx--; renderSlideCard(); }
-        };
-        playerDiv.querySelector("#nextSlideBtn").onclick = () => {
-          if (currentSlideIdx < slideBlocks.length - 2) { currentSlideIdx++; renderSlideCard(); }
-        };
-        playerDiv.querySelector("#previewSlideBtn").onclick = () => openPresentationFullscreen(rawText);
-      }
-
-      renderSlideCard();
-      containerElem.appendChild(playerDiv);
-    }
-
-    function openPresentationFullscreen(rawText) {
-      const modal = document.getElementById("presentationModal");
-      const iframe = document.getElementById("presentationIframe");
-      if (!modal || !iframe) return;
-
-      const slideBlocks = rawText.split(/###?\s*Slide\s*\d+:?/i).filter(s => s.trim().length > 0);
-      const slidesHtml = slideBlocks.slice(1).map((slide, idx) => `
-        <div class="slide p-8 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl min-h-[350px] flex flex-col justify-center my-6 max-w-3xl mx-auto">
-          <div class="text-xs font-mono text-cyan-400 font-bold mb-3">SLIDE ${idx + 1} OF ${slideBlocks.length - 1}</div>
-          <div class="prose prose-invert max-w-none text-slate-100 text-sm leading-relaxed">
-            ${window.marked ? marked.parse(slide) : slide}
-          </div>
-        </div>
-      `).join('');
-
-      const htmlContent = `<!DOCTYPE html><html class="dark"><head><script src="https://cdn.tailwindcss.com"></` + `script><style>body { background-color: #090d16; color: #f8fafc; font-family: ui-sans-serif, system-ui, sans-serif; padding: 2rem; } h1, h2, h3 { color: #38bdf8; font-weight: bold; margin-bottom: 0.75rem; } p { margin-bottom: 0.75rem; line-height: 1.6; } ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; } ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }</style></head><body><div class="max-w-4xl mx-auto">${slidesHtml}</div></body></html>`;
-
-      iframe.srcdoc = htmlContent;
-      modal.classList.remove("hidden");
-    }
-
-    function closePresentationModal() {
-      const modal = document.getElementById("presentationModal");
-      if (modal) modal.classList.add("hidden");
-    }
-
-    // --- REAL-TIME CHAT STREAMING WITH MULTI-IMAGE / FILE ATTACHMENTS ---
+    // --- STREAMING MESSAGE DISPATCHER ---
     async function handleSendMessage() {
       const userInput = document.getElementById('userInput');
-      const text = userInput ? userInput.value.trim() : '';
+      const prompt = userInput ? userInput.value.trim() : '';
 
-      if ((!text && attachedFiles.length === 0) || isGenerating) return;
+      if ((!prompt && attachedFiles.length === 0) || isGenerating) return;
 
       if (isListening) stopVoiceWriting();
 
-      userInput.value = '';
-      userInput.style.height = 'auto';
-
       const activeChat = getActiveChat();
+
+      let textPrompt = prompt;
       const currentAttachedFiles = [...attachedFiles];
 
-      if (activeChat.messages.length === 0) {
-        const firstFileName = currentAttachedFiles.length > 0 ? currentAttachedFiles[0].name : '';
-        activeChat.title = (text || firstFileName || 'New Conversation').substring(0, 24) + '...';
+      if (currentAttachedFiles.length > 0) {
+        currentAttachedFiles.forEach(f => {
+          if (!f.isImage && f.textContent) {
+            textPrompt += `\n\n[Attached File: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
+          }
+        });
       }
 
-      activeChat.messages.push({
+      const userMsg = {
+        id: 'msg_' + Date.now(),
         role: 'user',
-        content: text || (currentAttachedFiles.length > 0 ? `[Sent ${currentAttachedFiles.length} file(s)]` : ''),
-        attachedFiles: currentAttachedFiles
-      });
+        content: prompt || (currentAttachedFiles.length > 0 ? `[Sent ${currentAttachedFiles.length} file(s)]` : ''),
+        attachedFiles: currentAttachedFiles,
+        timestamp: Date.now()
+      };
 
       clearAttachedFile();
 
-      const assistantMsgIndex = activeChat.messages.length;
-      activeChat.messages.push({
+      if (userInput) {
+        userInput.value = '';
+        userInput.style.height = 'auto';
+      }
+
+      if (activeChat.messages.length === 0) {
+        activeChat.title = userMsg.content.length > 30 ? userMsg.content.substring(0, 30) + '...' : userMsg.content;
+      }
+
+      activeChat.messages.push(userMsg);
+
+      const assistantMsg = {
+        id: 'msg_' + (Date.now() + 1),
         role: 'assistant',
-        content: ''
-      });
+        content: '',
+        timestamp: Date.now()
+      };
+      activeChat.messages.push(assistantMsg);
 
       isGenerating = true;
       renderChatMessages();
@@ -933,53 +833,47 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
         ...activeChat.messages.slice(0, -1).map(m => {
           if (m.role !== 'user') return { role: m.role, content: m.content };
 
-          let textPrompt = m.content || '';
+          let mText = m.content || '';
           if (m.attachedFiles && m.attachedFiles.length > 0) {
             m.attachedFiles.forEach(f => {
               if (!f.isImage && f.textContent) {
-                textPrompt += `\n\n[Attached Document: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
+                mText += `\n\n[Attached File: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
               }
             });
           }
 
           const hasImages = m.attachedFiles && m.attachedFiles.some(f => f.isImage);
           if (hasImages) {
-            const contentParts = [{ type: 'text', text: textPrompt }];
+            const parts = [{ type: 'text', text: mText }];
             m.attachedFiles.forEach(f => {
               if (f.isImage && f.dataUrl) {
-                contentParts.push({
-                  type: 'image_url',
-                  image_url: { url: f.dataUrl }
-                });
+                parts.push({ type: 'image_url', image_url: { url: f.dataUrl } });
               }
             });
-            return { role: 'user', content: contentParts };
+            return { role: 'user', content: parts };
           }
 
-          return { role: 'user', content: textPrompt };
+          return { role: 'user', content: mText };
         })
       ];
 
-      try {
-        let response = await fetch(GROQ_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${GROQ_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: currentModel,
-            messages: formattedMessages,
-            stream: true,
-            temperature: 0.7
-          })
-        });
+      const modelSelect = document.getElementById('modelSelect');
+      if (modelSelect) currentModel = modelSelect.value;
 
-        // Fallback to Instant Model if restricted
-        if (!response.ok && currentModel !== "openai/gpt-oss-20b") {
-          currentModel = "openai/gpt-oss-20b";
-          const modelSelect = document.getElementById("modelSelect");
-          if (modelSelect) modelSelect.value = currentModel;
+      const hasImagesInPayload = activeChat.messages.some(m => m.attachedFiles && m.attachedFiles.some(f => f.isImage));
+      
+      let usedModel = currentModel;
+      let response = null;
+
+      const modelCandidates = hasImagesInPayload 
+        ? ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"] 
+        : [currentModel, "openai/gpt-oss-20b", "llama-3.3-70b-versatile"];
+
+      const uniqueCandidates = [...new Set(modelCandidates)];
+
+      for (const modelCandidate of uniqueCandidates) {
+        try {
+          usedModel = modelCandidate;
           response = await fetch(GROQ_API_URL, {
             method: "POST",
             headers: {
@@ -987,23 +881,63 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
               "Authorization": `Bearer ${GROQ_API_KEY}`
             },
             body: JSON.stringify({
-              model: currentModel,
+              model: modelCandidate,
               messages: formattedMessages,
               stream: true,
               temperature: 0.7
             })
           });
-        }
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Unable to reach JARVIS core.`);
+          if (response && response.ok) break;
+        } catch (e) {
+          console.warn(`Model candidate ${modelCandidate} notice:`, e);
+        }
+      }
+
+      if ((!response || !response.ok) && hasImagesInPayload) {
+        const textOnlyMessages = [
+          SYSTEM_PROMPT,
+          ...activeChat.messages.slice(0, -1).map(m => {
+            if (m.role !== 'user') return { role: m.role, content: m.content };
+            let txt = m.content || '';
+            if (m.attachedFiles && m.attachedFiles.length > 0) {
+              m.attachedFiles.forEach(f => {
+                txt += `\n[Attached File: ${f.name}]`;
+              });
+            }
+            return { role: 'user', content: txt };
+          })
+        ];
+
+        usedModel = "openai/gpt-oss-20b";
+        try {
+          response = await fetch(GROQ_API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${GROQ_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: usedModel,
+              messages: textOnlyMessages,
+              stream: true,
+              temperature: 0.7
+            })
+          });
+        } catch (e) {}
+      }
+
+      try {
+        if (!response || !response.ok) {
+          const displayName = getModelDisplayName(usedModel);
+          throw new Error(`${displayName} is currently busy. Please try again in a moment.`);
         }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
         let accumulatedText = "";
 
-        const assistantElem = document.getElementById(`msg-content-${assistantMsgIndex}`);
+        const assistantElem = document.getElementById(`msg-content-${assistantMsg.id}`);
 
         while (true) {
           const { done, value } = await reader.read();
@@ -1021,7 +955,7 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
                 const parsed = JSON.parse(dataStr);
                 const delta = parsed.choices[0]?.delta?.content || "";
                 accumulatedText += delta;
-                activeChat.messages[assistantMsgIndex].content = accumulatedText;
+                assistantMsg.content = accumulatedText;
                 if (assistantElem) renderFormattedMarkdown(assistantElem, accumulatedText);
                 scrollToBottom();
               } catch (e) {}
@@ -1032,12 +966,176 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
         saveUserChats();
 
       } catch (error) {
-        activeChat.messages[assistantMsgIndex].content = `⚠️ **JARVIS Notice (${currentModel}):**\n\n${error.message}`;
+        const friendlyName = getModelDisplayName(currentModel);
+        assistantMsg.content = `⚠️ **JARVIS Notice (${friendlyName}):**\n\n${error.message}`;
         saveUserChats();
         renderChatMessages();
       } finally {
         isGenerating = false;
       }
+    }
+
+    function renderFormattedMarkdown(container, text) {
+      if (!text) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const isPresentation = text.includes('### Slide') || text.includes('Slide 1:');
+
+      if (isPresentation) {
+        container.innerHTML = renderPresentationDeck(text);
+        return;
+      }
+
+      let parsed = text;
+      if (window.marked) {
+        try {
+          parsed = marked.parse(text);
+        } catch (e) {
+          parsed = escapeHtml(text);
+        }
+      }
+
+      container.innerHTML = parsed;
+
+      container.querySelectorAll('img').forEach(img => {
+        if (img.src.includes('pollinations.ai') && !img.parentElement.querySelector('.download-img-btn')) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'relative inline-block my-2 rounded-2xl overflow-hidden group border border-slate-800 shadow-xl';
+          img.parentNode.insertBefore(wrapper, img);
+          wrapper.appendChild(img);
+
+          const btn = document.createElement('button');
+          btn.className = 'download-img-btn absolute bottom-3 right-3 bg-slate-900/90 hover:bg-cyan-600 text-white border border-slate-700 text-xs px-3 py-1.5 rounded-xl font-medium shadow-lg transition opacity-0 group-hover:opacity-100 flex items-center gap-1.5';
+          btn.innerHTML = '📥 Download Image';
+          btn.onclick = () => downloadImage(img.src);
+          wrapper.appendChild(btn);
+        }
+      });
+
+      if (window.renderMathInElement) {
+        try {
+          renderMathInElement(container, {
+            delimiters: [
+              { left: "$$", right: "$$", display: true },
+              { left: "$", right: "$", display: false },
+              { left: "\\(", right: "\\)", display: false },
+              { left: "\\[", right: "\\]", display: true }
+            ]
+          });
+        } catch(e) {}
+      }
+    }
+
+    function renderPresentationDeck(text) {
+      const slideRegex = /(?:###\s*Slide\s*\d+:?|Slide\s*\d+:?)\s*([^\n]+)([\s\S]*?)(?=(?:###\s*Slide\s*\d+:?|Slide\s*\d+:?)|$)/gi;
+      const slides = [];
+      let match;
+      while ((match = slideRegex.exec(text)) !== null) {
+        slides.push({
+          title: match[1].trim(),
+          content: match[2].trim()
+        });
+      }
+
+      if (slides.length === 0) {
+        slides.push({ title: "Presentation Overview", content: text });
+      }
+
+      const deckId = 'deck_' + Math.random().toString(36).substr(2, 6);
+      window[deckId + '_slides'] = slides;
+      window[deckId + '_index'] = 0;
+
+      return `
+        <div id="${deckId}" class="my-3 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+          <div class="p-3 border-b border-slate-800 bg-slate-950 flex items-center justify-between text-xs">
+            <span class="font-bold text-cyan-400 font-mono">📊 Visual Slide Presentation</span>
+            <div class="flex items-center gap-2">
+              <button onclick="changeSlide('${deckId}', -1)" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">◀</button>
+              <span id="${deckId}_counter" class="font-mono text-slate-400">1 of ${slides.length}</span>
+              <button onclick="changeSlide('${deckId}', 1)" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">▶</button>
+              <button onclick="openPresentationFullscreen('${deckId}')" class="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-medium ml-2">Fullscreen</button>
+            </div>
+          </div>
+          <div id="${deckId}_card" class="p-6 min-h-[200px] bg-slate-900 flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] text-cyan-400 font-mono uppercase tracking-wider mb-1 block">SLIDE 1</span>
+              <h3 class="text-base font-bold text-white mb-2">${escapeHtml(slides[0].title)}</h3>
+              <div class="text-xs text-slate-300 leading-relaxed space-y-2">
+                ${marked.parse(slides[0].content)}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function changeSlide(deckId, delta) {
+      const slides = window[deckId + '_slides'];
+      if (!slides) return;
+      let curr = window[deckId + '_index'] || 0;
+      curr += delta;
+      if (curr < 0) curr = 0;
+      if (curr >= slides.length) curr = slides.length - 1;
+      window[deckId + '_index'] = curr;
+
+      const counter = document.getElementById(deckId + '_counter');
+      const card = document.getElementById(deckId + '_card');
+      if (counter) counter.innerText = `${curr + 1} of ${slides.length}`;
+      if (card) {
+        card.innerHTML = `
+          <div>
+            <span class="text-[10px] text-cyan-400 font-mono uppercase tracking-wider mb-1 block">SLIDE ${curr + 1}</span>
+            <h3 class="text-base font-bold text-white mb-2">${escapeHtml(slides[curr].title)}</h3>
+            <div class="text-xs text-slate-300 leading-relaxed space-y-2">
+              ${marked.parse(slides[curr].content)}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function openPresentationFullscreen(deckId) {
+      const slides = window[deckId + '_slides'];
+      if (!slides) return;
+      const modal = document.getElementById('presentationModal');
+      const iframe = document.getElementById('presentationIframe');
+      if (!modal || !iframe) return;
+
+      const slidesHtml = slides.map((s, idx) => `
+        <div style="background:#0f172a; border:1px solid #1e293b; border-radius:16px; padding:32px; margin-bottom:24px; color:#f8fafc; font-family:sans-serif;">
+          <div style="font-size:12px; color:#38bdf8; font-family:monospace; margin-bottom:8px;">SLIDE ${idx + 1} OF ${slides.length}</div>
+          <h2 style="font-size:24px; font-weight:bold; margin-bottom:16px; color:#ffffff;">${s.title}</h2>
+          <div style="font-size:14px; line-height:1.6; color:#cbd5e1;">${marked.parse(s.content)}</div>
+        </div>
+      `).join('');
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>JARVIS Presentation</title>
+          <style>body { background:#020617; padding:24px; font-family:sans-serif; }</style>
+        </head>
+        <body>${slidesHtml}</body>
+        </html>
+      `);
+      doc.close();
+      modal.classList.remove('hidden');
+    }
+
+    function closePresentationModal() {
+      const modal = document.getElementById('presentationModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function escapeJsString(str) {
+      if (!str) return '';
+      return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
     }
 
     function renderChatList(filterQuery = "") {
