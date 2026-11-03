@@ -1,383 +1,313 @@
 <!DOCTYPE html>
-<html lang="en" class="dark h-full">
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JARVIS AI PRO - By Abdullah Waheed</title>
-  <meta name="description" content="JARVIS AI Assistant created and developed by Abdullah Waheed for smart chat, coding, math solutions, and multi-style AI image generation.">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           colors: {
             jarvis: {
-              bg: '#080c14',
-              sidebar: '#0e1526',
-              card: '#162036',
-              hover: '#1e2d4a',
-              border: '#233352',
-              accent: '#00f0ff',
-              accentDark: '#00b8cc',
-              userBubble: '#1b273e'
+              bg: '#090d16',
+              sidebar: '#0d1322',
+              card: '#131b2e',
+              border: '#1e293b',
+              cyan: '#06b6d4',
+              accent: '#38bdf8'
             }
-          },
-          boxShadow: {
-            'glow-cyan': '0 0 20px rgba(0, 240, 255, 0.25)',
-            'glow-sm': '0 0 10px rgba(0, 240, 255, 0.15)'
           }
         }
       }
     }
   </script>
 
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Highlight.js for Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
   <!-- Marked.js for Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- DOMPurify for HTML Sanitization -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-
-  <!-- KaTeX for LaTeX Math Equation Rendering -->
+  <!-- KaTeX for Mathematics -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-  <!-- Highlight.js for Code Highlighting -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
   <style>
-    /* Custom Scrollbars */
+    .markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; }
+    .markdown-body pre { background: #090d16; padding: 1rem; border-radius: 0.75rem; margin: 0.75rem 0; border: 1px solid #1e293b; overflow-x: auto; }
+    .markdown-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875em; }
+    .markdown-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .markdown-body th, .markdown-body td { border: 1px solid #334155; padding: 0.5rem 0.75rem; text-align: left; }
+    .markdown-body th { background-color: #1e293b; }
+    .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+    .markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+
+    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #233352; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #334973; }
-
-    /* Markdown Output Styles */
-    .markdown-content p { margin-bottom: 0.85rem; line-height: 1.65; }
-    .markdown-content p:last-child { margin-bottom: 0; }
-    .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.6rem; color: #f8fafc; }
-    .markdown-content ul { list-style-type: disc; padding-left: 1.4rem; margin-bottom: 0.85rem; }
-    .markdown-content ol { list-style-type: decimal; padding-left: 1.4rem; margin-bottom: 0.85rem; }
-    .markdown-content blockquote { border-left: 3px solid #00f0ff; padding-left: 0.85rem; color: #94a3b8; margin-bottom: 0.85rem; font-style: italic; }
-    .markdown-content table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; }
-    .markdown-content th, .markdown-content td { border: 1px solid #233352; padding: 0.6rem 0.85rem; text-align: left; }
-    .markdown-content th { background-color: #162036; font-weight: 600; color: #00f0ff; }
-    .markdown-content code:not(pre code) { background-color: #162036; color: #00f0ff; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; }
-
-    /* Code Block Header and Copy Button */
-    .code-block-wrapper { margin-top: 0.75rem; margin-bottom: 0.75rem; border-radius: 0.5rem; overflow: hidden; border: 1px solid #233352; }
-    .code-header { display: flex; justify-content: space-between; align-items: center; background-color: #0e1526; padding: 0.4rem 1rem; font-family: monospace; font-size: 0.75rem; color: #94a3b8; border-bottom: 1px solid #162036; }
-    .code-block-wrapper pre { margin: 0 !important; padding: 1rem !important; background-color: #080c14 !important; overflow-x: auto; }
-    .katex-display { margin: 0.75rem 0; overflow-x: auto; padding: 0.25rem 0; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
   </style>
 </head>
-<body class="bg-jarvis-bg text-slate-100 h-full font-sans antialiased selection:bg-jarvis-accent selection:text-black">
+<body class="h-full flex flex-col font-sans antialiased overflow-hidden bg-slate-950 text-slate-100">
 
-  <!-- TOAST NOTIFICATION CONTAINER -->
-  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- CONFIRM MODAL -->
-  <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-    <div class="bg-jarvis-card border border-jarvis-border rounded-2xl max-w-sm w-full p-5 shadow-2xl">
-      <h3 id="confirmTitle" class="text-base font-bold text-white mb-2">Confirm Action</h3>
-      <p id="confirmMessage" class="text-xs text-slate-300 mb-5">Are you sure you want to proceed?</p>
-      <div class="flex items-center justify-end gap-2">
-        <button id="confirmCancelBtn" class="px-3.5 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold">Cancel</button>
-        <button id="confirmOkBtn" class="px-3.5 py-1.5 rounded-xl bg-red-600 text-white hover:bg-red-500 text-xs font-semibold">Confirm</button>
+  <!-- TOP HEADER -->
+  <header class="h-14 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md flex items-center justify-between px-4 z-30 shrink-0">
+    <div class="flex items-center gap-3">
+      <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-bold text-cyan-400 shadow-sm shadow-cyan-500/20">
+        J
+      </div>
+      <div>
+        <h1 class="font-bold text-sm tracking-wide text-white flex items-center gap-2">
+          JARVIS AI <span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded font-mono">PRO</span>
+        </h1>
+        <p class="text-[10px] text-slate-400 hidden sm:block">Developed by Abdullah Waheed</p>
       </div>
     </div>
-  </div>
 
-  <div class="flex h-full w-full bg-jarvis-bg text-slate-100 overflow-hidden relative">
+    <!-- MODEL SELECTOR & AUTH BUTTON -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <select id="modelSelect" class="bg-slate-800/90 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 transition">
+        <option value="openai/gpt-oss-20b" selected>Jarvis Instant (Ultra Fast)</option>
+        <option value="openai/gpt-oss-120b">Jarvis Pro (120B Intelligence)</option>
+        <option value="deepseek-r1-distill-llama-70b">Ironman Jarvis (70B Reasoning)</option>
+      </select>
+
+      <button id="authBtn" onclick="openAuthModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3.5 py-1.5 rounded-xl font-medium transition shadow-lg shadow-cyan-600/20 flex items-center gap-1.5">
+        <i data-lucide="user" class="w-3.5 h-3.5"></i>
+        <span id="authBtnText">Sign In</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <div class="flex-1 flex overflow-hidden relative">
     
-    <!-- SIDEBAR BACKDROP (Mobile) -->
-    <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 z-20 md:hidden hidden transition-opacity"></div>
+    <!-- SIDEBAR OVERLAY (MOBILE) -->
+    <div id="sidebarOverlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 hidden md:hidden"></div>
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 w-72 bg-jarvis-sidebar flex flex-col border-r border-jarvis-border transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
+    <aside id="sidebar" class="w-64 border-r border-slate-800 bg-slate-900/60 flex flex-col z-40 absolute md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
       
-      <!-- App Brand Header -->
-      <div class="p-4 border-b border-jarvis-border flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center font-black text-black text-lg shadow-glow-sm">
-            J
-          </div>
-          <div>
-            <h1 class="font-bold text-sm text-white tracking-wide flex items-center gap-1.5">
-              <span>JARVIS AI</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-semibold border border-cyan-500/30">PRO</span>
-            </h1>
-            <p class="text-[11px] text-slate-400">By Abdullah Waheed</p>
-          </div>
-        </div>
-
-        <button id="closeSidebarMobile" class="md:hidden p-1 text-slate-400 hover:text-white">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- New Chat Button -->
-      <div class="p-3">
-        <button id="newChatBtn" class="w-full flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/30 rounded-xl text-sm font-semibold text-cyan-300 transition-all shadow-sm">
-          <div class="flex items-center gap-2">
-            <i data-lucide="plus-circle" class="w-4 h-4 text-cyan-400"></i>
-            <span>New Chat</span>
-          </div>
-          <span class="text-[10px] bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">Ctrl+K</span>
-        </button>
-      </div>
-
-      <!-- Status Banner -->
-      <div class="px-3 mb-2">
-        <div id="syncStatusBadge" class="px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center justify-between">
-          <span class="flex items-center gap-1.5 font-medium">
-            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            <span id="syncStatusText">Guest Mode</span>
+      <!-- NEW CHAT BUTTON -->
+      <div class="p-3 border-b border-slate-800/80">
+        <button onclick="createNewSession()" class="w-full flex items-center justify-between bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 hover:border-cyan-500/60 text-cyan-300 px-3 py-2 rounded-xl text-xs font-semibold transition shadow-sm">
+          <span class="flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            New Chat
           </span>
-          <button id="sidebarSignInLink" class="text-xs font-semibold text-amber-200 underline hover:text-white">Sign In</button>
+          <span class="text-[10px] opacity-60 font-mono">Ctrl+K</span>
+        </button>
+      </div>
+
+      <!-- ACCOUNT STATUS BANNER -->
+      <div id="accountBanner" class="px-3 py-2 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-xs text-amber-300">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          Guest Mode
+        </span>
+        <button onclick="openAuthModal()" class="underline text-[11px] font-semibold hover:text-amber-200">Sign In</button>
+      </div>
+
+      <!-- SEARCH INPUT -->
+      <div class="p-2 border-b border-slate-800/60">
+        <div class="relative">
+          <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
+          <input id="searchInput" type="text" placeholder="Search chats..." class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-cyan-500">
         </div>
       </div>
 
-      <!-- Conversations History Header -->
-      <div class="px-3 py-1 flex items-center justify-between text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-        <span>Saved Conversations</span>
-        <button id="clearAllHistoryBtn" class="text-[10px] hover:text-red-400 transition-colors lowercase" title="Clear all history">clear all</button>
+      <!-- SAVED CONVERSATIONS LIST -->
+      <div class="flex-1 overflow-y-auto p-2 space-y-1">
+        <div class="flex items-center justify-between px-2 py-1">
+          <p class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Conversations</p>
+          <button onclick="handleClearAllSessions()" class="text-[10px] text-slate-500 hover:text-red-400 transition" title="Clear all history">Clear</button>
+        </div>
+        <div id="historyItems" class="space-y-1"></div>
       </div>
 
-      <!-- Conversations History List -->
-      <div id="sessionsContainer" class="flex-1 overflow-y-auto px-2 space-y-1 my-1">
-        <!-- Sessions dynamic load -->
-      </div>
-
-      <!-- Sidebar Footer User Profile -->
-      <div class="p-3 border-t border-jarvis-border bg-slate-950/40 space-y-2">
-        
-        <!-- User Profile Card -->
-        <div id="userProfileCard" class="flex items-center justify-between p-2.5 rounded-xl bg-jarvis-card border border-jarvis-border">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div id="userAvatarContainer" class="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
-              <span id="userAvatarText">G</span>
-            </div>
-            <div class="min-w-0">
-              <p id="userNameText" class="text-xs font-semibold text-slate-200 truncate">Guest User</p>
-              <p id="userEmailText" class="text-[10px] text-slate-400 truncate">Chats saved in memory</p>
-            </div>
+      <!-- USER FOOTER PROFILE -->
+      <div class="p-3 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
+        <div class="flex items-center gap-2.5 overflow-hidden">
+          <div id="userAvatar" class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-300 font-bold shrink-0">
+            G
           </div>
-
-          <button id="authBtn" class="p-2 text-slate-400 hover:text-cyan-400 hover:bg-jarvis-hover rounded-lg transition-colors shrink-0" title="Sign In">
-            <i id="authBtnIcon" data-lucide="log-in" class="w-4 h-4"></i>
-          </button>
+          <div class="truncate">
+            <p id="userName" class="text-xs font-semibold text-slate-200 truncate">Guest User</p>
+            <p id="userSub" class="text-[10px] text-slate-500 truncate">Chats saved in memory</p>
+          </div>
         </div>
-
-        <div class="flex items-center justify-between px-1 text-[11px] text-slate-500 pt-1">
-          <span>JARVIS Engine v3.5</span>
-          <span>By Abdullah Waheed</span>
-        </div>
+        <button id="logoutBtn" onclick="handleLogout()" class="hidden text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition" title="Sign Out">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
       </div>
     </aside>
 
-    <!-- MAIN CHAT VIEW -->
-    <main class="flex-1 flex flex-col h-full min-w-0 bg-jarvis-bg relative">
+    <!-- CHAT VIEW CONTAINER -->
+    <main class="flex-1 flex flex-col bg-slate-950 relative min-w-0">
       
-      <!-- Top Header -->
-      <header class="h-14 px-4 border-b border-jarvis-border flex items-center justify-between bg-jarvis-bg/80 backdrop-blur z-10 shrink-0">
-        <div class="flex items-center gap-3">
-          <button id="openSidebarMobile" class="md:hidden p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-jarvis-card">
-            <i data-lucide="menu" class="w-5 h-5"></i>
-          </button>
-
-          <!-- Model Selector Dropdown -->
-          <div class="relative">
-            <select id="modelSelect" class="bg-jarvis-card border border-jarvis-border text-slate-100 text-xs font-semibold rounded-xl px-3 py-2 pr-8 focus:outline-none focus:border-cyan-400 cursor-pointer hover:bg-jarvis-hover transition-colors appearance-none">
-              <option value="openai/gpt-oss-20b" selected>Jarvis Instant (Ultra Fast)</option>
-              <option value="openai/gpt-oss-120b">Jarvis Pro (120B High Intelligence)</option>
-              <option value="deepseek-r1-distill-llama-70b">Ironman Jarvis (70B Deep Reasoning)</option>
-            </select>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+      <!-- CHAT MESSAGES SCROLL AREA -->
+      <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl mx-auto w-full">
+        <!-- WELCOME CARD -->
+        <div id="welcomeCard" class="flex flex-col items-center justify-center min-h-[60vh] text-center py-12">
+          <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4 shadow-xl shadow-cyan-500/5">
+            <span class="text-cyan-400 font-bold text-3xl">J</span>
           </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button id="topAuthBtn" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-glow-sm">
-            <i data-lucide="user" class="w-3.5 h-3.5"></i>
-            <span id="topAuthBtnText">Sign In</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- Chat Messages Scroll Area -->
-      <div id="chatContainer" class="flex-1 overflow-y-auto px-4 py-6 md:px-0 scroll-smooth">
-        
-        <!-- Welcome Screen (When no messages) -->
-        <div id="welcomeCard" class="max-w-2xl mx-auto h-full flex flex-col items-center justify-center text-center px-4">
-          <div class="relative mb-6">
-            <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-cyan-400 to-blue-600 p-0.5 shadow-glow-cyan">
-              <div class="w-full h-full bg-jarvis-bg rounded-[22px] flex items-center justify-center">
-                <span class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">J</span>
-              </div>
-            </div>
-            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-cyan-400 text-black flex items-center justify-center font-bold text-[10px] shadow">
-              ⚡
-            </div>
-          </div>
-
-          <h2 class="text-2xl font-extrabold text-white mb-2">How can JARVIS assist you today?</h2>
-          <p class="text-xs text-slate-400 max-w-md mb-8">
-            Created & developed by <span class="text-cyan-400 font-semibold">Abdullah Waheed</span>. Ask questions, code, solve math equations, or request multi-style AI image generation!
+          <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">Hello, I am JARVIS</h2>
+          <p class="text-sm text-slate-400 max-w-md leading-relaxed mb-6">
+            Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate multi-style artwork, solve math, or upload files!
           </p>
 
-          <!-- Prompt Suggestions Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl text-left">
-            <button onclick="window.quickPrompt('Draw a photorealistic supercar driving in Tokyo at night')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
-              <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
-                <span>🎨 Photorealistic Image</span>
-              </span>
-              <span class="text-slate-400 truncate">Supercar in Tokyo at night</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full text-left">
+            <button onclick="sendQuickPrompt('Create a 4-slide presentation on Artificial Intelligence')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+              <i data-lucide="presentation" class="w-4 h-4 text-cyan-400"></i>
+              <span>Create a presentation on AI</span>
             </button>
-
-            <button onclick="window.quickPrompt('Create a detailed pencil sketch of an old owl on an oak tree branch')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
-              <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
-                <span>✏️ Pencil Sketch</span>
-              </span>
-              <span class="text-slate-400 truncate">Old owl on an oak tree</span>
+            <button onclick="sendQuickPrompt('Paint a watercolor portrait of a futuristic cyberpunk city')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+              <i data-lucide="image" class="w-4 h-4 text-purple-400"></i>
+              <span>Generate watercolor artwork</span>
             </button>
-
-            <button onclick="window.quickPrompt('Paint a vibrant watercolor painting of a rainy cottage garden')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
-              <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
-                <span>🖌️ Watercolor Painting</span>
-              </span>
-              <span class="text-slate-400 truncate">Rainy cottage garden</span>
+            <button onclick="sendQuickPrompt('Write a Python script for automated web scraping with BeautifulSoup')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
+              <span>Write web scraping script</span>
             </button>
-
-            <button onclick="window.quickPrompt('Create a 5-slide presentation on Artificial Intelligence in Healthcare')" class="p-3.5 bg-jarvis-card/70 border border-jarvis-border hover:border-cyan-400/50 hover:bg-jarvis-hover rounded-2xl text-xs text-slate-300 transition group flex flex-col gap-1">
-              <span class="font-bold text-white group-hover:text-cyan-300 flex items-center gap-1.5">
-                <span>📊 Create Presentation</span>
-              </span>
-              <span class="text-slate-400 truncate">AI in Healthcare slides</span>
+            <button onclick="sendQuickPrompt('Who created and developed you?')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+              <i data-lucide="user" class="w-4 h-4 text-amber-400"></i>
+              <span>Who is your creator?</span>
             </button>
           </div>
         </div>
-
       </div>
 
-      <!-- Input Form -->
-      <div class="p-4 bg-jarvis-bg border-t border-jarvis-border/40 shrink-0">
-        <div class="max-w-3xl mx-auto relative">
-          <form id="chatForm" class="relative bg-jarvis-card border border-jarvis-border rounded-2xl focus-within:border-cyan-400/80 shadow-xl transition-all">
-            
-            <!-- File Attachment Preview Bar -->
-            <div id="filePreviewBar" class="hidden px-3 pt-2.5 flex items-center gap-2">
-              <div id="filePreviewTag" class="inline-flex items-center gap-2 bg-jarvis-bg border border-cyan-500/30 text-xs text-cyan-300 px-3 py-1.5 rounded-xl shadow-sm">
-                <i data-lucide="file-text" id="filePreviewIcon" class="w-4 h-4 text-cyan-400 shrink-0"></i>
-                <span id="filePreviewName" class="truncate max-w-xs font-mono font-medium">filename.txt</span>
-                <button type="button" id="removeFileBtn" class="text-slate-400 hover:text-red-400 font-bold ml-1 transition-colors">✕</button>
-              </div>
-            </div>
+      <!-- INPUT BAR AREA -->
+      <div class="p-3 md:p-4 border-t border-slate-800/80 bg-slate-950 shrink-0">
+        <div class="max-w-4xl mx-auto">
+          
+          <!-- ATTACHED FILE PREVIEW BADGE -->
+          <div id="filePreviewBar" class="hidden mb-2 inline-flex items-center gap-2 bg-slate-900 border border-cyan-500/40 px-3 py-1.5 rounded-xl text-xs text-cyan-300 font-mono shadow-md">
+            <i id="filePreviewIcon" data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
+            <span id="filePreviewName" class="max-w-xs truncate">file.txt</span>
+            <button id="removeFileBtn" class="text-slate-400 hover:text-red-400 ml-1">✕</button>
+          </div>
 
-            <textarea id="userInput" rows="1" placeholder="Ask JARVIS anything or request an image (e.g. 'Paint a watercolor cat')..." class="w-full bg-transparent text-slate-100 placeholder-slate-500 px-4 pt-3.5 pb-11 resize-none focus:outline-none text-sm max-h-48"></textarea>
-            
-            <!-- Hidden File Input -->
-            <input type="file" id="fileInput" class="hidden" accept="image/*, .txt, .pdf, .doc, .docx, .js, .py, .html, .css, .json, .csv, .md" />
+          <div class="relative bg-slate-900/90 border border-slate-800 focus-within:border-cyan-500/60 rounded-2xl p-2 transition shadow-2xl">
+            <!-- HIDDEN FILE INPUT -->
+            <input type="file" id="fileInput" class="hidden">
 
-            <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between pointer-events-none">
-              <div class="flex items-center gap-1.5 pointer-events-auto">
-                
-                <!-- File / Image Attach Button -->
-                <button type="button" id="attachFileBtn" class="p-1.5 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-jarvis-hover transition-colors" title="Attach Image or Document">
+            <textarea id="userInput" rows="1" placeholder="Ask JARVIS anything, attach a file, or say 'Create a presentation on...'" class="w-full bg-transparent text-slate-100 text-sm focus:outline-none resize-none px-3 py-1.5 max-h-40 placeholder-slate-500"></textarea>
+            
+            <div class="flex items-center justify-between pt-1.5 border-t border-slate-800/60 mt-1 px-1">
+              <div class="flex items-center gap-1">
+                <!-- FILE ATTACH BUTTON -->
+                <button id="attachFileBtn" class="p-1.5 text-slate-400 hover:text-cyan-400 rounded-lg hover:bg-slate-800 transition" title="Attach image or text/code document">
                   <i data-lucide="paperclip" class="w-4 h-4"></i>
                 </button>
-
-                <!-- Voice Writing Mic Button -->
-                <button type="button" id="micBtn" class="p-1.5 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-jarvis-hover transition-colors" title="Voice Writing (Speech-to-Text)">
+                
+                <!-- VOICE WRITING MIC BUTTON -->
+                <button id="micBtn" class="p-1.5 text-slate-400 hover:text-cyan-400 rounded-lg hover:bg-slate-800 transition" title="Voice dictation (Speech-to-text)">
                   <i data-lucide="mic" class="w-4 h-4"></i>
                 </button>
 
-                <span class="text-[11px] text-cyan-400 font-semibold px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 ml-1">
-                  JARVIS Engine
-                </span>
+                <span class="text-[10px] text-slate-500 font-mono hidden sm:inline ml-1">JARVIS Engine v3.5</span>
               </div>
 
-              <button type="submit" id="sendBtn" class="pointer-events-auto p-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-bold hover:opacity-90 transition-opacity shadow-glow-sm">
+              <!-- SEND BUTTON -->
+              <button onclick="handleSendMessage()" class="bg-cyan-600 hover:bg-cyan-500 text-white p-2 rounded-xl transition shadow-lg shadow-cyan-600/30 flex items-center justify-center">
                 <i data-lucide="arrow-up" class="w-4 h-4"></i>
               </button>
             </div>
-          </form>
-
-          <p class="text-[11px] text-slate-500 text-center mt-2 font-medium">
-            JARVIS AI Assistant • Developed by Abdullah Waheed
-          </p>
+          </div>
+          <p class="text-[10px] text-center text-slate-600 mt-2">JARVIS AI Assistant • Developed by Abdullah Waheed</p>
         </div>
       </div>
     </main>
-
   </div>
 
   <!-- AUTHENTICATION MODAL -->
-  <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-    <div class="bg-jarvis-card border border-jarvis-border rounded-3xl w-full max-w-md p-6 shadow-2xl relative">
-      
-      <button id="closeAuthModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg">
+  <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
-
-      <div class="text-center mb-6">
-        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-black text-xl flex items-center justify-center mx-auto mb-3 shadow-glow-sm">
-          J
-        </div>
-        <h3 class="text-xl font-bold text-white">Account Sign In</h3>
-        <p class="text-xs text-slate-400 mt-1">Sign in to save your conversation history across sessions.</p>
+      
+      <div class="text-center mb-5">
+        <div class="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center mx-auto mb-2 text-lg shadow-sm shadow-cyan-500/20">J</div>
+        <h3 id="authModalTitle" class="text-lg font-bold text-white">Sign In to JARVIS</h3>
+        <p class="text-xs text-slate-400 mt-1">Save your chat history & presentation slide decks.</p>
       </div>
 
-      <!-- Error Message Banner -->
-      <div id="authErrorBox" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400"></div>
+      <!-- TAB SWITCHER -->
+      <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 mb-4">
+        <button id="tabSignIn" onclick="switchAuthTab('signin')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg text-white bg-slate-800 transition">Sign In</button>
+        <button id="tabRegister" onclick="switchAuthTab('register')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition">Register</button>
+      </div>
 
-      <!-- Google Sign In Button Option -->
-      <button id="googleSignInBtn" class="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2.5 shadow-md mb-4">
-        <svg class="w-4 h-4" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-        </svg>
+      <!-- GOOGLE SIGN IN BUTTON -->
+      <button onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 mb-4 shadow">
+        <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
         <span>Continue with Google</span>
       </button>
 
-      <div class="flex items-center gap-3 my-4">
-        <div class="h-px bg-jarvis-border flex-1"></div>
-        <span class="text-[10px] text-slate-500 font-bold uppercase">Or Email</span>
-        <div class="h-px bg-jarvis-border flex-1"></div>
+      <div class="relative flex items-center justify-center mb-4">
+        <div class="border-t border-slate-800 w-full"></div>
+        <span class="bg-slate-900 px-2 text-[10px] text-slate-500 uppercase font-mono absolute">OR EMAIL</span>
       </div>
 
-      <!-- Auth Mode Toggle Tabs -->
-      <div class="flex bg-jarvis-bg p-1 rounded-xl mb-4 border border-jarvis-border">
-        <button id="tabSignInBtn" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-jarvis-card text-white shadow">Sign In</button>
-        <button id="tabSignUpBtn" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white">Register</button>
-      </div>
-
-      <!-- Email Auth Form -->
-      <form id="emailAuthForm" class="space-y-3">
+      <div class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
-          <input id="authEmail" type="email" placeholder="name@domain.com" required class="w-full bg-jarvis-bg border border-jarvis-border rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-400" />
+          <label class="text-[11px] font-medium text-slate-400 block mb-1">Email Address</label>
+          <input id="authEmail" type="email" placeholder="name@domain.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
-          <input id="authPassword" type="password" placeholder="••••••••" required class="w-full bg-jarvis-bg border border-jarvis-border rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-400" />
+          <label class="text-[11px] font-medium text-slate-400 block mb-1">Password</label>
+          <input id="authPassword" type="password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
         </div>
-
-        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-bold text-xs rounded-xl hover:opacity-90 transition-opacity mt-2">
+        <button id="authSubmitBtn" onclick="handleAuthSubmit()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 rounded-xl text-xs transition shadow-lg shadow-cyan-600/20">
           Sign In
         </button>
-      </form>
+      </div>
     </div>
   </div>
+
+  <!-- PRESENTATION FULLSCREEN PREVIEW MODAL -->
+  <div id="presentationModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden shadow-2xl relative">
+      <div class="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <h3 id="presentationTitle" class="text-xs font-bold text-cyan-400 font-mono">Visual Presentation Slide Viewer</h3>
+        <button onclick="closePresentationModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <iframe id="presentationIframe" class="w-full flex-1 border-none bg-slate-950"></iframe>
+    </div>
+  </div>
+
+  <!-- CONFIRMATION MODAL (Replaces confirm()) -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5 shadow-2xl text-center">
+      <h3 id="confirmTitle" class="text-sm font-bold text-white mb-2">Confirmation Required</h3>
+      <p id="confirmMessage" class="text-xs text-slate-400 mb-4 leading-relaxed"></p>
+      <div class="flex gap-2">
+        <button id="confirmCancelBtn" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl transition">Cancel</button>
+        <button id="confirmOkBtn" class="flex-1 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs rounded-xl font-semibold transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER (Replaces alert()) -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- APPLICATION LOGIC SCRIPT -->
   <script>
@@ -385,7 +315,6 @@
     const GROQ_API_KEY = "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";
     const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-    // System Persona Setup
     const SYSTEM_PROMPT = {
       role: "system",
       content: `You are JARVIS, an advanced AI assistant created and developed by Abdullah Waheed.
@@ -395,390 +324,58 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
 2. RESPONSE STYLE:
    - For simple, casual, or general questions: Answer concisely, naturally, and directly in conversational plain text. Do not add unnecessary headers or markdown tables.
    - For programming or code requests: Provide full, clean, formatted code blocks with syntax highlighting language tags (e.g., \`\`\`javascript ... \`\`\`).
-   - For math problems: Render equations cleanly using standard KaTeX syntax (e.g., \\( x^2 + y^2 = r^2 \\) or \\[\n\\int f(x)dx\n\\]).
-3. MULTI-STYLE IMAGE GENERATION CAPABILITY:
-   - When the user asks you to draw, generate, create, or paint ANY image (photorealistic photos, pencil sketches, watercolor paintings, poster color art, pencil color drawings, 3D renders, digital art, or anime):
-   - You MUST generate the image by embedding this exact Markdown image tag:
+   - For math problems: Render equations cleanly using standard KaTeX syntax (e.g., \\( x^2 + y^2 = r^2 \\)).
+3. MULTI-STYLE IMAGE GENERATION:
+   - When asked to draw, generate, or paint ANY image (photos, sketches, watercolor, poster colors, anime):
+   - You MUST embed this exact Markdown image tag:
      ![Image Description](https://image.pollinations.ai/prompt/YOUR_ENCODED_DETAILED_PROMPT?width=1024&height=1024&nologo=true&model=flux&seed=54321)
-   - Replace YOUR_ENCODED_DETAILED_PROMPT with a URL-encoded detailed description of the image including the requested style.
-   - Replace 54321 with a random 5-digit number so each request is unique and bypasses rate-limit caches.
-4. PRESENTATION CREATION CAPABILITY:
-   - When requested to create, generate, or make a presentation or slides on ANY topic:
-   - Structure the response clearly into distinct numbered slides (e.g., "### Slide 1: Title & Overview", "### Slide 2: Key Concepts", bullet points, key takeaways, and speaker notes).
-   - Make presentation content highly structured, professional, clear, and ready to present.`
+   - Replace YOUR_ENCODED_DETAILED_PROMPT with a URL-encoded description including the requested style.
+   - Replace 54321 with a random 5-digit number so each request is unique.
+4. VISUAL PRESENTATIONS & SLIDES:
+   - When asked to create or make a presentation or slides on ANY topic:
+   - Organize into distinct slides (e.g. "### Slide 1: Title & Overview", "### Slide 2: Core Concepts", key bullet points, takeaways, and speaker notes).`
     };
 
-    // --- STATE MANAGEMENT ---
-    let currentUser = loadActiveUser(); // null = Guest Mode
-    let authTabMode = "signin"; // "signin" or "signup"
+    // Application State
+    let currentUser = JSON.parse(localStorage.getItem("jarvis_active_user") || "null");
+    let registeredUsers = JSON.parse(localStorage.getItem("jarvis_registered_users_db") || "[]");
+    let authTabMode = "signin";
     let currentModel = "openai/gpt-oss-20b";
     let activeChatId = null;
-    let chats = []; // [{ id, title, updatedAt, messages: [] }]
+    let chats = [];
     let isGenerating = false;
     let confirmCallback = null;
 
-    const MODEL_LABELS = {
-      "openai/gpt-oss-20b": "Jarvis Instant",
-      "openai/gpt-oss-120b": "Jarvis Pro",
-      "deepseek-r1-distill-llama-70b": "Ironman Jarvis"
-    };
-
-    // --- REGISTERED ACCOUNTS DATABASE & STRICT VALIDATION ---
-    function getRegisteredUsersDB() {
-      try {
-        const data = localStorage.getItem('jarvis_users_db');
-        return data ? JSON.parse(data) : {};
-      } catch (e) {
-        return {};
-      }
-    }
-
-    function saveUserToDB(email, password, name, provider = "email") {
-      const db = getRegisteredUsersDB();
-      const normalizedEmail = email.toLowerCase().trim();
-      db[normalizedEmail] = {
-        email: normalizedEmail,
-        password: password,
-        name: name || normalizedEmail.split('@')[0],
-        provider: provider,
-        createdAt: Date.now()
-      };
-      localStorage.setItem('jarvis_users_db', JSON.stringify(db));
-      return db[normalizedEmail];
-    }
-
-    function validateEmailStrict(email) {
-      if (!email) return { valid: false, reason: "Email address is required." };
-
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      if (!emailRegex.test(email)) {
-        return { valid: false, reason: "Please enter a valid email format (e.g., user@domain.com)." };
-      }
-
-      const parts = email.split('@');
-      const domain = parts[1].toLowerCase();
-
-      // Block known disposable/dummy domains and invalid TLDs
-      const invalidDomains = ['test.com', 'example.com', 'fake.com', 'a.com', 'temp.com', 'mailinator.com', '123.com', 'asdf.com', 'domain.com'];
-      if (invalidDomains.includes(domain) || domain.split('.')[0].length < 2) {
-        return { valid: false, reason: "Please enter a valid, existing email domain (e.g., @gmail.com, @outlook.com)." };
-      }
-
-      if (parts[0].length < 2 || /^(\w)\1+$/.test(parts[0])) {
-        return { valid: false, reason: "Invalid email username. Please use a real email address." };
-      }
-
-      return { valid: true };
-    }
+    // File Attachment & Voice Input State
+    let attachedFile = null;
+    let isListening = false;
+    let speechRecognitionObj = null;
 
     // --- INITIALIZATION ---
-    window.addEventListener('DOMContentLoaded', () => {
-      if (window.lucide) lucide.createIcons();
+    document.addEventListener("DOMContentLoaded", () => {
+      initializeMarkdown();
       setupDOMEventListeners();
-      
-      // Load user conversations or initialize guest state
-      if (currentUser) {
-        chats = loadSavedChatsForUser(currentUser.email);
-      } else {
-        chats = [];
-      }
-
-      if (chats.length === 0) {
-        createNewSession();
-      } else {
-        activeChatId = chats[0].id;
-      }
-
-      updateAuthUI();
-      renderSessionsList();
-      renderChatMessages();
+      updateUserUI();
+      loadUserChats();
+      if (window.lucide) window.lucide.createIcons();
     });
 
-    // --- LOCAL STORAGE ACCOUNTS & PERSISTENCE ---
-    function loadActiveUser() {
-      try {
-        const saved = localStorage.getItem('jarvis_active_user');
-        return saved ? JSON.parse(saved) : null;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function saveActiveUser(userObj) {
-      currentUser = userObj;
-      if (userObj) {
-        localStorage.setItem('jarvis_active_user', JSON.stringify(userObj));
-      } else {
-        localStorage.removeItem('jarvis_active_user');
-      }
-      updateAuthUI();
-    }
-
-    function loadSavedChatsForUser(email) {
-      try {
-        const key = `jarvis_chats_${email.toLowerCase()}`;
-        const saved = localStorage.getItem(key);
-        return saved ? JSON.parse(saved) : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveChatsToStorage() {
-      if (!currentUser) return; // Do not persist to disk in Guest Mode
-      try {
-        const key = `jarvis_chats_${currentUser.email.toLowerCase()}`;
-        localStorage.setItem(key, JSON.stringify(chats));
-      } catch (e) {
-        console.error("Failed to save chats:", e);
-      }
-    }
-
-    // --- AUTHENTICATION ACTIONS & UI ---
-    function updateAuthUI() {
-      const syncBadge = document.getElementById('syncStatusBadge');
-      const syncText = document.getElementById('syncStatusText');
-      const userAvatarText = document.getElementById('userAvatarText');
-      const userAvatarContainer = document.getElementById('userAvatarContainer');
-      const userNameText = document.getElementById('userNameText');
-      const userEmailText = document.getElementById('userEmailText');
-      const authBtn = document.getElementById('authBtn');
-      const topAuthBtnText = document.getElementById('topAuthBtnText');
-
-      if (currentUser) {
-        // Cloud / Persistent Active Mode
-        if (syncBadge) {
-          syncBadge.className = "px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-center justify-between";
-        }
-        if (syncText) syncText.textContent = "Saved to Profile";
-
-        const sidebarSignInLink = document.getElementById('sidebarSignInLink');
-        if (sidebarSignInLink) {
-          sidebarSignInLink.textContent = "Sign Out";
-          sidebarSignInLink.onclick = handleSignOut;
-        }
-
-        const name = currentUser.name || currentUser.email.split('@')[0];
-        if (userNameText) userNameText.textContent = name;
-        if (userEmailText) userEmailText.textContent = currentUser.email;
-
-        if (currentUser.photoURL) {
-          userAvatarContainer.innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover" />`;
-        } else {
-          userAvatarContainer.innerHTML = `<span>${name.charAt(0).toUpperCase()}</span>`;
-        }
-
-        if (authBtn) {
-          authBtn.title = "Sign Out";
-          authBtn.onclick = handleSignOut;
-          authBtn.innerHTML = `<i data-lucide="log-out" class="w-4 h-4 text-red-400"></i>`;
-        }
-
-        if (topAuthBtnText) topAuthBtnText.textContent = "Sign Out";
-
-      } else {
-        // Guest Mode
-        if (syncBadge) {
-          syncBadge.className = "px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center justify-between";
-        }
-        if (syncText) syncText.textContent = "Guest Mode";
-
-        const sidebarSignInLink = document.getElementById('sidebarSignInLink');
-        if (sidebarSignInLink) {
-          sidebarSignInLink.textContent = "Sign In";
-          sidebarSignInLink.onclick = () => toggleAuthModal(true);
-        }
-
-        if (userNameText) userNameText.textContent = "Guest User";
-        if (userEmailText) userEmailText.textContent = "Chats saved in memory";
-        if (userAvatarContainer) userAvatarContainer.innerHTML = "<span>G</span>";
-
-        if (authBtn) {
-          authBtn.title = "Sign In";
-          authBtn.onclick = () => toggleAuthModal(true);
-          authBtn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4 text-cyan-400"></i>`;
-        }
-
-        if (topAuthBtnText) topAuthBtnText.textContent = "Sign In";
-      }
-
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function handleGoogleSignIn() {
-      const googleEmail = prompt("Please enter your existing Google / Gmail address:");
-      if (!googleEmail) return;
-
-      const trimmedEmail = googleEmail.trim().toLowerCase();
-      const emailVal = validateEmailStrict(trimmedEmail);
-
-      if (!emailVal.valid) {
-        showToast(emailVal.reason, "error");
-        return;
-      }
-
-      if (!trimmedEmail.endsWith('@gmail.com') && !trimmedEmail.includes('google')) {
-        showToast("Please enter a valid existing Google (@gmail.com) account.", "error");
-        return;
-      }
-
-      const usersDB = getRegisteredUsersDB();
-      let account = usersDB[trimmedEmail];
-
-      if (!account) {
-        account = saveUserToDB(trimmedEmail, "GOOGLE_AUTH", trimmedEmail.split('@')[0], "google");
-      }
-
-      const userObj = {
-        name: account.name,
-        email: account.email,
-        provider: "google"
-      };
-
-      saveActiveUser(userObj);
-      chats = loadSavedChatsForUser(trimmedEmail);
-      if (chats.length === 0) createNewSession();
-      else activeChatId = chats[0].id;
-
-      toggleAuthModal(false);
-      renderSessionsList();
-      renderChatMessages();
-      showToast(`Google account verified: ${trimmedEmail}`, "success");
-    }
-
-    function handleEmailFormSubmit(e) {
-      e.preventDefault();
-      const emailInput = document.getElementById('authEmail');
-      const passwordInput = document.getElementById('authPassword');
-      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
-      const password = passwordInput ? passwordInput.value : '';
-
-      // Validate email syntax and real domain check
-      const emailVal = validateEmailStrict(email);
-      if (!emailVal.valid) {
-        showAuthError(emailVal.reason);
-        return;
-      }
-
-      if (!password || password.length < 6) {
-        showAuthError("Password must be at least 6 characters long.");
-        return;
-      }
-
-      const usersDB = getRegisteredUsersDB();
-      const existingAccount = usersDB[email];
-
-      if (authTabMode === "signin") {
-        // SIGN IN MODE: Account MUST already exist in database
-        if (!existingAccount) {
-          showAuthError(`No account found for "${email}". Please click 'Register' to create a new account.`);
-          return;
-        }
-
-        // Verify password
-        if (existingAccount.password !== password) {
-          showAuthError("Incorrect password. Please verify your credentials.");
-          return;
-        }
-
-        showAuthError("");
-        const userObj = {
-          name: existingAccount.name,
-          email: existingAccount.email,
-          provider: existingAccount.provider || "email"
-        };
-
-        saveActiveUser(userObj);
-        chats = loadSavedChatsForUser(email);
-        if (chats.length === 0) createNewSession();
-        else activeChatId = chats[0].id;
-
-        toggleAuthModal(false);
-        renderSessionsList();
-        renderChatMessages();
-        showToast(`Welcome back, ${userObj.name}!`, "success");
-
-      } else {
-        // REGISTER MODE: Account MUST NOT already exist
-        if (existingAccount) {
-          showAuthError(`An account with "${email}" already exists. Please switch to 'Sign In'.`);
-          return;
-        }
-
-        showAuthError("");
-        const newUser = saveUserToDB(email, password, email.split('@')[0], "email");
-        const userObj = {
-          name: newUser.name,
-          email: newUser.email,
-          provider: "email"
-        };
-
-        saveActiveUser(userObj);
-        chats = loadSavedChatsForUser(email);
-        if (chats.length === 0) createNewSession();
-        else activeChatId = chats[0].id;
-
-        toggleAuthModal(false);
-        renderSessionsList();
-        renderChatMessages();
-        showToast(`Account created successfully for ${email}!`, "success");
-      }
-    }
-
-    function handleSignOut() {
-      saveActiveUser(null);
-      chats = [];
-      createNewSession();
-      renderSessionsList();
-      renderChatMessages();
-      showToast("Signed out. Switched to Guest Mode.", "info");
-    }
-
-    function showAuthError(msg) {
-      const errBox = document.getElementById('authErrorBox');
-      if (!errBox) return;
-      if (msg) {
-        errBox.textContent = msg;
-        errBox.classList.remove('hidden');
-      } else {
-        errBox.classList.add('hidden');
-      }
-    }
-
-    function toggleAuthModal(show) {
-      const modal = document.getElementById('authModal');
-      if (!modal) return;
-      showAuthError("");
-      if (show) modal.classList.remove('hidden');
-      else modal.classList.add('hidden');
-    }
-
-    // --- DOM EVENT BINDING ---
-    function setupDOMEventListeners() {
-      const chatForm = document.getElementById('chatForm');
-      const userInput = document.getElementById('userInput');
-      const newChatBtn = document.getElementById('newChatBtn');
-      const modelSelect = document.getElementById('modelSelect');
-      const openSidebarMobile = document.getElementById('openSidebarMobile');
-      const closeSidebarMobile = document.getElementById('closeSidebarMobile');
-      const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-      const topAuthBtn = document.getElementById('topAuthBtn');
-      const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
-      const googleSignInBtn = document.getElementById('googleSignInBtn');
-      const emailAuthForm = document.getElementById('emailAuthForm');
-      const tabSignInBtn = document.getElementById('tabSignInBtn');
-      const tabSignUpBtn = document.getElementById('tabSignUpBtn');
-      const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn');
-      const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-      const confirmOkBtn = document.getElementById('confirmOkBtn');
-
-      if (chatForm) {
-        chatForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          handleSendMessage();
+    function initializeMarkdown() {
+      if (window.marked) {
+        marked.setOptions({
+          highlight: function (code, lang) {
+            if (window.hljs && hljs.getLanguage(lang)) {
+              return hljs.highlight(code, { language: lang }).value;
+            }
+            return code;
+          },
+          breaks: true
         });
       }
+    }
 
+    function setupDOMEventListeners() {
+      const userInput = document.getElementById('userInput');
       if (userInput) {
         userInput.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
@@ -786,65 +383,48 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
             handleSendMessage();
           }
         });
-
         userInput.addEventListener('input', function() {
           this.style.height = 'auto';
-          this.style.height = Math.min(this.scrollHeight, 180) + 'px';
+          this.style.height = Math.min(this.scrollHeight, 160) + 'px';
         });
       }
 
-      if (newChatBtn) newChatBtn.addEventListener('click', createNewSession);
-
+      const modelSelect = document.getElementById('modelSelect');
       if (modelSelect) {
         modelSelect.addEventListener('change', (e) => {
           currentModel = e.target.value;
         });
       }
 
-      // Mobile Sidebar Drawer
-      if (openSidebarMobile) openSidebarMobile.addEventListener('click', toggleMobileSidebar);
-      if (closeSidebarMobile) closeSidebarMobile.addEventListener('click', toggleMobileSidebar);
-      if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', toggleMobileSidebar);
-
-      // Auth Triggers
-      if (topAuthBtn) topAuthBtn.addEventListener('click', () => {
-        if (currentUser) handleSignOut();
-        else toggleAuthModal(true);
-      });
-
-      if (closeAuthModalBtn) closeAuthModalBtn.addEventListener('click', () => toggleAuthModal(false));
-      if (googleSignInBtn) googleSignInBtn.addEventListener('click', handleGoogleSignIn);
-      if (emailAuthForm) emailAuthForm.addEventListener('submit', handleEmailFormSubmit);
-
-      if (tabSignInBtn && tabSignUpBtn) {
-        tabSignInBtn.addEventListener('click', () => {
-          authTabMode = "signin";
-          tabSignInBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-jarvis-card text-white shadow";
-          tabSignUpBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white";
-          document.getElementById('authSubmitBtn').textContent = "Sign In";
-        });
-
-        tabSignUpBtn.addEventListener('click', () => {
-          authTabMode = "signup";
-          tabSignUpBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-jarvis-card text-white shadow";
-          tabSignInBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white";
-          document.getElementById('authSubmitBtn').textContent = "Register Account";
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          renderChatList(e.target.value.toLowerCase());
         });
       }
 
-      if (clearAllHistoryBtn) {
-        clearAllHistoryBtn.addEventListener('click', () => {
-          showConfirmModal("Clear All Conversations", "Are you sure you want to delete all saved conversations?", () => {
-            chats = [];
-            createNewSession();
-            saveChatsToStorage();
-            renderSessionsList();
-            renderChatMessages();
-            showToast("All conversations cleared.", "info");
-          });
-        });
+      // File Attacher Handlers
+      const attachFileBtn = document.getElementById('attachFileBtn');
+      const fileInput = document.getElementById('fileInput');
+      const removeFileBtn = document.getElementById('removeFileBtn');
+
+      if (attachFileBtn && fileInput) {
+        attachFileBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+      }
+      if (removeFileBtn) {
+        removeFileBtn.addEventListener('click', clearAttachedFile);
       }
 
+      // Voice Writing Handler
+      const micBtn = document.getElementById('micBtn');
+      if (micBtn) {
+        micBtn.addEventListener('click', toggleVoiceWriting);
+      }
+
+      // Confirm Modal Listener
+      const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+      const confirmOkBtn = document.getElementById('confirmOkBtn');
       if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', hideConfirmModal);
       if (confirmOkBtn) confirmOkBtn.addEventListener('click', () => {
         if (confirmCallback) confirmCallback();
@@ -860,135 +440,292 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
       });
     }
 
-    function toggleMobileSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const backdrop = document.getElementById('sidebarBackdrop');
-      if (sidebar && backdrop) {
-        sidebar.classList.toggle('-translate-x-full');
-        backdrop.classList.toggle('hidden');
+    // --- FILE ATTACHMENT LOGIC ---
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const isImage = file.type.startsWith('image/');
+      const reader = new FileReader();
+
+      reader.onload = function(evt) {
+        attachedFile = {
+          name: file.name,
+          type: file.type,
+          isImage: isImage,
+          dataUrl: isImage ? evt.target.result : null,
+          textContent: !isImage ? evt.target.result : null
+        };
+
+        const previewBar = document.getElementById('filePreviewBar');
+        const previewName = document.getElementById('filePreviewName');
+        const previewIcon = document.getElementById('filePreviewIcon');
+
+        if (previewBar && previewName) {
+          previewName.textContent = file.name;
+          if (previewIcon) {
+            previewIcon.setAttribute('data-lucide', isImage ? 'image' : 'file-text');
+            if (window.lucide) window.lucide.createIcons();
+          }
+          previewBar.classList.remove('hidden');
+        }
+        showToast(`Attached file: ${file.name}`, "info");
+      };
+
+      if (isImage) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.readAsText(file);
       }
     }
 
-    // --- SESSION MANAGEMENT ---
-    function createNewSession() {
+    function clearAttachedFile() {
+      attachedFile = null;
+      const fileInput = document.getElementById('fileInput');
+      const previewBar = document.getElementById('filePreviewBar');
+      if (fileInput) fileInput.value = '';
+      if (previewBar) previewBar.classList.add('hidden');
+    }
+
+    // --- VOICE WRITING (SPEECH-TO-TEXT) LOGIC ---
+    function toggleVoiceWriting() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast("Speech Recognition is not supported in this browser. Please use Chrome or Edge.", "error");
+        return;
+      }
+
+      if (isListening) {
+        stopVoiceWriting();
+        return;
+      }
+
+      if (!speechRecognitionObj) {
+        speechRecognitionObj = new SpeechRecognition();
+        speechRecognitionObj.continuous = true;
+        speechRecognitionObj.interimResults = true;
+        speechRecognitionObj.lang = navigator.language || 'en-US';
+
+        let baseText = '';
+
+        speechRecognitionObj.onstart = () => {
+          isListening = true;
+          const userInput = document.getElementById('userInput');
+          baseText = userInput ? userInput.value : '';
+          const micBtn = document.getElementById('micBtn');
+          if (micBtn) {
+            micBtn.classList.remove('text-slate-400');
+            micBtn.classList.add('text-red-400', 'animate-pulse', 'bg-red-500/20');
+          }
+          showToast("Listening... Speak clearly into your mic.", "info");
+        };
+
+        speechRecognitionObj.onresult = (event) => {
+          let transcript = '';
+          for (let i = 0; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+          }
+          const userInput = document.getElementById('userInput');
+          if (userInput) {
+            userInput.value = (baseText ? baseText + ' ' : '') + transcript;
+            userInput.style.height = 'auto';
+            userInput.style.height = Math.min(userInput.scrollHeight, 160) + 'px';
+          }
+        };
+
+        speechRecognitionObj.onerror = (err) => {
+          console.warn("Speech recognition notice:", err.error);
+          if (err.error === 'not-allowed') {
+            showToast("Microphone permission was denied.", "error");
+          }
+          stopVoiceWriting();
+        };
+
+        speechRecognitionObj.onend = () => {
+          if (isListening) stopVoiceWriting();
+        };
+      }
+
+      try {
+        speechRecognitionObj.start();
+      } catch (e) {
+        stopVoiceWriting();
+      }
+    }
+
+    function stopVoiceWriting() {
+      if (speechRecognitionObj && isListening) {
+        try { speechRecognitionObj.stop(); } catch(e) {}
+      }
+      isListening = false;
+      const micBtn = document.getElementById('micBtn');
+      if (micBtn) {
+        micBtn.classList.remove('text-red-400', 'animate-pulse', 'bg-red-500/20');
+        micBtn.classList.add('text-slate-400');
+      }
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      sidebar.classList.toggle('-translate-x-full');
+      overlay.classList.toggle('hidden');
+    }
+
+    // --- CHAT SESSION MANAGEMENT ---
+    function loadUserChats() {
+      const storageKey = currentUser ? `jarvis_chats_${currentUser.email}` : `jarvis_chats_guest`;
+      chats = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      
+      if (chats.length === 0) {
+        createNewSession(false);
+      } else {
+        activeChatId = chats[0].id;
+        renderChatList();
+        renderChatMessages();
+      }
+    }
+
+    function saveUserChats() {
+      const storageKey = currentUser ? `jarvis_chats_${currentUser.email}` : `jarvis_chats_guest`;
+      localStorage.setItem(storageKey, JSON.stringify(chats));
+      renderChatList();
+    }
+
+    function createNewSession(shouldRender = true) {
       const newChat = {
-        id: 'chat_' + Date.now(),
-        title: 'New Conversation',
-        updatedAt: Date.now(),
+        id: "chat_" + Date.now(),
+        title: "New Conversation",
+        updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         messages: []
       };
-
       chats.unshift(newChat);
       activeChatId = newChat.id;
+      saveUserChats();
 
-      saveChatsToStorage();
-      renderSessionsList();
+      if (shouldRender) {
+        renderChatMessages();
+      }
+    }
+
+    function switchChat(chatId) {
+      activeChatId = chatId;
+      renderChatList();
       renderChatMessages();
+      const sidebar = document.getElementById('sidebar');
+      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
+        toggleMobileSidebar();
+      }
+    }
+
+    function deleteChat(chatId, e) {
+      e.stopPropagation();
+      showConfirmModal("Delete Conversation?", "Are you sure you want to delete this chat session?", () => {
+        chats = chats.filter(c => c.id !== chatId);
+        if (chats.length === 0) {
+          createNewSession(false);
+        } else if (activeChatId === chatId) {
+          activeChatId = chats[0].id;
+        }
+        saveUserChats();
+        renderChatMessages();
+      });
+    }
+
+    function handleClearAllSessions() {
+      showConfirmModal("Clear All Conversations?", "This will permanently remove all your saved chat history.", () => {
+        chats = [];
+        createNewSession(true);
+        showToast("All chats cleared", "info");
+      });
     }
 
     function getActiveChat() {
       return chats.find(c => c.id === activeChatId) || chats[0];
     }
 
-    function renderSessionsList() {
-      const sessionsContainer = document.getElementById('sessionsContainer');
-      if (!sessionsContainer) return;
-
-      if (chats.length === 0) {
-        sessionsContainer.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">No saved chats</div>`;
-        return;
-      }
-
-      sessionsContainer.innerHTML = chats.map(session => {
-        const isActive = session.id === activeChatId;
-        return `
-          <div 
-            onclick="window.switchChat('${session.id}')"
-            class="group relative flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-colors ${isActive ? 'bg-jarvis-card text-cyan-300 font-semibold border border-jarvis-border' : 'text-slate-400 hover:bg-jarvis-hover hover:text-slate-200'}"
-          >
-            <div class="flex items-center gap-2 min-w-0 pr-6">
-              <i data-lucide="message-square" class="w-3.5 h-3.5 shrink-0 ${isActive ? 'text-cyan-400' : 'text-slate-500'}"></i>
-              <span class="truncate">${escapeHtml(session.title)}</span>
-            </div>
-            <button 
-              onclick="event.stopPropagation(); window.deleteChat('${session.id}')"
-              class="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition-opacity"
-              title="Delete chat"
-            >
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
-          </div>
-        `;
-      }).join('');
-
-      if (window.lucide) lucide.createIcons();
-    }
-
-    window.switchChat = function(chatId) {
-      activeChatId = chatId;
-      renderSessionsList();
-      renderChatMessages();
-    };
-
-    window.deleteChat = function(chatId) {
-      showConfirmModal("Delete Chat", "Delete this conversation?", () => {
-        chats = chats.filter(c => c.id !== chatId);
-        saveChatsToStorage();
-
-        if (chats.length === 0) {
-          createNewSession();
-        } else if (activeChatId === chatId) {
-          activeChatId = chats[0].id;
-        }
-
-        renderSessionsList();
-        renderChatMessages();
-      });
-    };
-
-    window.quickPrompt = function(promptText) {
+    function sendQuickPrompt(text) {
       const userInput = document.getElementById('userInput');
       if (userInput) {
-        userInput.value = promptText;
+        userInput.value = text;
         handleSendMessage();
       }
-    };
+    }
 
-    // --- CHAT MESSAGES UI RENDERING ---
+    // --- RENDER CHAT MESSAGES & SLIDES ---
     function renderChatMessages() {
       const chatContainer = document.getElementById('chatContainer');
-      const welcomeCard = document.getElementById('welcomeCard');
       const activeChat = getActiveChat();
 
       if (!chatContainer) return;
 
       if (!activeChat || activeChat.messages.length === 0) {
-        if (welcomeCard) welcomeCard.classList.remove('hidden');
-        chatContainer.innerHTML = '';
-        if (welcomeCard) chatContainer.appendChild(welcomeCard);
+        chatContainer.innerHTML = `
+          <div id="welcomeCard" class="flex flex-col items-center justify-center min-h-[60vh] text-center py-12">
+            <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4 shadow-xl shadow-cyan-500/5">
+              <span class="text-cyan-400 font-bold text-3xl">J</span>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">Hello, I am JARVIS</h2>
+            <p class="text-sm text-slate-400 max-w-md leading-relaxed mb-6">
+              Created and developed by <span class="text-cyan-400 font-medium">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate multi-style artwork, solve math, or upload files!
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full text-left">
+              <button onclick="sendQuickPrompt('Create a 4-slide presentation on Artificial Intelligence')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+                <i data-lucide="presentation" class="w-4 h-4 text-cyan-400"></i>
+                <span>Create a presentation on AI</span>
+              </button>
+              <button onclick="sendQuickPrompt('Paint a watercolor portrait of a futuristic cyberpunk city')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+                <i data-lucide="image" class="w-4 h-4 text-purple-400"></i>
+                <span>Generate watercolor artwork</span>
+              </button>
+              <button onclick="sendQuickPrompt('Write a Python script for automated web scraping with BeautifulSoup')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+                <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
+                <span>Write web scraping script</span>
+              </button>
+              <button onclick="sendQuickPrompt('Who created and developed you?')" class="p-3 bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs text-slate-300 hover:text-white transition flex items-center gap-2">
+                <i data-lucide="user" class="w-4 h-4 text-amber-400"></i>
+                <span>Who is your creator?</span>
+              </button>
+            </div>
+          </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
         return;
       }
-
-      if (welcomeCard) welcomeCard.classList.add('hidden');
 
       chatContainer.innerHTML = activeChat.messages.map((msg, index) => {
         const isUser = msg.role === 'user';
         return `
           <div class="flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} my-4 max-w-3xl mx-auto">
             ${!isUser ? `
-              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 text-black font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-glow-sm">
+              <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-sm shadow-cyan-500/20">
                 J
               </div>
             ` : ''}
 
             <div class="flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start flex-1 min-w-0'}">
-              <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'bg-jarvis-card text-slate-100 rounded-tr-none border border-jarvis-border' : 'bg-transparent text-slate-100'}">
-                ${isUser ? `<div class="whitespace-pre-wrap">${escapeHtml(msg.content)}</div>` : `<div id="msg-content-${index}" class="markdown-content"></div>`}
+              <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'bg-slate-800 text-slate-100 rounded-tr-none border border-slate-700/60 shadow-md' : 'bg-transparent text-slate-100'}">
+                
+                <!-- Render Attached File in User Bubble -->
+                ${isUser && msg.attachedFile ? `
+                  <div class="mb-2">
+                    ${msg.attachedFile.isImage ? `
+                      <img src="${msg.attachedFile.dataUrl}" class="max-w-xs max-h-48 rounded-xl border border-slate-700 shadow-md mb-1.5" />
+                    ` : `
+                      <div class="inline-flex items-center gap-2 bg-slate-950 border border-slate-700 px-3 py-1.5 rounded-xl text-xs text-cyan-300 font-mono mb-1.5">
+                        <i data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
+                        <span>${escapeHtml(msg.attachedFile.name)}</span>
+                      </div>
+                    `}
+                  </div>
+                ` : ''}
+
+                ${isUser ? `<div class="whitespace-pre-wrap">${escapeHtml(msg.content)}</div>` : `<div id="msg-content-${index}" class="markdown-body space-y-2"></div>`}
               </div>
             </div>
 
             ${isUser ? `
-              <div class="w-8 h-8 rounded-xl bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-jarvis-border">
+              <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-slate-700">
                 U
               </div>
             ` : ''}
@@ -996,243 +733,237 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
         `;
       }).join('');
 
-      // Render Markdown, KaTeX & Code for Assistant responses
+      // Render Markdown, Math, Images & Presentation Visual Cards for Assistant Messages
       activeChat.messages.forEach((msg, index) => {
         if (msg.role === 'assistant') {
           const elem = document.getElementById(`msg-content-${index}`);
-          if (elem) formatAndRenderMarkdown(elem, msg.content);
+          if (elem) {
+            renderFormattedMarkdown(elem, msg.content);
+          }
         }
       });
 
-      if (window.lucide) lucide.createIcons();
+      if (window.lucide) window.lucide.createIcons();
       scrollToBottom();
     }
 
-    // --- MARKDOWN & KATEX MATH FORMATTING ---
-    function formatAndRenderMarkdown(element, rawText) {
-      if (!element) return;
-
-      if (window.marked) {
-        marked.setOptions({
-          gfm: true,
-          breaks: true,
-          highlight: function(code, lang) {
-            if (window.hljs && hljs.getLanguage(lang)) {
-              return hljs.highlight(code, { language: lang }).value;
-            }
-            return code;
-          }
-        });
-
-        const rawHtml = marked.parse(rawText || '');
-        const cleanHtml = window.DOMPurify ? DOMPurify.sanitize(rawHtml) : rawHtml;
-        element.innerHTML = cleanHtml;
-      } else {
-        element.textContent = rawText;
+    function renderFormattedMarkdown(element, rawText) {
+      if (!rawText) {
+        element.innerHTML = `<span class="inline-block w-2 h-4 bg-cyan-400 animate-pulse"></span>`;
+        return;
       }
 
-      // Render KaTeX Expressions
+      let parsedHtml = rawText;
+      if (window.marked) {
+        parsedHtml = marked.parse(rawText);
+      }
+
+      element.innerHTML = parsedHtml;
+
+      // Render KaTeX Math
       if (window.renderMathInElement) {
         try {
           renderMathInElement(element, {
             delimiters: [
-              {left: '$$', right: '$$', display: true},
-              {left: '$', right: '$', display: false},
-              {left: '\\(', right: '\\)', display: false},
-              {left: '\\[', right: '\\]', display: true}
+              { left: "$$", right: "$$", display: true },
+              { left: "\\[", right: "\\]", display: true },
+              { left: "$", right: "$", display: false },
+              { left: "\\(", right: "\\)", display: false }
             ],
             throwOnError: false
           });
-        } catch (e) {
-          console.warn("KaTeX render notice:", e);
-        }
+        } catch (e) {}
       }
 
-      // Highlight Code Blocks & Attach Copy Buttons
-      element.querySelectorAll('pre').forEach((pre) => {
-        if (pre.parentNode.classList.contains('code-block-wrapper')) return;
-
-        const codeEl = pre.querySelector('code');
-        let lang = 'code';
-        if (codeEl) {
-          const match = codeEl.className.match(/language-(\w+)/);
-          if (match) lang = match[1];
-        }
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'code-block-wrapper';
-
-        const header = document.createElement('div');
-        header.className = 'code-header';
-        header.innerHTML = `
-          <span>${lang}</span>
-          <button class="copy-code-btn flex items-center gap-1 hover:text-white transition-colors">
-            <i data-lucide="copy" class="w-3 h-3"></i>
-            <span>Copy code</span>
-          </button>
-        `;
-
-        pre.parentNode.insertBefore(wrapper, pre);
-        wrapper.appendChild(header);
-        wrapper.appendChild(pre);
-
-        const copyBtn = header.querySelector('.copy-code-btn');
-        copyBtn.addEventListener('click', () => {
-          const codeText = codeEl ? codeEl.innerText : pre.innerText;
-          navigator.clipboard.writeText(codeText);
-          copyBtn.querySelector('span').innerText = 'Copied!';
-          setTimeout(() => {
-            copyBtn.querySelector('span').innerText = 'Copy code';
-          }, 2000);
-        });
-      });
-
-      // Style Generated Images & Bypass Rate Limit Caching
-      element.querySelectorAll('img').forEach((img) => {
-        if (img.dataset.downloadAdded) return;
-        img.dataset.downloadAdded = 'true';
-
-        img.classList.add('rounded-2xl', 'shadow-xl', 'my-3', 'max-w-full', 'border', 'border-jarvis-border');
-
-        // Auto-fix Pollinations URLs to ensure seed & model parameters are always unique
-        if (img.src.includes('pollinations.ai')) {
-          const randomSeed = Math.floor(Math.random() * 999999) + 1;
+      // Format Images with Download Button
+      element.querySelectorAll("img").forEach((img) => {
+        const src = img.getAttribute("src");
+        if (src && !img.parentElement.classList.contains("image-wrap")) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "image-wrap relative group my-4 rounded-xl overflow-hidden border border-slate-800 shadow-xl inline-block max-w-full";
           
-          if (!img.src.includes('seed=')) {
-            const separator = img.src.includes('?') ? '&' : '?';
-            img.src += `${separator}seed=${randomSeed}`;
-          }
-          if (!img.src.includes('model=')) {
-            img.src += `&model=flux`;
-          }
+          img.className = "rounded-xl max-w-full h-auto block";
+          img.parentNode.insertBefore(wrapper, img);
+          wrapper.appendChild(img);
 
-          // Error recovery if a rate-limit banner is served
-          img.onerror = function() {
-            this.onerror = null; // Prevent loop
-            const freshSeed = Math.floor(Math.random() * 899999) + 100000;
-            const cleanPrompt = encodeURIComponent(img.alt || 'car photo');
-            this.src = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1024&height=1024&seed=${freshSeed}&model=flux&nologo=true`;
-          };
+          const dlBtn = document.createElement("button");
+          dlBtn.className = "absolute bottom-3 right-3 bg-slate-900/90 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 backdrop-blur-md shadow-lg transition flex items-center gap-1.5 opacity-90 hover:opacity-100";
+          dlBtn.innerHTML = `📥 Download Image`;
+          dlBtn.onclick = () => downloadImage(src);
+          wrapper.appendChild(dlBtn);
         }
-
-        // Add Image Download Overlay Button
-        const imgWrapper = document.createElement('div');
-        imgWrapper.className = 'relative group my-3 inline-block max-w-full';
-        img.parentNode.insertBefore(imgWrapper, img);
-        imgWrapper.appendChild(img);
-
-        const downloadBtn = document.createElement('button');
-        downloadBtn.className = 'absolute bottom-3 right-3 bg-slate-900/90 hover:bg-cyan-500 text-white hover:text-black font-semibold text-xs px-3 py-1.5 rounded-xl border border-slate-700 backdrop-blur transition-all opacity-90 group-hover:opacity-100 flex items-center gap-1.5 shadow-lg';
-        downloadBtn.innerHTML = `<i data-lucide="download" class="w-3.5 h-3.5"></i><span>Download Image</span>`;
-        downloadBtn.onclick = () => window.downloadImage(img.src, `${(img.alt || 'jarvis-image').replace(/[^a-z0-9]/gi, '_')}.jpg`);
-        imgWrapper.appendChild(downloadBtn);
       });
 
-      if (window.lucide) lucide.createIcons();
+      // Detect Presentation Content and inject Visual Slide Player
+      if (rawText.includes("Slide 1:") || rawText.includes("### Slide 1")) {
+        injectVisualSlidePlayer(element, rawText);
+      }
     }
 
-    // --- HELPER TO DOWNLOAD IMAGES ---
-    window.downloadImage = async function(url, filename = 'jarvis-generated-image.jpg') {
-      try {
-        showToast("Downloading image...", "info");
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-        showToast("Image downloaded successfully!", "success");
-      } catch (e) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.target = '_blank';
-        link.download = filename;
-        link.click();
-      }
-    };
+    // --- VISUAL SLIDE PLAYER FOR PRESENTATIONS ---
+    function injectVisualSlidePlayer(containerElem, rawText) {
+      if (containerElem.querySelector(".slide-player")) return;
 
-    // --- REAL-TIME STREAMING FROM GROQ ENGINE ---
+      const slideBlocks = rawText.split(/###?\s*Slide\s*\d+:?/i).filter(s => s.trim().length > 0);
+      if (slideBlocks.length < 2) return;
+
+      let currentSlideIdx = 0;
+      const playerDiv = document.createElement("div");
+      playerDiv.className = "slide-player my-4 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl max-w-2xl";
+
+      function renderSlideCard() {
+        const slideContent = marked.parse("### Slide " + (currentSlideIdx + 1) + slideBlocks[currentSlideIdx + 1]);
+        playerDiv.innerHTML = `
+          <div class="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
+            <span class="text-cyan-400 font-bold flex items-center gap-1.5">
+              <span>📊 Slide Deck</span>
+            </span>
+            <div class="flex items-center gap-2">
+              <button id="prevSlideBtn" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-300">◀</button>
+              <span class="text-slate-400">${currentSlideIdx + 1} / ${slideBlocks.length - 1}</span>
+              <button id="nextSlideBtn" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-300">▶</button>
+              <button id="previewSlideBtn" class="ml-2 px-2.5 py-0.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-sans font-medium">Fullscreen</button>
+            </div>
+          </div>
+          <div class="p-6 bg-slate-900/90 text-slate-100 min-h-[220px] markdown-body">
+            ${slideContent}
+          </div>
+        `;
+
+        playerDiv.querySelector("#prevSlideBtn").onclick = () => {
+          if (currentSlideIdx > 0) { currentSlideIdx--; renderSlideCard(); }
+        };
+        playerDiv.querySelector("#nextSlideBtn").onclick = () => {
+          if (currentSlideIdx < slideBlocks.length - 2) { currentSlideIdx++; renderSlideCard(); }
+        };
+        playerDiv.querySelector("#previewSlideBtn").onclick = () => openPresentationFullscreen(rawText);
+      }
+
+      renderSlideCard();
+      containerElem.appendChild(playerDiv);
+    }
+
+    function openPresentationFullscreen(rawText) {
+      const modal = document.getElementById("presentationModal");
+      const iframe = document.getElementById("presentationIframe");
+      if (!modal || !iframe) return;
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <script src="https://cdn.tailwindcss.com"><\/script>
+          <style> body { background: #090d16; color: #f8fafc; font-family: sans-serif; padding: 2rem; } </style>
+        </head>
+        <body>
+          <div class="max-w-3xl mx-auto space-y-6">
+            ${marked.parse(rawText)}
+          </div>
+        </body>
+        </html>
+      `;
+      iframe.srcdoc = htmlContent;
+      modal.classList.remove("hidden");
+    }
+
+    function closePresentationModal() {
+      const modal = document.getElementById("presentationModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    // --- REAL-TIME CHAT STREAMING ---
     async function handleSendMessage() {
       const userInput = document.getElementById('userInput');
       const text = userInput ? userInput.value.trim() : '';
-      if (!text || isGenerating) return;
+
+      if ((!text && !attachedFile) || isGenerating) return;
+
+      if (isListening) stopVoiceWriting();
 
       userInput.value = '';
       userInput.style.height = 'auto';
 
       const activeChat = getActiveChat();
+      const currentAttachedFile = attachedFile;
 
-      // Set conversation title on first prompt
-      if (activeChat.messages.length === 0) {
-        activeChat.title = text.length > 30 ? text.substring(0, 30) + '...' : text;
+      let fullPromptText = text;
+      if (currentAttachedFile && !currentAttachedFile.isImage && currentAttachedFile.textContent) {
+        fullPromptText += `\n\n[Attached File: ${currentAttachedFile.name}]\n\`\`\`\n${currentAttachedFile.textContent}\n\`\`\``;
       }
 
-      // Append User Message
-      activeChat.messages.push({ role: 'user', content: text });
-      
-      // Append Assistant Placeholder
+      if (activeChat.messages.length === 0) {
+        activeChat.title = (text || currentAttachedFile?.name || 'New Conversation').substring(0, 24) + '...';
+      }
+
+      activeChat.messages.push({
+        role: 'user',
+        content: text || (currentAttachedFile ? `[Sent File: ${currentAttachedFile.name}]` : ''),
+        attachedFile: currentAttachedFile ? { ...currentAttachedFile } : null
+      });
+
+      clearAttachedFile();
+
       const assistantMsgIndex = activeChat.messages.length;
-      activeChat.messages.push({ role: 'assistant', content: '' });
-
-      activeChat.updatedAt = Date.now();
-
-      renderSessionsList();
-      renderChatMessages();
+      activeChat.messages.push({
+        role: 'assistant',
+        content: ''
+      });
 
       isGenerating = true;
+      renderChatMessages();
+
+      const formattedMessages = [
+        SYSTEM_PROMPT,
+        ...activeChat.messages.slice(0, -1).map(m => ({
+          role: m.role,
+          content: m.role === 'user' && m.attachedFile && !m.attachedFile.isImage && m.attachedFile.textContent
+            ? `${m.content}\n\n[Attached File: ${m.attachedFile.name}]\n\`\`\`\n${m.attachedFile.textContent}\n\`\`\``
+            : m.content
+        }))
+      ];
 
       try {
-        const formattedMessages = [
-          SYSTEM_PROMPT,
-          ...activeChat.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
-        ];
-
         let response = await fetch(GROQ_API_URL, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${GROQ_API_KEY}`
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${GROQ_API_KEY}`
           },
           body: JSON.stringify({
             model: currentModel,
             messages: formattedMessages,
-            temperature: 0.7,
-            stream: true
+            stream: true,
+            temperature: 0.7
           })
         });
 
-        // Automatic fallback to default active model if selected model is restricted
+        // Fallback to Instant Model if restricted
         if (!response.ok && currentModel !== "openai/gpt-oss-20b") {
           currentModel = "openai/gpt-oss-20b";
-          const modelSelect = document.getElementById('modelSelect');
+          const modelSelect = document.getElementById("modelSelect");
           if (modelSelect) modelSelect.value = currentModel;
           response = await fetch(GROQ_API_URL, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${GROQ_API_KEY}`
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${GROQ_API_KEY}`
             },
             body: JSON.stringify({
               model: currentModel,
               messages: formattedMessages,
-              temperature: 0.7,
-              stream: true
+              stream: true,
+              temperature: 0.7
             })
           });
         }
 
         if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `Engine Error (${response.status})`);
+          throw new Error(`HTTP ${response.status}: Unable to reach JARVIS core.`);
         }
 
         const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let fullResponse = '';
+        const decoder = new TextDecoder("utf-8");
+        let accumulatedText = "";
 
         const assistantElem = document.getElementById(`msg-content-${assistantMsgIndex}`);
 
@@ -1241,71 +972,256 @@ PRIMARY INSTRUCTIONS & BEHAVIOR:
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+          const lines = chunk.split("\n");
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const dataStr = line.replace('data: ', '').trim();
-              if (dataStr === '[DONE]') break;
+            if (line.startsWith("data: ")) {
+              const dataStr = line.replace("data: ", "").trim();
+              if (dataStr === "[DONE]") break;
 
               try {
                 const parsed = JSON.parse(dataStr);
-                const delta = parsed.choices[0]?.delta?.content || '';
-                fullResponse += delta;
-                activeChat.messages[assistantMsgIndex].content = fullResponse;
-                if (assistantElem) formatAndRenderMarkdown(assistantElem, fullResponse);
+                const delta = parsed.choices[0]?.delta?.content || "";
+                accumulatedText += delta;
+                activeChat.messages[assistantMsgIndex].content = accumulatedText;
+                if (assistantElem) renderFormattedMarkdown(assistantElem, accumulatedText);
                 scrollToBottom();
-              } catch (e) {
-                // Ignore chunk parse exceptions
-              }
+              } catch (e) {}
             }
           }
         }
 
-        saveChatsToStorage();
+        saveUserChats();
 
-      } catch (err) {
-        console.error("JARVIS Engine Exception:", err);
-        const friendlyName = MODEL_LABELS[currentModel] || "Jarvis Engine";
-        activeChat.messages[assistantMsgIndex].content = `⚠️ **JARVIS Notice (${friendlyName} - \`${currentModel}\`):**\n\n${err.message}`;
+      } catch (error) {
+        activeChat.messages[assistantMsgIndex].content = `⚠️ **JARVIS Notice (${currentModel}):**\n\n${error.message}`;
+        saveUserChats();
         renderChatMessages();
       } finally {
         isGenerating = false;
       }
     }
 
-    // --- MODALS & UTILITY HELPERS ---
+    function renderChatList(filterQuery = "") {
+      const historyContainer = document.getElementById("historyItems");
+      if (!historyContainer) return;
+
+      const filtered = chats.filter(c => c.title.toLowerCase().includes(filterQuery));
+
+      if (filtered.length === 0) {
+        historyContainer.innerHTML = `<p class="text-[11px] text-slate-500 px-2 py-1 italic">No chats found.</p>`;
+        return;
+      }
+
+      historyContainer.innerHTML = filtered.map(c => `
+        <div onclick="switchChat('${c.id}')" class="group px-2.5 py-2 rounded-xl border ${c.id === activeChatId ? 'bg-slate-800/90 border-cyan-500/40 text-cyan-300' : 'bg-transparent border-transparent hover:bg-slate-800/50 text-slate-300'} text-xs truncate cursor-pointer flex items-center justify-between transition">
+          <div class="flex items-center gap-2 truncate">
+            <i data-lucide="message-square" class="w-3.5 h-3.5 shrink-0 ${c.id === activeChatId ? 'text-cyan-400' : 'text-slate-500'}"></i>
+            <span class="truncate font-medium">${escapeHtml(c.title)}</span>
+          </div>
+          <button onclick="deleteChat('${c.id}', event)" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-0.5 rounded transition" title="Delete chat">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      `).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    // --- AUTHENTICATION SYSTEM ---
+    function openAuthModal() {
+      document.getElementById("authModal").classList.remove("hidden");
+    }
+
+    function closeAuthModal() {
+      document.getElementById("authModal").classList.add("hidden");
+    }
+
+    function switchAuthTab(mode) {
+      authTabMode = mode;
+      const tabSignIn = document.getElementById("tabSignIn");
+      const tabRegister = document.getElementById("tabRegister");
+      const authSubmitBtn = document.getElementById("authSubmitBtn");
+      const authModalTitle = document.getElementById("authModalTitle");
+
+      if (mode === "signin") {
+        tabSignIn.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-white bg-slate-800 transition";
+        tabRegister.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition";
+        authSubmitBtn.innerText = "Sign In";
+        authModalTitle.innerText = "Sign In to JARVIS";
+      } else {
+        tabRegister.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-white bg-slate-800 transition";
+        tabSignIn.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition";
+        authSubmitBtn.innerText = "Create Account";
+        authModalTitle.innerText = "Register New Account";
+      }
+    }
+
+    function isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const fakeDomains = ['test.com', 'fake.com', 'example.com', 'temp.com', 'mail.com'];
+      if (!emailRegex.test(email)) return false;
+      const domain = email.split('@')[1].toLowerCase();
+      return !fakeDomains.includes(domain);
+    }
+
+    function handleAuthSubmit() {
+      const email = document.getElementById("authEmail").value.trim();
+      const password = document.getElementById("authPassword").value.trim();
+
+      if (!isValidEmail(email)) {
+        showToast("Please enter a valid, real email address.", "error");
+        return;
+      }
+
+      if (password.length < 6) {
+        showToast("Password must be at least 6 characters.", "error");
+        return;
+      }
+
+      if (authTabMode === "register") {
+        const exists = registeredUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
+        if (exists) {
+          showToast("An account with this email already exists. Please Sign In.", "error");
+          return;
+        }
+
+        const newUser = { email: email, name: email.split("@")[0], password: password };
+        registeredUsers.push(newUser);
+        localStorage.setItem("jarvis_registered_users_db", JSON.stringify(registeredUsers));
+
+        currentUser = { email: newUser.email, name: newUser.name };
+        localStorage.setItem("jarvis_active_user", JSON.stringify(currentUser));
+
+        closeAuthModal();
+        updateUserUI();
+        loadUserChats();
+        showToast(`Welcome ${currentUser.name}! Account registered.`, "success");
+
+      } else {
+        const user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+        if (!user) {
+          showToast("Invalid credentials. Please check your email or Register first.", "error");
+          return;
+        }
+
+        currentUser = { email: user.email, name: user.name };
+        localStorage.setItem("jarvis_active_user", JSON.stringify(currentUser));
+
+        closeAuthModal();
+        updateUserUI();
+        loadUserChats();
+        showToast(`Signed in as ${currentUser.name}`, "success");
+      }
+    }
+
+    function handleGoogleSignIn() {
+      const googleEmail = prompt("Enter your Google Account email (@gmail.com):");
+      if (!googleEmail || !googleEmail.endsWith("@gmail.com")) {
+        showToast("Please enter a valid @gmail.com email.", "error");
+        return;
+      }
+
+      currentUser = { email: googleEmail, name: googleEmail.split("@")[0] };
+      localStorage.setItem("jarvis_active_user", JSON.stringify(currentUser));
+
+      closeAuthModal();
+      updateUserUI();
+      loadUserChats();
+      showToast(`Google Sign In successful! Welcome ${currentUser.name}`, "success");
+    }
+
+    function handleLogout() {
+      showConfirmModal("Sign Out?", "Are you sure you want to sign out of your account?", () => {
+        currentUser = null;
+        localStorage.removeItem("jarvis_active_user");
+        updateUserUI();
+        loadUserChats();
+        showToast("Signed out. Switched to Guest Mode.", "info");
+      });
+    }
+
+    function updateUserUI() {
+      const authBtnText = document.getElementById("authBtnText");
+      const banner = document.getElementById("accountBanner");
+      const userName = document.getElementById("userName");
+      const userSub = document.getElementById("userSub");
+      const userAvatar = document.getElementById("userAvatar");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      if (currentUser) {
+        if (authBtnText) authBtnText.innerText = currentUser.name;
+        if (banner) banner.innerHTML = `<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Sync Active (${currentUser.name})</span>`;
+        if (userName) userName.innerText = currentUser.name;
+        if (userSub) userSub.innerText = currentUser.email;
+        if (userAvatar) userAvatar.innerText = currentUser.name.charAt(0).toUpperCase();
+        if (logoutBtn) logoutBtn.classList.remove("hidden");
+      } else {
+        if (authBtnText) authBtnText.innerText = "Sign In";
+        if (banner) banner.innerHTML = `<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>Guest Mode</span><button onclick="openAuthModal()" class="underline text-[11px] font-semibold hover:text-amber-200">Sign In</button>`;
+        if (userName) userName.innerText = "Guest User";
+        if (userSub) userSub.innerText = "Chats saved in memory";
+        if (userAvatar) userAvatar.innerText = "G";
+        if (logoutBtn) logoutBtn.classList.add("hidden");
+      }
+    }
+
+    // --- UTILITY HELPERS ---
+    function downloadImage(url) {
+      showToast("Downloading image...", "info");
+      fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = `jarvis-artwork-${Date.now()}.jpg`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch(() => window.open(url, '_blank'));
+    }
+
     function showToast(message, type = "info") {
-      const container = document.getElementById('toastContainer');
+      const container = document.getElementById("toastContainer");
       if (!container) return;
 
-      const toast = document.createElement('div');
-      const bgColor = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-cyan-600';
-
-      toast.className = `${bgColor} text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xl transition-all transform translate-y-2 opacity-0 pointer-events-auto`;
-      toast.textContent = message;
-
+      const toast = document.createElement("div");
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xl border flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0 ${
+        type === "error" ? "bg-red-950/90 border-red-500/50 text-red-200" :
+        type === "success" ? "bg-emerald-950/90 border-emerald-500/50 text-emerald-200" :
+        "bg-slate-900/90 border-cyan-500/50 text-cyan-200"
+      }`;
+      toast.innerText = message;
       container.appendChild(toast);
 
       setTimeout(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
+        toast.classList.remove("translate-y-2", "opacity-0");
       }, 10);
 
       setTimeout(() => {
-        toast.classList.add('opacity-0');
+        toast.classList.add("opacity-0");
         setTimeout(() => toast.remove(), 300);
-      }, 3000);
+      }, 3500);
     }
 
-    function showConfirmModal(title, message, callback) {
-      document.getElementById('confirmTitle').textContent = title;
-      document.getElementById('confirmMessage').textContent = message;
-      confirmCallback = callback;
-      document.getElementById('confirmModal').classList.remove('hidden');
+    function showConfirmModal(title, message, onConfirm) {
+      const modal = document.getElementById("confirmModal");
+      const titleElem = document.getElementById("confirmTitle");
+      const msgElem = document.getElementById("confirmMessage");
+      if (!modal) return;
+
+      if (titleElem) titleElem.innerText = title;
+      if (msgElem) msgElem.innerText = message;
+      confirmCallback = onConfirm;
+      modal.classList.remove("hidden");
     }
 
     function hideConfirmModal() {
-      document.getElementById('confirmModal').classList.add('hidden');
+      const modal = document.getElementById("confirmModal");
+      if (modal) modal.classList.add("hidden");
       confirmCallback = null;
     }
 
