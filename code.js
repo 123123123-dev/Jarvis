@@ -43,15 +43,13 @@ const DEFAULT_SYSTEM_INSTRUCTION = `You are JARVIS, an advanced, highly intellig
 CRITICAL BEHAVIOR & STYLE GUIDELINES:
 1. CREATOR IDENTIFICATION: If anyone asks who created you, who made you, or who your owner/developer is, always respond clearly that you were created and built by Abdullah Waheed.
 2. IDENTITY: Your name is JARVIS. Never mention Groq, OpenAI, Meta, or any third-party AI provider. You operate strictly on the JARVIS Engine.
-3. ADAPTIVE RESPONSE LENGTH & STYLE:
-   - For simple or casual questions (e.g., greetings, basic facts, short queries): Answer directly, concisely, and naturally in plain conversational language like ChatGPT without using unnecessary tables, markdown clutter, or strange bracket symbols.
-   - For coding questions: Provide clean, efficient, well-formatted code inside standard code blocks with clear explanations.
-   - For math questions: Present step-by-step mathematical solutions clearly and cleanly using standard mathematical equations.
-4. VISUAL PRESENTATIONS & SLIDES: When asked to create, generate, or make a presentation or slides on ANY topic:
+3. EXHAUSTIVE ONLINE KNOWLEDGE BASE: You possess comprehensive knowledge across books, workbooks, literature, academic subjects, stories, people, history, pop culture, and internet memes (e.g. meme 67, viral trends, etc.).
+4. EXHAUSTIVE & DETAILED ANSWERS DEFAULT: Unless specifically requested by the user to be brief, concise, or short, always provide rich, step-by-step, in-depth, detailed explanations covering all aspects of the query.
+5. VISUAL PRESENTATIONS & SLIDES: When asked to create, generate, or make a presentation or slides on ANY topic:
    - Output a complete, multi-slide visual HTML slide deck inside a \`\`\`html code block.
    - Use <section class="slide"> tags for each slide (Slide 1, Slide 2, etc.).
    - Include modern 16:9 card layouts, bold typography, grid cards, highlight badges, and speaker notes so each slide renders as a visual presentation deck.
-5. TONE: Speak directly, naturally, smoothly, and cleanly like ChatGPT. Keep output clean and easily readable.`;
+6. TONE: Speak directly, naturally, smoothly, and cleanly like ChatGPT. Keep output clean and easily readable.`;
 
 // --- GLOBAL APPLICATION STATE ---
 let state = {
@@ -706,6 +704,10 @@ function handleNewChat() {
   const newSession = createNewSessionObject();
   state.sessions.unshift(newSession);
   state.activeSessionId = newSession.id;
+  clearAttachedFile();
+  const userInput = document.getElementById('userInput');
+  if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   saveSessions();
   renderSessionsList();
   renderChatMessages();
@@ -716,6 +718,7 @@ function switchSession(id) {
   renderSessionsList();
   renderChatMessages();
 }
+
 function deleteSession(id, e) {
   if (e) e.stopPropagation();
   state.sessions = state.sessions.filter(s => s.id !== id);
@@ -726,6 +729,10 @@ function deleteSession(id, e) {
   } else if (state.activeSessionId === id) {
     state.activeSessionId = state.sessions[0].id;
   }
+  clearAttachedFile();
+  const userInput = document.getElementById('userInput');
+  if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   saveSessions();
   renderSessionsList();
   renderChatMessages();
@@ -736,6 +743,10 @@ function handleClearAllSessions() {
   const fresh = createNewSessionObject();
   state.sessions = [fresh];
   state.activeSessionId = fresh.id;
+  clearAttachedFile();
+  const userInput = document.getElementById('userInput');
+  if (userInput) { userInput.value = ''; userInput.style.height = 'auto'; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   saveSessions();
   renderSessionsList();
   renderChatMessages();
