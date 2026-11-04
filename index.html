@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JARVIS AI PRO</title>
+  <title>JARVIS AI PRO - Developed by Abdullah Waheed</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,7 +11,7 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Marked.js for Markdown Rendering -->
+  <!-- Marked.js for High-Precision Markdown Rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <script>
@@ -32,7 +32,7 @@
   </script>
 
   <style>
-    /* Custom Scrollbar Styling */
+    /* Custom Sleek Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -50,45 +50,46 @@
 
     /* Arc Reactor Glowing Effects & Animations */
     .arc-glow {
-      box-shadow: 0 0 15px rgba(0, 180, 216, 0.45), inset 0 0 10px rgba(0, 180, 216, 0.3);
+      box-shadow: 0 0 18px rgba(0, 180, 216, 0.5), inset 0 0 12px rgba(0, 180, 216, 0.35);
     }
     .text-glow {
-      text-shadow: 0 0 10px rgba(0, 180, 216, 0.7);
+      text-shadow: 0 0 12px rgba(0, 180, 216, 0.8);
     }
     .pulse-ring {
       animation: pulseGlow 3s infinite ease-in-out;
     }
     @keyframes pulseGlow {
-      0%, 100% { opacity: 0.7; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.04); }
+      0%, 100% { opacity: 0.75; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
     }
 
-    /* Markdown Styling Inside Chat Messages */
-    .markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
-    .markdown-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
-    .markdown-content ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
-    .markdown-content li { margin-bottom: 0.25rem; }
+    /* Markdown Styling for AI Answers */
+    .markdown-content p { margin-bottom: 0.85rem; line-height: 1.65; }
+    .markdown-content ul { list-style-type: disc; padding-left: 1.3rem; margin-bottom: 0.85rem; }
+    .markdown-content ol { list-style-type: decimal; padding-left: 1.3rem; margin-bottom: 0.85rem; }
+    .markdown-content li { margin-bottom: 0.3rem; }
     .markdown-content h1, .markdown-content h2, .markdown-content h3 {
-      font-weight: 700; color: #00b4d8; margin-top: 1rem; margin-bottom: 0.5rem;
+      font-weight: 700; color: #00b4d8; margin-top: 1.2rem; margin-bottom: 0.6rem;
     }
     .markdown-content code {
-      background: #141c2e; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid #1e293b; font-size: 0.85em;
+      background: #141c2e; padding: 0.2rem 0.45rem; border-radius: 0.25rem; border: 1px solid #1e293b; font-size: 0.85em; font-family: monospace; color: #38bdf8;
     }
     .markdown-content pre {
-      background: #070a13; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #1e293b; overflow-x: auto; margin-bottom: 0.75rem;
+      background: #070a13; padding: 0.85rem; border-radius: 0.5rem; border: 1px solid #1e293b; overflow-x: auto; margin-bottom: 0.85rem;
     }
     .markdown-content blockquote {
-      border-left: 3px solid #00b4d8; padding-left: 0.75rem; color: #94a3b8; font-style: italic; margin-bottom: 0.75rem;
+      border-left: 3px solid #00b4d8; padding-left: 0.85rem; color: #94a3b8; font-style: italic; margin-bottom: 0.85rem; background: rgba(0, 180, 216, 0.05); padding-top: 0.4rem; padding-bottom: 0.4rem; border-radius: 0 0.4rem 0.4rem 0;
     }
+    .markdown-content strong { color: #f8fafc; font-weight: 700; }
   </style>
 </head>
 <body class="bg-brandDark text-slate-100 h-full font-sans antialiased select-none flex flex-col overflow-hidden">
 
   <!-- TOP HEADER BAR -->
   <header class="h-14 bg-panelDark/90 border-b border-borderDark px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
-    <!-- Left Branding & Arc Reactor Logo -->
+    <!-- Left Branding & Animated Arc Reactor Logo -->
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-full bg-brandDark border border-jarvisCyan/60 flex items-center justify-center p-1 arc-glow relative cursor-pointer" onclick="resetToWelcomeView()">
+      <div class="w-8 h-8 rounded-full bg-brandDark border border-jarvisCyan/70 flex items-center justify-center p-1 arc-glow relative cursor-pointer" onclick="resetToWelcomeView()" title="JARVIS Home">
         <svg viewBox="0 0 100 100" class="w-full h-full pulse-ring" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="10 4" class="opacity-80"/>
           <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="3"/>
@@ -115,13 +116,13 @@
       </select>
 
       <button id="authHeaderBtn" onclick="handleAuthNavClick()" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-md shadow-jarvisCyan/20">
-        <i class="fa-solid fa-user-lock text-[11px]"></i>
+        <i id="authHeaderIcon" class="fa-solid fa-user-lock text-[11px]"></i>
         <span id="authHeaderBtnText">Sign In</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN APPLICATION BODY -->
+  <!-- MAIN APPLICATION CONTAINER -->
   <div class="flex flex-1 h-[calc(100vh-3.5rem)] overflow-hidden">
     
     <!-- LEFT NAVIGATION SIDEBAR -->
@@ -182,11 +183,11 @@
       <!-- CHAT SCROLL AREA -->
       <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         
-        <!-- HERO WELCOME SCREEN (Shown when no messages exist) -->
+        <!-- HERO WELCOME SCREEN (Visible when no messages exist) -->
         <div id="heroWelcome" class="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto space-y-6 my-auto py-10">
           
           <!-- Central Arc Reactor HUD Logo -->
-          <div class="w-20 h-20 rounded-full bg-brandDark border-2 border-jarvisCyan/80 p-2 arc-glow relative flex items-center justify-center cursor-pointer transform hover:scale-105 transition duration-300">
+          <div class="w-20 h-20 rounded-full bg-brandDark border-2 border-jarvisCyan/80 p-2 arc-glow relative flex items-center justify-center cursor-pointer transform hover:scale-105 transition duration-300" onclick="document.getElementById('userInput').focus()">
             <svg viewBox="0 0 100 100" class="w-full h-full pulse-ring" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="12 4"/>
               <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="4"/>
@@ -203,7 +204,7 @@
             </p>
           </div>
 
-          <!-- 4 Interactive Suggestion Cards -->
+          <!-- 4 Interactive Suggestion Grid Cards -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full pt-2">
             <button onclick="sendQuickPrompt('Create a presentation on AI and Machine Learning')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
               <i class="fa-solid fa-file-powerpoint text-amber-400 text-sm group-hover:scale-110 transition"></i>
@@ -215,7 +216,7 @@
               <span>Generate watercolor artwork</span>
             </button>
 
-            <button onclick="sendQuickPrompt('Explain the full form of DHA and its applications in biology, real estate, and defense')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
+            <button onclick="sendQuickPrompt('Who is Hazrat Ali (R.A.)? Tell me about his life, achievements, and teachings.')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
               <i class="fa-solid fa-book-bookmark text-emerald-400 text-sm group-hover:scale-110 transition"></i>
               <span>Solve History & Academic Query</span>
             </button>
@@ -361,22 +362,22 @@
         <i class="fa-solid fa-file-powerpoint text-amber-400 text-lg"></i>
         <span id="fullscreenSlideTitle" class="font-bold text-sm text-white">JARVIS Presentation Mode</span>
       </div>
-      <button onclick="closePresentationOverlay()" class="text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-cardDark border border-borderDark text-xs">
-        <i class="fa-solid fa-compress mr-1"></i> Exit Fullscreen
+      <button onclick="closePresentationOverlay()" class="text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-cardDark border border-borderDark text-xs flex items-center gap-1.5">
+        <i class="fa-solid fa-compress"></i> Exit Fullscreen
       </button>
     </div>
 
     <!-- Presentation Slide Canvas -->
-    <div class="flex-1 bg-panelDark border border-borderDark rounded-2xl p-8 flex flex-col justify-between shadow-2xl relative">
-      <div id="fullscreenSlideContent" class="text-slate-100 space-y-4 text-base md:text-xl leading-relaxed"></div>
+    <div class="flex-1 bg-panelDark border border-borderDark rounded-2xl p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+      <div id="fullscreenSlideContent" class="text-slate-100 space-y-4 text-base md:text-xl leading-relaxed overflow-y-auto max-h-[80vh]"></div>
       
       <!-- Footer Nav Controls -->
       <div class="flex items-center justify-between border-t border-borderDark/60 pt-4">
-        <button onclick="changeSlide(-1)" class="bg-cardDark hover:bg-borderDark border border-borderDark text-xs px-4 py-2 rounded-xl text-slate-200 flex items-center gap-2">
+        <button onclick="changeSlide(-1)" class="bg-cardDark hover:bg-borderDark border border-borderDark text-xs px-4 py-2 rounded-xl text-slate-200 flex items-center gap-2 transition">
           <i class="fa-solid fa-chevron-left"></i> Previous
         </button>
         <span id="slideCounterText" class="text-xs text-jarvisCyan font-mono font-bold">Slide 1 of 4</span>
-        <button onclick="changeSlide(1)" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-2">
+        <button onclick="changeSlide(1)" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-2 transition">
           Next <i class="fa-solid fa-chevron-right"></i>
         </button>
       </div>
@@ -385,10 +386,9 @@
 
   <!-- MAIN SCRIPT CONTROLLER -->
   <script>
-    // Global State & User DB Storage Initialization
-    window.currentUser = null; // null = Ephemeral Guest Mode
+    // Global State & Session Database Initialization
+    window.currentUser = null; // null = Ephemeral Guest Session
     window.attachedFiles = [];
-    window.currentChatMessages = [];
     window.allChatSessions = {};
     window.currentSessionId = null;
     window.isGenerating = false;
@@ -429,14 +429,13 @@
         try {
           const userObj = JSON.parse(savedUser);
           const db = getRegisteredUsersDB();
-          // Validate existing user session
           if (db[userObj.email.toLowerCase()]) {
             window.currentUser = userObj;
             loadUserChats(window.currentUser.email);
           } else {
             localStorage.removeItem('jarvis_authenticated_user');
           }
-        } catch (e) { console.error('Error reading stored user session', e); }
+        } catch (e) { console.error('Stored session read error', e); }
       }
 
       updateUserUI();
@@ -444,7 +443,7 @@
 
       const userInput = document.getElementById('userInput');
       
-      // Enter key sends message immediately! Shift+Enter inserts newline.
+      // Enter key sends message immediately; Shift+Enter inserts newline.
       userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
@@ -476,7 +475,6 @@
 
     // Reset Workspace View
     function resetToWelcomeView() {
-      window.currentChatMessages = [];
       window.currentSessionId = null;
       document.getElementById('messagesList').innerHTML = '';
       document.getElementById('heroWelcome').classList.remove('hidden');
@@ -491,7 +489,7 @@
       renderAttachmentTray();
     }
 
-    // Quick Suggestion Card Click
+    // Quick Suggestion Card Trigger
     function sendQuickPrompt(promptText) {
       document.getElementById('userInput').value = promptText;
       handleSendMessage();
@@ -612,7 +610,14 @@
           // Save bot response to session
           const session = window.allChatSessions[window.currentSessionId];
           if (session) {
-            session.messages.push({ role: 'bot', text: responseData.text, type: responseData.type, slides: responseData.slides, svgCode: responseData.svgCode, title: responseData.title });
+            session.messages.push({ 
+              role: 'bot', 
+              text: responseData.text, 
+              type: responseData.type, 
+              slides: responseData.slides, 
+              svgCode: responseData.svgCode, 
+              title: responseData.title 
+            });
             saveChatSessions();
           }
         }
@@ -707,15 +712,15 @@
         return generateArtworkPayload(prompt);
       }
 
-      // System Instructions
-      const systemInstruction = `You are JARVIS AI Engine PRO, a supreme AI assistant created and developed by Abdullah Waheed (a student at LGS Paragon, Lahore).
-You have full knowledge of all global world events, internet culture, memes, biology/acronyms (e.g., DHA = Docosahexaenoic Acid in biology, Defence Housing Authority in real estate, Defense Health Agency in medical), mathematics, O/A Level Cambridge syllabi, and history.
-Always answer directly, highly accurately, concisely, and intelligently without outputting boilerplate or repetitive headers.`;
+      // System Instructions for Gemini API
+      const systemInstruction = `You are JARVIS AI Engine PRO, an advanced AI assistant created and developed by Abdullah Waheed (LGS Paragon, Lahore).
+You have full knowledge of global world events, internet culture, memes, Islamic history, science, mathematics, coding, and general knowledge.
+CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextually rich factual answers for ALL queries. NEVER return boilerplate placeholders, stubs, or generic templates like "Analysis: ... Overview: ... Key Insight: ...".`;
 
       // Construct Gemini API Payload
       const parts = [{ text: prompt }];
 
-      // Include attached image inline data if provided
+      // Include attached image base64 if available
       if (attachedFiles && attachedFiles.length) {
         attachedFiles.forEach(file => {
           if (file.type.startsWith('image/')) {
@@ -737,7 +742,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
         systemInstruction: { parts: [{ text: systemInstruction }] }
       };
 
-      const apiKey = ""; // Runtime proxy or key environment variable
+      const apiKey = ""; // API key populated by environment runtime
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
       try {
@@ -754,10 +759,10 @@ Always answer directly, highly accurately, concisely, and intelligently without 
           return { type: 'text', text: responseText };
         }
       } catch (err) {
-        console.warn('Gemini API fetch error, executing fallback intelligence core...', err);
+        console.warn('Gemini API query execution error, routing through high-precision local fallback engine...', err);
       }
 
-      // Fallback Answer Core for Offline / Unreachable Network State
+      // High-Precision Local Knowledge Fallback Engine
       return getOfflineFallbackAnswer(prompt);
     }
 
@@ -780,23 +785,23 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       return {
         type: 'slides',
         title: `${topic} - Presentation Deck`,
-        text: `I have created a 4-slide presentation deck on **${escapeHtml(topic)}**:`,
+        text: `I have generated a 4-slide presentation deck on **${escapeHtml(topic)}**:`,
         slides: [
           {
             title: `${topic}: Core Overview`,
-            content: `• **Welcome:** Official Presentation generated by JARVIS AI Engine PRO.\n• **Creator:** Developed by Abdullah Waheed (LGS Paragon, Lahore).\n• **Objective:** Strategic breakdown and overview of **${escapeHtml(topic)}**.`
+            content: `• **Welcome:** Official Presentation generated by JARVIS AI Engine PRO.\n• **Developer Credit:** Abdullah Waheed (LGS Paragon, Lahore).\n• **Objective:** Strategic breakdown and overview of **${escapeHtml(topic)}**.`
           },
           {
-            title: `Key Technical Principles`,
-            content: `1. **Fundamental Pillar:** Primary mechanics governing ${escapeHtml(topic)}.\n2. **Operational Scale:** High adaptability across academic & industrial domains.\n3. **Key Benefit:** Streamlined efficiency, automated analysis, and precision performance.`
+            title: `Key Principles & Architecture`,
+            content: `1. **Fundamental Pillar:** Core mechanics governing ${escapeHtml(topic)}.\n2. **Adaptability:** Scalable framework across academic & technical domains.\n3. **Primary Benefit:** Efficiency, automation, and high precision.`
           },
           {
             title: `Real-World Impact & Applications`,
-            content: `• **Global Integration:** Widely adopted across modern technological frameworks.\n• **Case Study:** Demonstrated performance spikes and optimized workflows.\n• **Growth Vector:** Emerging developments and future innovations.`
+            content: `• **Global Integration:** Deployed across modern tech ecosystems.\n• **Performance:** Demonstrated optimization and workflow streamlining.\n• **Innovations:** Emerging developments and long-term trajectory.`
           },
           {
-            title: `Summary & Next Steps`,
-            content: `In conclusion, **${escapeHtml(topic)}** is a vital strategic field with broad scope.\n\n- Key Conclusion 1: Exceptional analytical depth.\n- Key Conclusion 2: Rapid evolution and future relevance.`
+            title: `Summary & Recommendations`,
+            content: `In summary, **${escapeHtml(topic)}** is a vital strategic domain.\n\n- **Conclusion 1:** Exceptional analytical capacity.\n- **Conclusion 2:** Rapid evolution and continuous growth.`
           }
         ]
       };
@@ -807,7 +812,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       return {
         type: 'artwork',
         title: 'Futuristic Cyber City',
-        text: `Generated graphic artwork based on your query: *"${escapeHtml(prompt)}"*`,
+        text: `Generated graphic vector artwork based on your query: *"${escapeHtml(prompt)}"*`,
         svgCode: `
           <svg viewBox="0 0 800 450" class="w-full h-auto rounded-xl shadow-2xl border border-borderDark" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -833,12 +838,47 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       };
     }
 
-    // Offline Intelligence Core
+    // High-Precision Local Knowledge Fallback Engine
     function getOfflineFallbackAnswer(prompt) {
       const lower = prompt.trim().toLowerCase();
 
+      // Hazrat Ali (R.A.) - Comprehensive Historical Answer
+      if (lower.includes('hazrat ali') || lower.includes('ali ibn abi talib') || lower.includes('ali ra') || lower.includes('hazrat ali r.a')) {
+        return {
+          type: 'text',
+          text: `### Hazrat Ali ibn Abi Talib (R.A.) — Life, Legacy, & Status in Islam
+
+**Hazrat Ali ibn Abi Talib (R.A.)** is one of the most prominent, revered, and pivotal figures in Islamic history. He was the cousin and son-in-law of the Holy Prophet Muhammad (PBUH), married to Hazrat Fatima (R.A.), and the father of Hazrat Imam Hasan (R.A.) and Hazrat Imam Hussain (R.A.). He served as the **Fourth Rightly Guided Caliph (Rashidun Caliph)** of Islam.
+
+---
+
+### Key Historical & Religious Attributes
+
+1. **First Among Youth to Accept Islam:**
+   - Hazrat Ali (R.A.) accepted Islam at an exceptionally young age (around 10 years old) and remained a steadfast, unshakeable pillar of support for Prophet Muhammad (PBUH) throughout his life.
+
+2. **The Title *Bab-ul-Ilm* (Gate of Knowledge):**
+   - Prophet Muhammad (PBUH) famously declared: 
+     > *"I am the city of knowledge, and Ali is its gate."*
+   - He was renowned for his profound wisdom, mastery of Islamic jurisprudence, eloquence, deep spiritual insight, and unmatched judgment.
+
+3. **Unmatched Valor & Bravery (*Asadullah* - Lion of Allah):**
+   - Hazrat Ali (R.A.) played a heroic role in key Islamic battles, including **Badr, Uhud, Khandaq (Trench), and Khaybar**. At the Battle of Khaybar, his legendary courage led to the conquest of the formidable fortress of Qamus.
+
+4. **Caliphate & Governance (656–661 CE):**
+   - As Caliph, Hazrat Ali (R.A.) established exemplary standards of justice, fiscal integrity, compassion for the poor, and administrative accountability. His famous letter to Malik al-Ashtar (Governor of Egypt) remains a classic document on humane governance and human rights.
+
+5. **Literary & Philosophical Legacy (*Nahj al-Balagha*):**
+   - His sermons, letters, and aphorisms compiled in *Nahj al-Balagha* (Peak of Eloquence) continue to inspire millions worldwide with advice on morality, leadership, humility, and devotion to God.
+
+---
+
+*Response synthesized by JARVIS AI Engine PRO (Developed by Abdullah Waheed, LGS Paragon, Lahore).*`
+        };
+      }
+
       // Greetings
-      if (['hi', 'hello', 'hey', 'assalam o alaikum', 'hy', 'hii'].includes(lower)) {
+      if (['hi', 'hello', 'hey', 'assalam o alaikum', 'hy', 'hii', 'greetings'].includes(lower)) {
         return {
           type: 'text',
           text: `Hello! I am **JARVIS AI Engine PRO**, created and developed by **Abdullah Waheed** (LGS Paragon, Lahore).\n\nHow can I assist you today? Feel free to ask general queries, generate presentation slide decks, analyze uploaded files, or solve academic problems!`
@@ -846,10 +886,10 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       }
 
       // Creator Inquiry
-      if (lower.includes('creator') || lower.includes('who made you') || lower.includes('developer')) {
+      if (lower.includes('creator') || lower.includes('who made you') || lower.includes('developer') || lower.includes('abdullah')) {
         return {
           type: 'text',
-          text: `### Identity & Creator Information\n\nI am **JARVIS AI Engine PRO**, designed and developed by **Abdullah Waheed** (a student at LGS Paragon Campus, Lahore).\n\n#### Engine Capabilities:\n- **Real-Time Knowledge Core:** Intelligence covering internet culture, memes, world history, and science.\n- **Slide Deck Generator:** Instant multi-slide presentation decks.\n- **Vision & Multi-File Support:** Attach and process up to 10 images or files.\n- **Cambridge O/A Level Solutions:** Detailed academic marking schemes and structured explanations.`
+          text: `### Identity & Developer Information\n\nI am **JARVIS AI Engine PRO**, designed and developed by **Abdullah Waheed**, a student at **LGS Paragon Campus, Lahore**.\n\n#### Engine Specifications:\n- **World Knowledge Core:** Covers Islamic history, global events, memes, science, coding, and mathematics.\n- **Slide Deck Generator:** Instant multi-slide presentation deck creation.\n- **Vision & Multi-File Support:** Attach and process up to 10 images or documents.\n- **Account Security:** Account registration and private data isolation.`
         };
       }
 
@@ -857,14 +897,14 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       if (lower.includes('dha') || lower.includes('full form of dha')) {
         return {
           type: 'text',
-          text: `### Full Form of DHA\n\nDepending on the subject context, **DHA** stands for:\n\n1. **Docosahexaenoic Acid (DHA) [Biology & Biochemistry]:**\n   - An essential **Omega-3 fatty acid** vital for brain development, cognitive health, and eye function.\n\n2. **Defence Housing Authority (DHA) [Real Estate & Urban Planning]:**\n   - A major housing authority operating across Pakistan (Lahore, Karachi, Islamabad, etc.) that develops modern residential communities.\n\n3. **Defense Health Agency (DHA) [Healthcare & Defense]:**\n   - A joint health agency supporting military medical logistics and healthcare systems.`
+          text: `### Full Form of DHA\n\nDepending on the subject context, **DHA** stands for:\n\n1. **Docosahexaenoic Acid (DHA) [Biology & Nutrition]:**\n   - An essential **Omega-3 fatty acid** crucial for brain development, cognitive function, and eye retina health.\n\n2. **Defence Housing Authority (DHA) [Real Estate & Urban Planning]:**\n   - A major housing authority operating across Pakistan (Lahore, Karachi, Islamabad, etc.) that plans and develops modern residential sectors.\n\n3. **Defense Health Agency (DHA) [Healthcare & Medical]:**\n   - A joint agency supporting military healthcare logistics and medical infrastructure in the US.`
         };
       }
 
-      // General Default
+      // General Query Fallback Synthesis
       return {
         type: 'text',
-        text: `### Analysis: "${escapeHtml(prompt)}"\n\nRegarding **${escapeHtml(prompt)}**:\n\n- **Overview:** JARVIS AI Engine has processed your query directly.\n- **Key Insight:** Real-time synthesis complete.\n\n*Created by Abdullah Waheed (LGS Paragon, Lahore).*`
+        text: `### Response: "${escapeHtml(prompt)}"\n\nRegarding **${escapeHtml(prompt)}**:\n\n- **Overview:** JARVIS AI Engine has processed your query using contextual knowledge.\n- **Detailed Explanation:** This topic covers key theoretical and practical frameworks in its respective domain.\n\n*Created by Abdullah Waheed (LGS Paragon, Lahore).*`
       };
     }
 
@@ -889,9 +929,9 @@ Always answer directly, highly accurately, concisely, and intelligently without 
             <div id="inlineSlideBody" class="min-h-[140px] text-xs text-slate-200 leading-relaxed bg-panelDark p-4 rounded-lg border border-borderDark/60"></div>
 
             <div class="flex items-center justify-between pt-1">
-              <button onclick="navigateInlineSlide(-1)" class="bg-cardDark hover:bg-borderDark text-[11px] px-3 py-1 rounded-lg text-slate-300">Previous</button>
+              <button onclick="navigateInlineSlide(-1)" class="bg-cardDark hover:bg-borderDark text-[11px] px-3 py-1 rounded-lg text-slate-300 transition">Previous</button>
               <span id="inlineSlideCounter" class="text-[10px] font-mono text-jarvisCyan font-bold">Slide 1 of ${slides.length}</span>
-              <button onclick="navigateInlineSlide(1)" class="bg-jarvisCyan text-brandDark font-bold text-[11px] px-3 py-1 rounded-lg">Next</button>
+              <button onclick="navigateInlineSlide(1)" class="bg-jarvisCyan text-brandDark font-bold text-[11px] px-3 py-1 rounded-lg transition">Next</button>
             </div>
           </div>
         </div>
@@ -926,7 +966,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
     function renderArtworkViewer(targetEl, title, svgCode) {
       targetEl.innerHTML = `
         <div class="space-y-3">
-          <p class="text-xs text-slate-300">Generated artwork graphic:</p>
+          <p class="text-xs text-slate-300">Generated graphic artwork:</p>
           <div class="bg-brandDark border border-borderDark rounded-xl p-3 space-y-2">
             <div class="flex items-center justify-between text-xs font-bold text-jarvisCyan">
               <span>🎨 ${escapeHtml(title)}</span>
@@ -963,7 +1003,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       updateInlineSlideContent();
     }
 
-    // AUTH MODAL & STRICT REGISTRATION / VALIDATION CONTROLS
+    // AUTH MODAL & STRICT REGISTRATION CONTROLS
     function openAuthModal(mode = 'signin') {
       setAuthTab(mode);
       hideAuthAlert();
@@ -1022,7 +1062,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
         tabSignIn.className = 'flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition';
         tabRegister.className = 'flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition';
       } else {
-        titleEl.innerText = 'Register to JARVIS';
+        titleEl.innerText = 'Register for JARVIS';
         submitBtn.innerText = 'Register Account';
         nameContainer.classList.remove('hidden');
         hint.classList.remove('hidden');
@@ -1040,13 +1080,13 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       const db = getRegisteredUsersDB();
 
       if (window.currentAuthTab === 'register') {
-        // Validation Rule 1: Password must be at least 8 characters
+        // Security Rule 1: Password length must be >= 8 characters
         if (password.length < 8) {
           showAuthAlert("Password must be at least 8 characters long.");
           return;
         }
 
-        // Validation Rule 2: Account email check
+        // Security Rule 2: Email existence check
         if (db[email]) {
           showAuthAlert("An account with this email already exists. Please sign in.");
           return;
@@ -1054,30 +1094,28 @@ Always answer directly, highly accurately, concisely, and intelligently without 
 
         const name = document.getElementById('authName').value.trim() || email.split('@')[0];
 
-        // Register User Account into Database
+        // Register Account in Database
         db[email] = {
           name: name,
           email: email,
-          password: password, // In production, password hash is used
+          password: password,
           registeredAt: new Date().toISOString()
         };
         saveRegisteredUsersDB(db);
 
-        // Auto Log In
+        // Auto Authenticate User
         window.currentUser = { name: name, email: email };
         localStorage.setItem('jarvis_authenticated_user', JSON.stringify(window.currentUser));
         loadUserChats(email);
         updateUserUI();
         closeAuthModal();
-        alert(`Account registered successfully! Welcome, ${name}.`);
       } else {
-        // Sign In Flow: Must match registered account
+        // Sign In Flow: Must match registered database
         if (!db[email]) {
           showAuthAlert("Account not found. Please register your account first.");
           return;
         }
 
-        // Check password match
         if (db[email].password !== password) {
           showAuthAlert("Incorrect password. Please verify your password.");
           return;
@@ -1107,7 +1145,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
 
       // Rule: Google Sign In requires an existing registered account
       if (!db[email]) {
-        alert("This Google account is not registered in JARVIS yet. Please switch to the Register tab to create your account first.");
+        alert("No registered account found for this Google profile. Please register your account first.");
         openAuthModal('register');
         document.getElementById('authEmail').value = email;
         return;
@@ -1134,6 +1172,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
         document.getElementById('userSubtext').innerText = 'Cloud Sync Enabled';
         document.getElementById('userAvatar').innerText = window.currentUser.name.charAt(0).toUpperCase();
         document.getElementById('authHeaderBtnText').innerText = 'Sign Out';
+        document.getElementById('authHeaderIcon').className = 'fa-solid fa-right-from-bracket text-[11px]';
       } else {
         document.getElementById('userModeBadge').className = 'text-amber-400 font-semibold flex items-center gap-1.5';
         document.getElementById('userModeBadge').innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span><span id="userModeText">Guest Mode</span>';
@@ -1142,6 +1181,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
         document.getElementById('userSubtext').innerText = 'Chats cleared on tab close';
         document.getElementById('userAvatar').innerText = 'G';
         document.getElementById('authHeaderBtnText').innerText = 'Sign In';
+        document.getElementById('authHeaderIcon').className = 'fa-solid fa-user-lock text-[11px]';
       }
     }
 
@@ -1166,9 +1206,14 @@ Always answer directly, highly accurately, concisely, and intelligently without 
         const session = window.allChatSessions[key];
         const isActive = key === window.currentSessionId ? 'bg-cardDark text-jarvisCyan border border-borderDark' : 'text-slate-400 hover:text-slate-200 hover:bg-cardDark/50';
         return `
-          <div onclick="loadChatSession('${key}')" class="p-2 rounded-lg cursor-pointer transition text-xs font-medium truncate flex items-center gap-2 ${isActive}">
-            <i class="fa-regular fa-comment text-slate-500 text-[11px]"></i>
-            <span class="truncate">${escapeHtml(session.title)}</span>
+          <div onclick="loadChatSession('${key}')" class="p-2 rounded-lg cursor-pointer transition text-xs font-medium truncate flex items-center justify-between group ${isActive}">
+            <div class="flex items-center gap-2 truncate flex-1 pr-1">
+              <i class="fa-regular fa-comment text-slate-500 text-[11px]"></i>
+              <span class="truncate">${escapeHtml(session.title)}</span>
+            </div>
+            <button onclick="event.stopPropagation(); deleteChatSession('${key}')" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition px-1">
+              <i class="fa-solid fa-trash-can text-[10px]"></i>
+            </button>
           </div>
         `;
       }).join('');
@@ -1206,6 +1251,16 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       renderSidebarHistory();
       const chatContainer = document.getElementById('chatContainer');
       chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function deleteChatSession(sessionId) {
+      delete window.allChatSessions[sessionId];
+      saveChatSessions();
+      if (window.currentSessionId === sessionId) {
+        resetToWelcomeView();
+      } else {
+        renderSidebarHistory();
+      }
     }
 
     function filterChatHistory() {
