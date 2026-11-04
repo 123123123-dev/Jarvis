@@ -282,7 +282,7 @@
 
   <!-- AUTHENTICATION & REGISTRATION MODAL -->
   <div id="authModal" class="fixed inset-0 bg-brandDark/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-panelDark border border-borderDark rounded-2xl w-full max-w-sm p-6 shadow-2xl relative space-y-5 animate-in fade-in zoom-in-95 duration-200">
+    <div class="bg-panelDark border border-borderDark rounded-2xl w-full max-w-sm p-6 shadow-2xl relative space-y-4 animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Close Button -->
       <button onclick="closeAuthModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white transition">
@@ -307,6 +307,9 @@
         <button id="tabSignIn" onclick="setAuthTab('signin')" class="flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition">Sign In</button>
         <button id="tabRegister" onclick="setAuthTab('register')" class="flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition">Register</button>
       </div>
+
+      <!-- Auth Error / Success Alert Box -->
+      <div id="authAlert" class="hidden p-2.5 rounded-xl text-xs flex items-center gap-2"></div>
 
       <!-- Google OAuth Button -->
       <button onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow">
@@ -337,7 +340,10 @@
         </div>
 
         <div class="space-y-1">
-          <label class="text-slate-400 text-[11px] font-medium">Password</label>
+          <div class="flex justify-between items-center">
+            <label class="text-slate-400 text-[11px] font-medium">Password</label>
+            <span id="passwordRuleHint" class="text-[10px] text-slate-500 hidden font-mono">Min 8 characters</span>
+          </div>
           <input type="password" id="authPassword" required placeholder="••••••••" class="w-full bg-cardDark border border-borderDark rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-jarvisCyan">
         </div>
 
@@ -379,8 +385,8 @@
 
   <!-- MAIN SCRIPT CONTROLLER -->
   <script>
-    // Global State Bindings
-    window.currentUser = null; // null = Guest Mode
+    // Global State & User DB Storage Initialization
+    window.currentUser = null; // null = Ephemeral Guest Mode
     window.attachedFiles = [];
     window.currentChatMessages = [];
     window.allChatSessions = {};
@@ -389,6 +395,20 @@
     window.currentAuthTab = 'signin';
     window.activeSlideDeck = null;
     window.activeSlideIndex = 0;
+
+    // Retrieve Registered User DB from Local Storage
+    function getRegisteredUsersDB() {
+      try {
+        const db = localStorage.getItem('jarvis_registered_user_db');
+        return db ? JSON.parse(db) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveRegisteredUsersDB(db) {
+      localStorage.setItem('jarvis_registered_user_db', JSON.stringify(db));
+    }
 
     // Helper Utility Function to Escape HTML
     window.escapeHtml = function(str) {
@@ -403,14 +423,18 @@
 
     // DOM Ready Initialization
     document.addEventListener('DOMContentLoaded', () => {
-      // Check localStorage for saved auth session
+      // Check localStorage for an active logged in session
       const savedUser = localStorage.getItem('jarvis_authenticated_user');
       if (savedUser) {
         try {
-          window.currentUser = JSON.parse(savedUser);
-          const savedSessions = localStorage.getItem('jarvis_saved_chats_' + window.currentUser.email);
-          if (savedSessions) {
-            window.allChatSessions = JSON.parse(savedSessions);
+          const userObj = JSON.parse(savedUser);
+          const db = getRegisteredUsersDB();
+          // Validate existing user session
+          if (db[userObj.email.toLowerCase()]) {
+            window.currentUser = userObj;
+            loadUserChats(window.currentUser.email);
+          } else {
+            localStorage.removeItem('jarvis_authenticated_user');
           }
         } catch (e) { console.error('Error reading stored user session', e); }
       }
@@ -440,6 +464,15 @@
         }
       });
     });
+
+    function loadUserChats(userEmail) {
+      try {
+        const savedSessions = localStorage.getItem('jarvis_saved_chats_' + userEmail.toLowerCase());
+        window.allChatSessions = savedSessions ? JSON.parse(savedSessions) : {};
+      } catch (e) {
+        window.allChatSessions = {};
+      }
+    }
 
     // Reset Workspace View
     function resetToWelcomeView() {
@@ -704,7 +737,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
         systemInstruction: { parts: [{ text: systemInstruction }] }
       };
 
-      const apiKey = ""; // API Key automatically provided by runtime proxy or empty string fallback
+      const apiKey = ""; // Runtime proxy or key environment variable
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
       try {
@@ -930,19 +963,37 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       updateInlineSlideContent();
     }
 
-    // AUTH MODAL & USER SESSION CONTROLS
+    // AUTH MODAL & STRICT REGISTRATION / VALIDATION CONTROLS
     function openAuthModal(mode = 'signin') {
       setAuthTab(mode);
+      hideAuthAlert();
       document.getElementById('authModal').classList.remove('hidden');
     }
 
     function closeAuthModal() {
       document.getElementById('authModal').classList.add('hidden');
+      hideAuthAlert();
+    }
+
+    function showAuthAlert(msg, type = 'error') {
+      const alertBox = document.getElementById('authAlert');
+      alertBox.classList.remove('hidden', 'bg-red-500/10', 'border-red-500/40', 'text-red-400', 'bg-emerald-500/10', 'border-emerald-500/40', 'text-emerald-400');
+      if (type === 'error') {
+        alertBox.classList.add('bg-red-500/10', 'border', 'border-red-500/40', 'text-red-400');
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation text-xs"></i> <span>${escapeHtml(msg)}</span>`;
+      } else {
+        alertBox.classList.add('bg-emerald-500/10', 'border', 'border-emerald-500/40', 'text-emerald-400');
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-check text-xs"></i> <span>${escapeHtml(msg)}</span>`;
+      }
+    }
+
+    function hideAuthAlert() {
+      document.getElementById('authAlert').classList.add('hidden');
     }
 
     function handleAuthNavClick() {
       if (window.currentUser) {
-        // Sign Out
+        // Sign Out & Reset Session
         window.currentUser = null;
         localStorage.removeItem('jarvis_authenticated_user');
         window.allChatSessions = {};
@@ -955,9 +1006,11 @@ Always answer directly, highly accurately, concisely, and intelligently without 
 
     function setAuthTab(tab) {
       window.currentAuthTab = tab;
+      hideAuthAlert();
       const titleEl = document.getElementById('authModalTitle');
       const submitBtn = document.getElementById('authSubmitBtn');
       const nameContainer = document.getElementById('nameFieldContainer');
+      const hint = document.getElementById('passwordRuleHint');
       const tabSignIn = document.getElementById('tabSignIn');
       const tabRegister = document.getElementById('tabRegister');
 
@@ -965,12 +1018,14 @@ Always answer directly, highly accurately, concisely, and intelligently without 
         titleEl.innerText = 'Sign In to JARVIS';
         submitBtn.innerText = 'Sign In';
         nameContainer.classList.add('hidden');
+        hint.classList.add('hidden');
         tabSignIn.className = 'flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition';
         tabRegister.className = 'flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition';
       } else {
         titleEl.innerText = 'Register to JARVIS';
         submitBtn.innerText = 'Register Account';
         nameContainer.classList.remove('hidden');
+        hint.classList.remove('hidden');
         tabRegister.className = 'flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition';
         tabSignIn.className = 'flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition';
       }
@@ -978,27 +1033,96 @@ Always answer directly, highly accurately, concisely, and intelligently without 
 
     function handleAuthSubmit(e) {
       e.preventDefault();
-      const email = document.getElementById('authEmail').value.trim();
-      const name = document.getElementById('authName').value.trim() || (email ? email.split('@')[0] : 'User');
+      hideAuthAlert();
 
-      window.currentUser = {
-        name: name,
-        email: email
-      };
+      const email = document.getElementById('authEmail').value.trim().toLowerCase();
+      const password = document.getElementById('authPassword').value;
+      const db = getRegisteredUsersDB();
 
-      localStorage.setItem('jarvis_authenticated_user', JSON.stringify(window.currentUser));
-      updateUserUI();
-      closeAuthModal();
+      if (window.currentAuthTab === 'register') {
+        // Validation Rule 1: Password must be at least 8 characters
+        if (password.length < 8) {
+          showAuthAlert("Password must be at least 8 characters long.");
+          return;
+        }
+
+        // Validation Rule 2: Account email check
+        if (db[email]) {
+          showAuthAlert("An account with this email already exists. Please sign in.");
+          return;
+        }
+
+        const name = document.getElementById('authName').value.trim() || email.split('@')[0];
+
+        // Register User Account into Database
+        db[email] = {
+          name: name,
+          email: email,
+          password: password, // In production, password hash is used
+          registeredAt: new Date().toISOString()
+        };
+        saveRegisteredUsersDB(db);
+
+        // Auto Log In
+        window.currentUser = { name: name, email: email };
+        localStorage.setItem('jarvis_authenticated_user', JSON.stringify(window.currentUser));
+        loadUserChats(email);
+        updateUserUI();
+        closeAuthModal();
+        alert(`Account registered successfully! Welcome, ${name}.`);
+      } else {
+        // Sign In Flow: Must match registered account
+        if (!db[email]) {
+          showAuthAlert("Account not found. Please register your account first.");
+          return;
+        }
+
+        // Check password match
+        if (db[email].password !== password) {
+          showAuthAlert("Incorrect password. Please verify your password.");
+          return;
+        }
+
+        // Authentication Successful
+        window.currentUser = {
+          name: db[email].name,
+          email: db[email].email
+        };
+
+        localStorage.setItem('jarvis_authenticated_user', JSON.stringify(window.currentUser));
+        loadUserChats(email);
+        updateUserUI();
+        closeAuthModal();
+        resetToWelcomeView();
+      }
     }
 
     function handleGoogleSignIn() {
+      hideAuthAlert();
+      const googleEmail = prompt("Enter your Google Account email address to sign in:");
+      if (!googleEmail) return;
+
+      const email = googleEmail.trim().toLowerCase();
+      const db = getRegisteredUsersDB();
+
+      // Rule: Google Sign In requires an existing registered account
+      if (!db[email]) {
+        alert("This Google account is not registered in JARVIS yet. Please switch to the Register tab to create your account first.");
+        openAuthModal('register');
+        document.getElementById('authEmail').value = email;
+        return;
+      }
+
       window.currentUser = {
-        name: 'Google User',
-        email: 'user@gmail.com'
+        name: db[email].name,
+        email: db[email].email
       };
+
       localStorage.setItem('jarvis_authenticated_user', JSON.stringify(window.currentUser));
+      loadUserChats(email);
       updateUserUI();
       closeAuthModal();
+      resetToWelcomeView();
     }
 
     function updateUserUI() {
@@ -1023,7 +1147,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
 
     function saveChatSessions() {
       if (window.currentUser) {
-        localStorage.setItem('jarvis_saved_chats_' + window.currentUser.email, JSON.stringify(window.allChatSessions));
+        localStorage.setItem('jarvis_saved_chats_' + window.currentUser.email.toLowerCase(), JSON.stringify(window.allChatSessions));
       }
     }
 
@@ -1099,7 +1223,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
     function clearAllChats() {
       window.allChatSessions = {};
       if (window.currentUser) {
-        localStorage.removeItem('jarvis_saved_chats_' + window.currentUser.email);
+        localStorage.removeItem('jarvis_saved_chats_' + window.currentUser.email.toLowerCase());
       }
       resetToWelcomeView();
     }
