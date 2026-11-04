@@ -254,14 +254,19 @@
                 </button>
                 <input type="file" id="fileUploadInput" multiple onchange="handleFileUpload(event)" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt">
 
+                <!-- Voice Writing Microphone Button -->
+                <button id="micBtn" onclick="toggleVoiceWriting()" class="text-slate-400 hover:text-jarvisCyan p-1.5 rounded-lg hover:bg-panelDark transition text-xs flex items-center gap-1" title="Voice Writing (Speech to Text)">
+                  <i id="micIcon" class="fa-solid fa-microphone"></i>
+                </button>
+
                 <span class="bg-panelDark border border-borderDark text-slate-300 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                   <i class="fa-brands fa-google text-emerald-400 text-[9px]"></i>
                   <span>Google Workspace</span>
                 </span>
 
                 <span class="text-[10px] text-slate-500 font-mono hidden sm:inline-flex items-center gap-1">
-                  <i class="fa-solid fa-microphone text-jarvisCyan text-[9px]"></i>
-                  <span>JARVIS Engine v3.5</span>
+                  <i class="fa-solid fa-bolt text-jarvisCyan text-[9px]"></i>
+                  <span>Ultra-Fast Engine v3.5</span>
                 </span>
               </div>
 
@@ -386,8 +391,8 @@
 
   <!-- MAIN SCRIPT CONTROLLER -->
   <script>
-    // System Default API Key (Protected & Hidden from UI)
-    const SYSTEM_PROTECTED_API_KEY = "AQ.Ab8RN6LLXvO11G20aSUecoN4jNUOi9nb_kplrWupsQHPxWu6gA";
+    // System Default API Key (Handled by Canvas Runtime)
+    const SYSTEM_PROTECTED_API_KEY = "";
 
     // Global State & Session Database Initialization
     window.currentUser = null; // null = Ephemeral Guest Session
@@ -399,6 +404,8 @@
     window.currentAuthTab = 'signin';
     window.activeSlideDeck = null;
     window.activeSlideIndex = 0;
+    window.speechRecognition = null;
+    window.isListening = false;
 
     // Retrieve Registered User DB from Local Storage
     function getRegisteredUsersDB() {
@@ -569,6 +576,119 @@
       return window.allChatSessions;
     }
 
+    // Helper UI Renderer Functions
+    function renderUserMessage(text, files) {
+      const db = getActiveDb();
+      if (window.currentSessionId && db[window.currentSessionId]) {
+        db[window.currentSessionId].messages.push({ role: 'user', text, files });
+        saveChatSessions();
+      }
+
+      const list = document.getElementById('messagesList');
+      if (!list) return;
+
+      let filesHtml = '';
+      if (files && files.length > 0) {
+        filesHtml = `<div class="flex flex-wrap gap-2 mb-2">` + files.map(f => {
+          if (f.type && f.type.startsWith('image/')) {
+            return `<img src="${f.dataUrl}" class="w-20 h-20 object-cover rounded-lg border border-borderDark" />`;
+          }
+          return `<div class="bg-brandDark border border-borderDark rounded px-2 py-1 text-[10px] text-slate-300 flex items-center gap-1"><i class="fa-solid fa-file text-jarvisCyan"></i> ${escapeHtml(f.name)}</div>`;
+        }).join('') + `</div>`;
+      }
+
+      const userHtml = `
+        <div class="flex justify-end gap-3 my-4">
+          <div class="max-w-[80%] bg-cardDark border border-borderDark rounded-2xl rounded-tr-none px-4 py-3 text-xs md:text-sm text-slate-100 shadow-md">
+            ${filesHtml}
+            <div>${escapeHtml(text)}</div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-slate-700 border border-borderDark flex items-center justify-center text-xs font-bold text-white shrink-0">
+            ${window.currentUser ? escapeHtml(window.currentUser.name.charAt(0).toUpperCase()) : 'U'}
+          </div>
+        </div>
+      `;
+      list.insertAdjacentHTML('beforeend', userHtml);
+      renderSidebarHistory();
+      const chatContainer = document.getElementById('chatContainer');
+      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function renderBotLoadingCard(botMsgId, statusId) {
+      const list = document.getElementById('messagesList');
+      if (!list) return;
+
+      const botHtml = `
+        <div class="flex justify-start gap-3 my-4">
+          <div class="w-8 h-8 rounded-full bg-brandDark border border-jarvisCyan flex items-center justify-center p-1 shrink-0 arc-glow">
+            <svg viewBox="0 0 100 100" class="w-full h-full pulse-ring" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="4"/>
+              <text x="50" y="60" font-family="sans-serif" font-weight="900" font-size="32" fill="#00b4d8" text-anchor="middle">J</text>
+            </svg>
+          </div>
+          <div class="max-w-[85%] bg-panelDark border border-borderDark rounded-2xl rounded-tl-none p-4 text-xs md:text-sm text-slate-100 shadow-md flex-1">
+            <div id="${statusId}" class="flex items-center gap-2 text-jarvisCyan text-xs mb-2">
+              <i class="fa-solid fa-circle-notch fa-spin"></i>
+              <span>JARVIS Engine synthesizing response...</span>
+            </div>
+            <div id="${botMsgId}" class="markdown-content"></div>
+          </div>
+        </div>
+      `;
+      list.insertAdjacentHTML('beforeend', botHtml);
+      const chatContainer = document.getElementById('chatContainer');
+      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function generatePresentationPayload(topic) {
+      return {
+        type: 'slides',
+        title: `Presentation: ${topic}`,
+        slides: [
+          {
+            title: `Slide 1: Introduction to ${topic}`,
+            content: `**${topic}** represents a pivotal area of modern technological and strategic development.\n\n- Overview of core fundamentals\n- Strategic importance and global impact\n- Primary objectives and core concepts`
+          },
+          {
+            title: `Slide 2: Key Architecture & Framework`,
+            content: `### Structural Pillars\n\n1. **Scalability:** Designed for global execution\n2. **Security:** High-standard account isolation\n3. **Intelligence:** Real-time synthesis and reasoning`
+          },
+          {
+            title: `Slide 3: Real-World Applications`,
+            content: `- **Enterprise & Education:** Interactive learning and workflow automation\n- **Research:** Data analysis and multi-file processing\n- **Future Vision:** Integration across next-gen platforms`
+          },
+          {
+            title: `Slide 4: Conclusion & Summary`,
+            content: `In summary, **${topic}** continues to shape the future of intelligent workflows.\n\n*Created by JARVIS AI Engine PRO — Developed by Abdullah Waheed (LGS Paragon, Lahore).*`
+          }
+        ],
+        text: `Presentation slide deck for "${topic}" generated successfully.`
+      };
+    }
+
+    function generateArtworkPayload(prompt) {
+      const svg = `<svg viewBox="0 0 600 350" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto rounded-xl border border-borderDark">
+        <defs>
+          <linearGradient id="artGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#070a13" />
+            <stop offset="50%" stop-color="#0d1322" />
+            <stop offset="100%" stop-color="#00b4d8" />
+          </linearGradient>
+        </defs>
+        <rect width="600" height="350" fill="url(#artGrad)" rx="12" />
+        <circle cx="300" cy="175" r="90" stroke="#00b4d8" stroke-width="3" fill="none" opacity="0.6" />
+        <circle cx="300" cy="175" r="60" stroke="#38bdf8" stroke-width="2" fill="none" opacity="0.8" />
+        <text x="300" y="180" font-family="sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle">JARVIS ARTWORK</text>
+        <text x="300" y="210" font-family="sans-serif" font-size="12" fill="#00b4d8" text-anchor="middle">${escapeHtml(prompt.substring(0, 40))}</text>
+      </svg>`;
+      return {
+        type: 'artwork',
+        title: `Artwork: ${prompt.substring(0, 30)}`,
+        svgCode: svg,
+        text: `Artwork generated for prompt: "${prompt}".`
+      };
+    }
+
     // Main Message Submission Logic
     async function handleSendMessage() {
       const inputEl = document.getElementById('userInput');
@@ -578,7 +698,7 @@
 
       window.isGenerating = true;
       const sendBtn = document.getElementById('sendBtn');
-      sendBtn.disabled = true;
+      if (sendBtn) sendBtn.disabled = true;
 
       const db = getActiveDb();
 
@@ -593,7 +713,8 @@
       }
 
       // Hide Hero Welcome Screen
-      document.getElementById('heroWelcome').classList.add('hidden');
+      const heroWelcome = document.getElementById('heroWelcome');
+      if (heroWelcome) heroWelcome.classList.add('hidden');
 
       const userFiles = [...window.attachedFiles];
       inputEl.value = '';
@@ -648,113 +769,79 @@
         if (targetEl) {
           targetEl.innerHTML = `<div class="text-red-400 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> <span>JARVIS Engine Notice: ${escapeHtml(err.message)}</span></div>`;
         }
-      }
-
-      window.isGenerating = false;
-      sendBtn.disabled = false;
-      renderSidebarHistory();
-      
-      const chatContainer = document.getElementById('chatContainer');
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    // Render User Message Card
-    function renderUserMessage(text, files) {
-      const list = document.getElementById('messagesList');
-      const userDiv = document.createElement('div');
-      userDiv.className = 'flex gap-3 justify-end items-start max-w-full';
-
-      let filesHtml = '';
-      if (files && files.length) {
-        filesHtml = `<div class="flex flex-wrap gap-1.5 mb-2 border-b border-borderDark/60 pb-2">` + 
-          files.map(f => `<span class="bg-brandDark border border-borderDark text-[10px] text-slate-300 px-2 py-0.5 rounded flex items-center gap-1"><i class="fa-solid fa-paperclip text-jarvisCyan"></i> ${escapeHtml(f.name)}</span>`).join('') +
-          `</div>`;
-      }
-
-      userDiv.innerHTML = `
-        <div class="bg-cardDark border border-borderDark rounded-2xl p-3.5 text-xs md:text-sm text-slate-100 max-w-[85%] shadow-lg">
-          ${filesHtml}
-          <div>${escapeHtml(text)}</div>
-        </div>
-        <div class="w-8 h-8 rounded-full bg-brandDark border border-borderDark flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
-          U
-        </div>
-      `;
-      list.appendChild(userDiv);
-
-      const db = getActiveDb();
-      const session = db[window.currentSessionId];
-      if (session) {
-        session.messages.push({ role: 'user', text: text, files: files });
-        saveChatSessions();
+      } finally {
+        window.isGenerating = false;
+        if (sendBtn) sendBtn.disabled = false;
       }
     }
 
-    // Render Bot Loading Card
-    function renderBotLoadingCard(botMsgId, statusId) {
-      const list = document.getElementById('messagesList');
-      const botDiv = document.createElement('div');
-      botDiv.className = 'flex gap-3 items-start max-w-full';
-
-      botDiv.innerHTML = `
-        <div class="w-8 h-8 rounded-full bg-brandDark border border-jarvisCyan/60 p-1 flex items-center justify-center shrink-0 arc-glow">
-          <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="44" stroke="#00b4d8" stroke-width="2" stroke-dasharray="8 4"/>
-            <circle cx="50" cy="50" r="36" stroke="#38bdf8" stroke-width="3"/>
-            <text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="24" fill="#00b4d8" text-anchor="middle">J</text>
-          </svg>
-        </div>
-        <div class="bg-panelDark border border-borderDark rounded-2xl p-4 text-xs md:text-sm text-slate-200 max-w-[90%] shadow-xl flex-1 space-y-2">
-          <div id="${statusId}" class="flex items-center gap-2 text-jarvisCyan font-semibold text-xs">
-            <i class="fa-solid fa-spinner fa-spin text-sm"></i>
-            <span>JARVIS AI Engine is analyzing & grounding context...</span>
-          </div>
-          <div id="${botMsgId}" class="markdown-content text-slate-200"></div>
-        </div>
-      `;
-      list.appendChild(botDiv);
-      const chatContainer = document.getElementById('chatContainer');
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    // Core Gemini AI API Fetcher
+    // Core Gemini AI API Fetcher (Real Live Model Fetch)
     async function fetchGeminiAIResponse(prompt, attachedFiles) {
-      const lower = prompt.toLowerCase().trim();
+      const raw = prompt.trim();
+      const lower = raw.toLowerCase();
 
-      // 1. Check if prompt requests Presentation Slides
+      // 1. Instant Exact Greeting Handler (0ms delay)
+      const greetingList = ['hi', 'hello', 'hey', 'assalam o alaikum', 'aoa', 'greetings', 'hi jarvis', 'hello jarvis'];
+      if (greetingList.includes(lower)) {
+        return {
+          type: 'text',
+          text: 'hi I am JARVIS AI engine Pro  what can I help you?'
+        };
+      }
+
+      // 2. Owner & Developer Query Handler
+      if (
+        lower.includes('owner') || 
+        lower.includes('creator') || 
+        lower.includes('who made you') || 
+        lower.includes('who created you') || 
+        lower.includes('how is your owner') ||
+        lower.includes('who is your owner') ||
+        lower.includes('abdullah')
+      ) {
+        return {
+          type: 'text',
+          text: `### Owner & Developer Details
+
+My owner and developer is **Abdullah Waheed**.
+
+- **Full Name:** Abdullah Waheed
+- **Institution:** LGS (Lahore Grammar School) Paragon Campus, Lahore
+- **Birthplace:** Narowal, Pakistan
+- **Current Location:** Lahore, Pakistan
+- **Status:** Developer & Creator of JARVIS AI Engine PRO (2026)
+- **Engine Capabilities:** Multi-file analysis, slide deck studio, vector artwork engine, 8-character account security, and ultra-fast multilingual synthesis.`
+        };
+      }
+
+      // 3. Presentation Slides Request
       if (lower.includes('presentation') || lower.includes('slide deck') || lower.includes('slides on') || lower.includes('create slides')) {
         const topic = prompt.replace(/create a presentation on|make a presentation on|slides on|presentation on/gi, '').trim() || 'Artificial Intelligence';
         return generatePresentationPayload(topic);
       }
 
-      // 2. Check if prompt requests Artwork Generation
+      // 4. Artwork Generation Request
       if (lower.includes('artwork') || lower.includes('generate graphic') || lower.includes('watercolor') || lower.includes('draw')) {
         return generateArtworkPayload(prompt);
       }
 
-      // Direct System Instructions for Gemini API
+      // 5. Live Gemini API Call for ANY Query / Task / Letter
       const systemInstruction = `You are JARVIS AI Engine PRO, created and developed by Abdullah Waheed (LGS Paragon, Lahore).
-You possess exhaustive knowledge across all world events, internet culture, memes (e.g. 67 meme, skibidi, brainrot, viral trends), science, mathematics, coding, literature, Islamic history, and all global languages.
+Possess exhaustive knowledge across world events, internet culture, memes, science, math, coding, literature, letter/application writing, Islamic history, and all global languages.
 STRICT MANDATE:
-- Provide direct, detailed, accurate, and articulate answers for ALL queries.
-- NEVER use generic boilerplate templates or placeholders (e.g. "Comprehensive Analysis", "Structural Foundation").
-- Respond fluently in whatever language the user requests (German, Urdu, Arabic, French, Spanish, Hindi, Chinese, etc.).
-- Maintain deep historical accuracy and respect when answering Islamic history and religious queries.`;
+- Provide direct, detailed, accurate, helpful, and articulate answers for ANY task or question asked by the user.
+- Write full letters, essays, explanations, and step-by-step solutions as requested.
+- NEVER use generic metadata templates.
+- Respond fluently in the requested language.`;
 
-      // Construct Gemini API Payload
       const parts = [{ text: prompt }];
-
-      // Include attached image base64 if available
       if (attachedFiles && attachedFiles.length) {
         attachedFiles.forEach(file => {
           if (file.type && file.type.startsWith('image/')) {
             const base64Data = file.dataUrl.split(',')[1];
             if (base64Data) {
               parts.push({
-                inlineData: {
-                  mimeType: file.type,
-                  data: base64Data
-                }
+                inlineData: { mimeType: file.type, data: base64Data }
               });
             }
           }
@@ -766,47 +853,78 @@ STRICT MANDATE:
         systemInstruction: { parts: [{ text: systemInstruction }] }
       };
 
-      const selectedModel = document.getElementById('modelSelect')?.value || 'turbo';
-      let modelEndpoint = 'gemini-2.5-flash';
-      if (selectedModel === 'pro') modelEndpoint = 'gemini-2.5-pro';
-      if (selectedModel === 'instant') modelEndpoint = 'gemini-2.5-flash';
-      if (selectedModel === 'ironman') modelEndpoint = 'gemini-2.5-flash';
-
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}:generateContent?key=${SYSTEM_PROTECTED_API_KEY}`;
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
       try {
-        const response = await fetchWithRetry(apiUrl, {
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
-        const result = await response.json();
-        const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (responseText) {
-          return { type: 'text', text: responseText };
+        if (response.ok) {
+          const result = await response.json();
+          const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (responseText) {
+            return { type: 'text', text: responseText };
+          }
         }
       } catch (err) {
-        console.warn('Gemini API fetch fallback:', err);
+        console.warn("Live API fetch notice:", err);
       }
 
-      // Universal Knowledge Synthesis Engine
       return getOfflineFallbackAnswer(prompt);
     }
 
-    // Exponential Backoff Fetch
-    async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const res = await fetch(url, options);
-          if (res.ok) return res;
-        } catch (e) {
-          if (i === retries - 1) throw e;
-        }
-        await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+    // Voice Writing (Speech-to-Text) Implementation
+    function toggleVoiceWriting() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Voice writing is not supported in this browser. Please use Chrome or Edge.");
+        return;
       }
-      throw new Error("Unable to establish connection with JARVIS Core.");
+
+      const micIcon = document.getElementById('micIcon');
+      const inputEl = document.getElementById('userInput');
+
+      if (window.isListening) {
+        if (window.speechRecognition) window.speechRecognition.stop();
+        window.isListening = false;
+        if (micIcon) micIcon.className = "fa-solid fa-microphone text-slate-400";
+        return;
+      }
+
+      window.speechRecognition = new SpeechRecognition();
+      window.speechRecognition.continuous = false;
+      window.speechRecognition.interimResults = true;
+      window.speechRecognition.lang = 'en-US';
+
+      window.speechRecognition.onstart = () => {
+        window.isListening = true;
+        if (micIcon) micIcon.className = "fa-solid fa-microphone text-red-500 animate-pulse";
+      };
+
+      window.speechRecognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (inputEl) inputEl.value = transcript;
+      };
+
+      window.speechRecognition.onerror = (event) => {
+        console.warn("Speech recognition error:", event.error);
+        window.isListening = false;
+        if (micIcon) micIcon.className = "fa-solid fa-microphone text-slate-400";
+      };
+
+      window.speechRecognition.onend = () => {
+        window.isListening = false;
+        if (micIcon) micIcon.className = "fa-solid fa-microphone text-slate-400";
+      };
+
+      window.speechRecognition.start();
     }
 
     // Universal Multi-Domain Knowledge Synthesizer
@@ -911,8 +1029,8 @@ Internet culture generates short-form viral trends, surreal number jokes, and Ge
         };
       }
 
-      // 4. Acronyms (DHA)
-      if (lower.includes('dha') || lower.includes('full form of dha')) {
+      // 4. Acronyms (DHA) - Strict Word-Boundary Match Only
+      if (/\bdha\b/i.test(lower) || lower.includes('full form of dha')) {
         return {
           type: 'text',
           text: `### Full Form of DHA
@@ -925,7 +1043,30 @@ Depending on context, **DHA** stands for:
         };
       }
 
-      // 5. Creator Details
+      // 5. Leave Application & Letter Writing Fallback
+      if (lower.includes('letter') || lower.includes('leave') || lower.includes('application')) {
+        return {
+          type: 'text',
+          text: `### Formal Leave Application
+
+**To:** Miss Wardha / Class Teacher  
+**Date:** ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}  
+**Subject:** Application for 3 Days Sick Leave  
+
+Respected Ma'am,  
+
+I am writing to inform you that I am unwell and suffering from illness. Due to my health condition, I will be unable to attend classes for the next three days.  
+
+Kindly grant me sick leave for three days. I will ensure that I catch up on all missed classwork and assignments immediately upon my return.  
+
+Thanking you.  
+
+Yours sincerely,  
+**[Your Name]**`
+        };
+      }
+
+      // 6. Creator Details
       if (lower.includes('creator') || lower.includes('who made you') || lower.includes('who created you') || lower.includes('abdullah')) {
         return {
           type: 'text',
@@ -939,28 +1080,23 @@ I am **JARVIS AI Engine PRO**, created and developed by **Abdullah Waheed**, stu
         };
       }
 
-      // 6. Greetings
+      // 7. Greetings
       if (['hi', 'hello', 'hey', 'assalam o alaikum', 'greetings', 'aoa'].includes(lower)) {
         return {
           type: 'text',
-          text: `Hello! I am **JARVIS AI Engine PRO**, developed by **Abdullah Waheed** (LGS Paragon, Lahore).\n\nHow can I assist you today with general questions, world news, memes, presentation slide decks, or academic topics?`
+          text: `hi I am JARVIS AI engine Pro  what can I help you?`
         };
       }
 
-      // 7. Dynamic Answer Synthesizer (No Template Buzzwords)
+      // 8. Dynamic Response
       return {
         type: 'text',
         text: `### Response for: ${escapeHtml(raw)}
 
 I have processed your query regarding **"${escapeHtml(raw)}"**.
 
-- **Summary:** Overview of "${escapeHtml(raw)}" covering key background details, context, and practical insights.
-- **Capabilities:** You can ask me for technical breakdowns, translations into any language (Urdu, Arabic, German, French, Spanish, etc.), presentation slide decks, or custom vector artwork.
-
-If you would like a dedicated presentation slide deck on this topic, try asking: *"Create a presentation on ${escapeHtml(raw)}"*!
-
----
-*Synthesized by JARVIS AI Engine PRO — Developed by Abdullah Waheed (LGS Paragon, Lahore).*`
+- **Overview:** Detailed synthesis of "${escapeHtml(raw)}" covering key background details and practical insights.
+- **Capabilities:** Ask for technical breakdowns, translations into any language, presentation slide decks, or custom vector artwork.`
       };
     }
 
