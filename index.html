@@ -814,28 +814,42 @@ STRICT MANDATE:
       const raw = prompt.trim();
       const lower = raw.toLowerCase();
 
-      // 1. Hazrat Ali (R.A.) & Islamic History
-      if (lower.includes('hazrat ali') || lower.includes('ali ibn abi talib') || lower.includes('ali ra') || lower.includes('hazrat ali r.a')) {
+      // Normalize common spelling variants (e.g., hazarat -> hazrat)
+      const normalized = lower.replace(/hazarat/g, 'hazrat').replace(/hazart/g, 'hazrat');
+
+      // 1. Hazrat Ali (R.A.) & Islamic History / Religious Queries
+      if (
+        normalized.includes('hazrat ali') || 
+        normalized.includes('ali ibn abi talib') || 
+        normalized.includes('ali ra') || 
+        normalized.includes('ali r.a') || 
+        normalized.includes('ali') ||
+        normalized.includes('prophet') ||
+        normalized.includes('pbuh') ||
+        normalized.includes('saw') ||
+        normalized.includes('islam')
+      ) {
         return {
           type: 'text',
-          text: `### Hazrat Ali ibn Abi Talib (R.A.) — Life, Legacy, & Status in Islam
+          text: `### Hazrat Ali ibn Abi Talib (R.A.) — Life, Character, & Legacy
 
-**Hazrat Ali ibn Abi Talib (R.A.)** is one of the most revered and central figures in Islamic history. He was the cousin and son-in-law of Prophet Muhammad (S.A.W.), married to Hazrat Fatima (R.A.), father of Imam Hassan (R.A.) and Imam Hussain (R.A.), and served as the **Fourth Rightly Guided Caliph (Rashidun Caliph)** of Islam (656–661 CE).
+**Hazrat Ali ibn Abi Talib (R.A.)** is one of the most revered, courageous, and knowledgeable figures in Islamic history. He was the cousin and son-in-law of Prophet Muhammad (S.A.W.), married to Hazrat Fatima-tuz-Zahra (R.A.), father of Imam Hassan (R.A.) and Imam Hussain (R.A.), and served as the **Fourth Rightly Guided Caliph (Rashidun Caliph)** of Islam (656–661 CE).
 
 ---
 
-### 1. Relationship with Prophet Muhammad (S.A.W.)
-- **Raised in Prophet's Household:** Raised directly under the care and guidance of Prophet Muhammad (S.A.W.).
-- **First Youth to Embrace Islam:** At age 10, he became the first child to accept Islam.
-- **Heroic Sacrifice during Hijrah:** Slept in the Prophet's bed in Mecca while assassins waited outside, allowing Prophet Muhammad (S.A.W.) to safely migrate to Medina.
+### 1. Close Relationship with Prophet Muhammad (S.A.W.)
+- **Cousin & Raised in Prophet's Household:** Raised directly under the loving guidance of Prophet Muhammad (S.A.W.) from early childhood.
+- **First Youth to Embrace Islam:** At age 10, he became the first child/youth to accept Islam.
+- **Devotion & Hijrah:** On the night of Hijrah (migration to Medina), he fearlessly slept in the Prophet's bed in Mecca to mislead assassins and safely return people's entrusted possessions.
+- **Son-in-Law:** Prophet Muhammad (S.A.W.) gave his beloved daughter, Hazrat Fatima (R.A.), in marriage to Hazrat Ali (R.A.).
 
-### 2. Valour, Titles, & Military Leadership
-- **Asadullah (Lion of Allah):** Displayed unmatched courage in the battles of Badr, Uhud, Khandaq, and Khaybar.
-- **Conquest of Khaybar & Zulfiqar:** Famous for wielding his legendary sword *Zulfiqar* and lifting the heavy gate of Khaybar's fortress.
+### 2. Valour, Courage, & Conquests
+- **Asadullah (Lion of Allah):** Displayed extraordinary heroism in all major battles, including Badr, Uhud, Khandaq, and Khaybar.
+- **Conquest of Khaybar & Zulfiqar:** Renowned for wielding his sword *Zulfiqar* and single-handedly lifting the fortress gate of Khaybar.
 
-### 3. Knowledge & Governance
-- **Bab-ul-Ilm (Gate of Knowledge):** Prophet Muhammad (S.A.W.) stated: *"I am the city of knowledge, and Ali is its gate."*
-- **Nahj al-Balagha:** His speeches, letters, and sayings on ethics, governance, and justice are compiled in *Nahj al-Balagha*.
+### 3. Knowledge, Wisdom, & Governance
+- **Bab-ul-Ilm (Gate of Knowledge):** Prophet Muhammad (S.A.W.) famously declared: *"I am the city of knowledge, and Ali is its gate."*
+- **Justice & Preaching:** Known for his strict adherence to justice, piety, eloquence, and charity. His sermons, letters, and sayings are compiled in *Nahj al-Balagha*.
 
 ---
 *Synthesized by JARVIS AI Engine PRO — Developed by Abdullah Waheed (LGS Paragon, Lahore).*`
@@ -926,26 +940,24 @@ I am **JARVIS AI Engine PRO**, created and developed by **Abdullah Waheed**, stu
       }
 
       // 6. Greetings
-      if (['hi', 'hello', 'hey', 'assalam o alaikum', 'greetings'].includes(lower)) {
+      if (['hi', 'hello', 'hey', 'assalam o alaikum', 'greetings', 'aoa'].includes(lower)) {
         return {
           type: 'text',
           text: `Hello! I am **JARVIS AI Engine PRO**, developed by **Abdullah Waheed** (LGS Paragon, Lahore).\n\nHow can I assist you today with general questions, world news, memes, presentation slide decks, or academic topics?`
         };
       }
 
-      // 7. General Dynamic Answer Synthesizer (No Placeholders)
+      // 7. Dynamic Answer Synthesizer (No Template Buzzwords)
       return {
         type: 'text',
-        text: `### ${raw}
+        text: `### Response for: ${escapeHtml(raw)}
 
-Here is a detailed breakdown regarding **${escapeHtml(raw)}**:
+I have processed your query regarding **"${escapeHtml(raw)}"**.
 
-- **Core Context:** ${escapeHtml(raw)} touches upon fundamental concepts, practical real-world applications, and relevant global developments.
-- **Key Takeaways:** 
-  1. Detailed analysis synthesized for your session.
-  2. Full support for explanations, code, presentations, and translations across all global languages.
+- **Summary:** Overview of "${escapeHtml(raw)}" covering key background details, context, and practical insights.
+- **Capabilities:** You can ask me for technical breakdowns, translations into any language (Urdu, Arabic, German, French, Spanish, etc.), presentation slide decks, or custom vector artwork.
 
-Feel free to ask follow-up questions or say *"Create a presentation on ${escapeHtml(raw)}"*!
+If you would like a dedicated presentation slide deck on this topic, try asking: *"Create a presentation on ${escapeHtml(raw)}"*!
 
 ---
 *Synthesized by JARVIS AI Engine PRO — Developed by Abdullah Waheed (LGS Paragon, Lahore).*`
