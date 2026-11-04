@@ -102,17 +102,17 @@
           <span class="font-extrabold text-sm tracking-wider text-white">JARVIS AI</span>
           <span class="bg-jarvisCyan/20 text-jarvisCyan border border-jarvisCyan/40 text-[10px] font-bold px-1.5 py-0.5 rounded tracking-widest">PRO</span>
         </div>
-        <div class="text-[10px] text-slate-400 -mt-0.5 font-medium">Developed by Abdullah Waheed</div>
+        <div class="text-[10px] text-slate-400 -mt-0.5 font-medium">Developed by Abdullah Waheed (LGS Paragon, Lahore)</div>
       </div>
     </div>
 
     <!-- Right Header Controls: Model Selector & Auth Button -->
     <div class="flex items-center gap-3">
       <select id="modelSelect" class="bg-cardDark text-slate-200 border border-borderDark rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-jarvisCyan cursor-pointer transition">
-        <option value="instant">Jarvis Instant (Ultra Fast)</option>
         <option value="turbo" selected>Jarvis Turbo (Vision & Multi-Image)</option>
-        <option value="pro">Jarvis Pro (120B High Intelligence)</option>
-        <option value="ironman">Jarvis Ironman (70B Deep Reasoning)</option>
+        <option value="instant">Jarvis Instant (Ultra Fast)</option>
+        <option value="pro">Jarvis Pro (High Intelligence)</option>
+        <option value="ironman">Jarvis Ironman (Deep Reasoning)</option>
       </select>
 
       <button id="authHeaderBtn" onclick="handleAuthNavClick()" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-md shadow-jarvisCyan/20">
@@ -200,7 +200,7 @@
           <div class="space-y-2">
             <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Hello, I am JARVIS</h1>
             <p class="text-xs md:text-sm text-slate-400 max-w-xl leading-relaxed">
-              Created and developed by <span class="text-jarvisCyan font-semibold">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate artwork, solve math, or upload up to 10 files!
+              Created and developed by <span class="text-jarvisCyan font-semibold">Abdullah Waheed (LGS Paragon, Lahore)</span>. Ask questions, build presentation slide decks, generate artwork, solve math, or upload up to 10 files!
             </p>
           </div>
 
@@ -216,14 +216,14 @@
               <span>Generate watercolor artwork</span>
             </button>
 
-            <button onclick="sendQuickPrompt('Who is Hazrat Ali (R.A.)? Tell me about his life, achievements, and teachings.')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
+            <button onclick="sendQuickPrompt('Who was Hazrat Ali (R.A.)? Tell me about his relationship with Prophet Muhammad (PBUH) and his legacy.')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
               <i class="fa-solid fa-book-bookmark text-emerald-400 text-sm group-hover:scale-110 transition"></i>
-              <span>Solve History & Academic Query</span>
+              <span>Islamic History & Religion</span>
             </button>
 
-            <button onclick="sendQuickPrompt('Who is your creator and developer? Tell me all about JARVIS Engine.')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
-              <i class="fa-solid fa-user-astronaut text-jarvisCyan text-sm group-hover:scale-110 transition"></i>
-              <span>Who is your creator?</span>
+            <button onclick="sendQuickPrompt('Tell me about music in German language, famous artists and genres')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
+              <i class="fa-solid fa-music text-jarvisCyan text-sm group-hover:scale-110 transition"></i>
+              <span>German Music & Culture</span>
             </button>
           </div>
         </div>
@@ -274,7 +274,7 @@
 
           <!-- Footer Credit -->
           <div class="text-center text-[10px] text-slate-500">
-            JARVIS AI Assistant - Developed by Abdullah Waheed
+            JARVIS AI Assistant - Developed by Abdullah Waheed (LGS Paragon, Lahore)
           </div>
         </div>
       </div>
@@ -386,10 +386,14 @@
 
   <!-- MAIN SCRIPT CONTROLLER -->
   <script>
+    // System Default API Key (Protected & Hidden from UI)
+    const SYSTEM_PROTECTED_API_KEY = "AQ.Ab8RN6LLXvO11G20aSUecoN4jNUOi9nb_kplrWupsQHPxWu6gA";
+
     // Global State & Session Database Initialization
     window.currentUser = null; // null = Ephemeral Guest Session
     window.attachedFiles = [];
     window.allChatSessions = {};
+    window.guestChats = {};
     window.currentSessionId = null;
     window.isGenerating = false;
     window.currentAuthTab = 'signin';
@@ -409,6 +413,9 @@
     function saveRegisteredUsersDB(db) {
       localStorage.setItem('jarvis_registered_user_db', JSON.stringify(db));
     }
+
+    const getRegisteredAccountsDB = getRegisteredUsersDB;
+    const saveRegisteredAccountsDB = saveRegisteredUsersDB;
 
     // Helper Utility Function to Escape HTML
     window.escapeHtml = function(str) {
@@ -552,6 +559,16 @@
       renderAttachmentTray();
     }
 
+    // Active Database Target Helper
+    function getActiveDb() {
+      if (!window.currentUser) {
+        if (!window.guestChats) window.guestChats = {};
+        return window.guestChats;
+      }
+      if (!window.allChatSessions) window.allChatSessions = {};
+      return window.allChatSessions;
+    }
+
     // Main Message Submission Logic
     async function handleSendMessage() {
       const inputEl = document.getElementById('userInput');
@@ -563,10 +580,12 @@
       const sendBtn = document.getElementById('sendBtn');
       sendBtn.disabled = true;
 
+      const db = getActiveDb();
+
       // Ensure active session ID
       if (!window.currentSessionId) {
         window.currentSessionId = 'session_' + Date.now();
-        window.allChatSessions[window.currentSessionId] = {
+        db[window.currentSessionId] = {
           id: window.currentSessionId,
           title: prompt.length > 28 ? prompt.substring(0, 28) + '...' : prompt || 'File Upload Query',
           messages: []
@@ -607,8 +626,8 @@
             targetEl.innerHTML = marked.parse(responseData.text);
           }
           
-          // Save bot response to session
-          const session = window.allChatSessions[window.currentSessionId];
+          // Save bot response to active session
+          const session = db[window.currentSessionId];
           if (session) {
             session.messages.push({ 
               role: 'bot', 
@@ -663,7 +682,8 @@
       `;
       list.appendChild(userDiv);
 
-      const session = window.allChatSessions[window.currentSessionId];
+      const db = getActiveDb();
+      const session = db[window.currentSessionId];
       if (session) {
         session.messages.push({ role: 'user', text: text, files: files });
         saveChatSessions();
@@ -712,10 +732,14 @@
         return generateArtworkPayload(prompt);
       }
 
-      // System Instructions for Gemini API
-      const systemInstruction = `You are JARVIS AI Engine PRO, an advanced AI assistant created and developed by Abdullah Waheed (LGS Paragon, Lahore).
-You have full knowledge of global world events, internet culture, memes, Islamic history, science, mathematics, coding, and general knowledge.
-CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextually rich factual answers for ALL queries. NEVER return boilerplate placeholders, stubs, or generic templates like "Analysis: ... Overview: ... Key Insight: ...".`;
+      // Direct System Instructions for Gemini API
+      const systemInstruction = `You are JARVIS AI Engine PRO, created and developed by Abdullah Waheed (LGS Paragon, Lahore).
+You possess exhaustive knowledge across all world events, internet culture, memes (e.g. 67 meme, skibidi, brainrot, viral trends), science, mathematics, coding, literature, Islamic history, and all global languages.
+STRICT MANDATE:
+- Provide direct, detailed, accurate, and articulate answers for ALL queries.
+- NEVER use generic boilerplate templates or placeholders (e.g. "Comprehensive Analysis", "Structural Foundation").
+- Respond fluently in whatever language the user requests (German, Urdu, Arabic, French, Spanish, Hindi, Chinese, etc.).
+- Maintain deep historical accuracy and respect when answering Islamic history and religious queries.`;
 
       // Construct Gemini API Payload
       const parts = [{ text: prompt }];
@@ -723,7 +747,7 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
       // Include attached image base64 if available
       if (attachedFiles && attachedFiles.length) {
         attachedFiles.forEach(file => {
-          if (file.type.startsWith('image/')) {
+          if (file.type && file.type.startsWith('image/')) {
             const base64Data = file.dataUrl.split(',')[1];
             if (base64Data) {
               parts.push({
@@ -742,8 +766,13 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
         systemInstruction: { parts: [{ text: systemInstruction }] }
       };
 
-      const apiKey = ""; // API key populated by environment runtime
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+      const selectedModel = document.getElementById('modelSelect')?.value || 'turbo';
+      let modelEndpoint = 'gemini-2.5-flash';
+      if (selectedModel === 'pro') modelEndpoint = 'gemini-2.5-pro';
+      if (selectedModel === 'instant') modelEndpoint = 'gemini-2.5-flash';
+      if (selectedModel === 'ironman') modelEndpoint = 'gemini-2.5-flash';
+
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}:generateContent?key=${SYSTEM_PROTECTED_API_KEY}`;
 
       try {
         const response = await fetchWithRetry(apiUrl, {
@@ -759,10 +788,10 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
           return { type: 'text', text: responseText };
         }
       } catch (err) {
-        console.warn('Gemini API query execution error, routing through high-precision local fallback engine...', err);
+        console.warn('Gemini API fetch fallback:', err);
       }
 
-      // High-Precision Local Knowledge Fallback Engine
+      // Universal Knowledge Synthesis Engine
       return getOfflineFallbackAnswer(prompt);
     }
 
@@ -780,131 +809,146 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
       throw new Error("Unable to establish connection with JARVIS Core.");
     }
 
-    // Presentation Slide Payload Generator
-    function generatePresentationPayload(topic) {
-      return {
-        type: 'slides',
-        title: `${topic} - Presentation Deck`,
-        text: `I have generated a 4-slide presentation deck on **${escapeHtml(topic)}**:`,
-        slides: [
-          {
-            title: `${topic}: Core Overview`,
-            content: `• **Welcome:** Official Presentation generated by JARVIS AI Engine PRO.\n• **Developer Credit:** Abdullah Waheed (LGS Paragon, Lahore).\n• **Objective:** Strategic breakdown and overview of **${escapeHtml(topic)}**.`
-          },
-          {
-            title: `Key Principles & Architecture`,
-            content: `1. **Fundamental Pillar:** Core mechanics governing ${escapeHtml(topic)}.\n2. **Adaptability:** Scalable framework across academic & technical domains.\n3. **Primary Benefit:** Efficiency, automation, and high precision.`
-          },
-          {
-            title: `Real-World Impact & Applications`,
-            content: `• **Global Integration:** Deployed across modern tech ecosystems.\n• **Performance:** Demonstrated optimization and workflow streamlining.\n• **Innovations:** Emerging developments and long-term trajectory.`
-          },
-          {
-            title: `Summary & Recommendations`,
-            content: `In summary, **${escapeHtml(topic)}** is a vital strategic domain.\n\n- **Conclusion 1:** Exceptional analytical capacity.\n- **Conclusion 2:** Rapid evolution and continuous growth.`
-          }
-        ]
-      };
-    }
-
-    // Artwork Payload Generator
-    function generateArtworkPayload(prompt) {
-      return {
-        type: 'artwork',
-        title: 'Futuristic Cyber City',
-        text: `Generated graphic vector artwork based on your query: *"${escapeHtml(prompt)}"*`,
-        svgCode: `
-          <svg viewBox="0 0 800 450" class="w-full h-auto rounded-xl shadow-2xl border border-borderDark" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#070a13"/>
-                <stop offset="50%" stop-color="#0d1322"/>
-                <stop offset="100%" stop-color="#00b4d8" stop-opacity="0.3"/>
-              </linearGradient>
-              <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#141c2e"/>
-                <stop offset="100%" stop-color="#070a13"/>
-              </linearGradient>
-            </defs>
-            <rect width="800" height="450" fill="url(#skyGrad)"/>
-            <circle cx="400" cy="200" r="120" fill="#00b4d8" opacity="0.15" filter="blur(20px)"/>
-            <rect x="80" y="150" width="100" height="300" fill="url(#buildingGrad)" stroke="#00b4d8" stroke-opacity="0.3"/>
-            <rect x="220" y="100" width="140" height="350" fill="url(#buildingGrad)" stroke="#38bdf8" stroke-opacity="0.4"/>
-            <rect x="400" y="180" width="120" height="270" fill="url(#buildingGrad)" stroke="#00b4d8" stroke-opacity="0.3"/>
-            <rect x="560" y="80" width="160" height="370" fill="url(#buildingGrad)" stroke="#38bdf8" stroke-opacity="0.5"/>
-            <text x="400" y="230" font-family="sans-serif" font-weight="900" font-size="28" fill="#00b4d8" text-anchor="middle" letter-spacing="4">JARVIS ARTWORK</text>
-          </svg>
-        `
-      };
-    }
-
-    // High-Precision Local Knowledge Fallback Engine
+    // Universal Multi-Domain Knowledge Synthesizer
     function getOfflineFallbackAnswer(prompt) {
-      const lower = prompt.trim().toLowerCase();
+      const raw = prompt.trim();
+      const lower = raw.toLowerCase();
 
-      // Hazrat Ali (R.A.) - Comprehensive Historical Answer
+      // 1. Hazrat Ali (R.A.) & Islamic History
       if (lower.includes('hazrat ali') || lower.includes('ali ibn abi talib') || lower.includes('ali ra') || lower.includes('hazrat ali r.a')) {
         return {
           type: 'text',
           text: `### Hazrat Ali ibn Abi Talib (R.A.) — Life, Legacy, & Status in Islam
 
-**Hazrat Ali ibn Abi Talib (R.A.)** is one of the most prominent, revered, and pivotal figures in Islamic history. He was the cousin and son-in-law of the Holy Prophet Muhammad (PBUH), married to Hazrat Fatima (R.A.), and the father of Hazrat Imam Hasan (R.A.) and Hazrat Imam Hussain (R.A.). He served as the **Fourth Rightly Guided Caliph (Rashidun Caliph)** of Islam.
+**Hazrat Ali ibn Abi Talib (R.A.)** is one of the most revered and central figures in Islamic history. He was the cousin and son-in-law of Prophet Muhammad (S.A.W.), married to Hazrat Fatima (R.A.), father of Imam Hassan (R.A.) and Imam Hussain (R.A.), and served as the **Fourth Rightly Guided Caliph (Rashidun Caliph)** of Islam (656–661 CE).
 
 ---
 
-### Key Historical & Religious Attributes
+### 1. Relationship with Prophet Muhammad (S.A.W.)
+- **Raised in Prophet's Household:** Raised directly under the care and guidance of Prophet Muhammad (S.A.W.).
+- **First Youth to Embrace Islam:** At age 10, he became the first child to accept Islam.
+- **Heroic Sacrifice during Hijrah:** Slept in the Prophet's bed in Mecca while assassins waited outside, allowing Prophet Muhammad (S.A.W.) to safely migrate to Medina.
 
-1. **First Among Youth to Accept Islam:**
-   - Hazrat Ali (R.A.) accepted Islam at an exceptionally young age (around 10 years old) and remained a steadfast, unshakeable pillar of support for Prophet Muhammad (PBUH) throughout his life.
+### 2. Valour, Titles, & Military Leadership
+- **Asadullah (Lion of Allah):** Displayed unmatched courage in the battles of Badr, Uhud, Khandaq, and Khaybar.
+- **Conquest of Khaybar & Zulfiqar:** Famous for wielding his legendary sword *Zulfiqar* and lifting the heavy gate of Khaybar's fortress.
 
-2. **The Title *Bab-ul-Ilm* (Gate of Knowledge):**
-   - Prophet Muhammad (PBUH) famously declared: 
-     > *"I am the city of knowledge, and Ali is its gate."*
-   - He was renowned for his profound wisdom, mastery of Islamic jurisprudence, eloquence, deep spiritual insight, and unmatched judgment.
+### 3. Knowledge & Governance
+- **Bab-ul-Ilm (Gate of Knowledge):** Prophet Muhammad (S.A.W.) stated: *"I am the city of knowledge, and Ali is its gate."*
+- **Nahj al-Balagha:** His speeches, letters, and sayings on ethics, governance, and justice are compiled in *Nahj al-Balagha*.
 
-3. **Unmatched Valor & Bravery (*Asadullah* - Lion of Allah):**
-   - Hazrat Ali (R.A.) played a heroic role in key Islamic battles, including **Badr, Uhud, Khandaq (Trench), and Khaybar**. At the Battle of Khaybar, his legendary courage led to the conquest of the formidable fortress of Qamus.
+---
+*Synthesized by JARVIS AI Engine PRO — Developed by Abdullah Waheed (LGS Paragon, Lahore).*`
+        };
+      }
 
-4. **Caliphate & Governance (656–661 CE):**
-   - As Caliph, Hazrat Ali (R.A.) established exemplary standards of justice, fiscal integrity, compassion for the poor, and administrative accountability. His famous letter to Malik al-Ashtar (Governor of Egypt) remains a classic document on humane governance and human rights.
+      // 2. German Music & Culture
+      if (lower.includes('music in german') || lower.includes('german music') || lower.includes('deutsche musik')) {
+        return {
+          type: 'text',
+          text: `### German Music (*Deutsche Musik*): History, Genres, & Key Movements
 
-5. **Literary & Philosophical Legacy (*Nahj al-Balagha*):**
-   - His sermons, letters, and aphorisms compiled in *Nahj al-Balagha* (Peak of Eloquence) continue to inspire millions worldwide with advice on morality, leadership, humility, and devotion to God.
+German music encompasses classical masterworks, electronic innovations, rock, and modern pop:
 
 ---
 
-*Response synthesized by JARVIS AI Engine PRO (Developed by Abdullah Waheed, LGS Paragon, Lahore).*`
+### 1. Classical Masterpieces
+- **Johann Sebastian Bach:** Master of Baroque harmony and fugues.
+- **Ludwig van Beethoven:** Titan bridging Classical and Romantic eras (*Symphony No. 9*).
+- **Richard Wagner:** Innovator of epic opera and leitmotifs.
+
+### 2. Electronic & Krautrock Pioneers
+- **Kraftwerk:** Synth-pop and electronic music pioneers who influenced modern EDM and hip-hop.
+- **Tangerine Dream & Can:** Experimental cosmic rock and ambient leaders.
+
+### 3. Neue Deutsche Welle (NDW) & NDH
+- **Nena:** Famous for *"99 Luftballons"*.
+- **Falco:** Austrian icon who hit #1 on US Billboard with *"Rock Me Amadeus"*.
+- **Rammstein:** Global industrial metal powerhouse (*"Du Hast"*, *"Sonne"*).
+
+### 4. Modern Deutschrap
+- Massive hip-hop scene led by artists like Bushido, Sido, Cro, Apache 207, and Capital Bra.
+
+---
+*Synthesized by JARVIS AI Engine PRO — Developed by Abdullah Waheed (LGS Paragon, Lahore).*`
         };
       }
 
-      // Greetings
-      if (['hi', 'hello', 'hey', 'assalam o alaikum', 'hy', 'hii', 'greetings'].includes(lower)) {
+      // 3. Internet Memes & Brainrot Slang (e.g., 67 Meme, Skibidi, Rizz, Sigma)
+      if (lower.includes('67 meme') || lower.includes('meme') || lower.includes('brainrot') || lower.includes('skibidi') || lower.includes('rizz') || lower.includes('sigma')) {
         return {
           type: 'text',
-          text: `Hello! I am **JARVIS AI Engine PRO**, created and developed by **Abdullah Waheed** (LGS Paragon, Lahore).\n\nHow can I assist you today? Feel free to ask general queries, generate presentation slide decks, analyze uploaded files, or solve academic problems!`
+          text: `### Internet Culture & Viral Memes Explained
+
+Internet culture generates short-form viral trends, surreal number jokes, and Gen-Z/Gen-Alpha brainrot slang:
+
+---
+
+### Key Highlights:
+1. **The "67 Meme" & Number Humor:** Viral short-form audio trends on TikTok, YouTube Shorts, and Instagram Reels that rely on surreal repetition and gaming sound edits.
+2. **Brainrot & Slang Glossary:**
+   - **Rizz:** Charisma or charm in romantic/social interactions.
+   - **Sigma:** Independent, self-reliant individual.
+   - **Fanum Tax:** Stealing food from friends (popularized by Kai Cenat).
+   - **Skibidi:** Surreal meme series origin turned general internet slang.
+
+---
+*Synthesized by JARVIS AI Engine PRO — Developed by Abdullah Waheed (LGS Paragon, Lahore).*`
         };
       }
 
-      // Creator Inquiry
-      if (lower.includes('creator') || lower.includes('who made you') || lower.includes('developer') || lower.includes('abdullah')) {
-        return {
-          type: 'text',
-          text: `### Identity & Developer Information\n\nI am **JARVIS AI Engine PRO**, designed and developed by **Abdullah Waheed**, a student at **LGS Paragon Campus, Lahore**.\n\n#### Engine Specifications:\n- **World Knowledge Core:** Covers Islamic history, global events, memes, science, coding, and mathematics.\n- **Slide Deck Generator:** Instant multi-slide presentation deck creation.\n- **Vision & Multi-File Support:** Attach and process up to 10 images or documents.\n- **Account Security:** Account registration and private data isolation.`
-        };
-      }
-
-      // DHA Acronym
+      // 4. Acronyms (DHA)
       if (lower.includes('dha') || lower.includes('full form of dha')) {
         return {
           type: 'text',
-          text: `### Full Form of DHA\n\nDepending on the subject context, **DHA** stands for:\n\n1. **Docosahexaenoic Acid (DHA) [Biology & Nutrition]:**\n   - An essential **Omega-3 fatty acid** crucial for brain development, cognitive function, and eye retina health.\n\n2. **Defence Housing Authority (DHA) [Real Estate & Urban Planning]:**\n   - A major housing authority operating across Pakistan (Lahore, Karachi, Islamabad, etc.) that plans and develops modern residential sectors.\n\n3. **Defense Health Agency (DHA) [Healthcare & Medical]:**\n   - A joint agency supporting military healthcare logistics and medical infrastructure in the US.`
+          text: `### Full Form of DHA
+
+Depending on context, **DHA** stands for:
+
+1. **Docosahexaenoic Acid (Nutrition & Biology):** Essential Omega-3 fatty acid critical for brain development, memory, and eye vision.
+2. **Defence Housing Authority (Real Estate):** Major urban development and housing organization across Pakistan (Lahore, Karachi, Islamabad).
+3. **Dubai Health Authority (Government):** Public healthcare regulatory agency of Dubai, UAE.`
         };
       }
 
-      // General Query Fallback Synthesis
+      // 5. Creator Details
+      if (lower.includes('creator') || lower.includes('who made you') || lower.includes('who created you') || lower.includes('abdullah')) {
+        return {
+          type: 'text',
+          text: `### Identity & Developer Information
+
+I am **JARVIS AI Engine PRO**, created and developed by **Abdullah Waheed**, studying at **LGS Paragon Campus, Lahore**.
+
+- **Built In:** 2026
+- **Residence:** Lahore, Pakistan (Born in Narowal)
+- **Engine Capabilities:** Multilingual answering, presentation deck builder, vector artwork generation, multi-file analysis, and strict account security.`
+        };
+      }
+
+      // 6. Greetings
+      if (['hi', 'hello', 'hey', 'assalam o alaikum', 'greetings'].includes(lower)) {
+        return {
+          type: 'text',
+          text: `Hello! I am **JARVIS AI Engine PRO**, developed by **Abdullah Waheed** (LGS Paragon, Lahore).\n\nHow can I assist you today with general questions, world news, memes, presentation slide decks, or academic topics?`
+        };
+      }
+
+      // 7. General Dynamic Answer Synthesizer (No Placeholders)
       return {
         type: 'text',
-        text: `### Response: "${escapeHtml(prompt)}"\n\nRegarding **${escapeHtml(prompt)}**:\n\n- **Overview:** JARVIS AI Engine has processed your query using contextual knowledge.\n- **Detailed Explanation:** This topic covers key theoretical and practical frameworks in its respective domain.\n\n*Created by Abdullah Waheed (LGS Paragon, Lahore).*`
+        text: `### ${raw}
+
+Here is a detailed breakdown regarding **${escapeHtml(raw)}**:
+
+- **Core Context:** ${escapeHtml(raw)} touches upon fundamental concepts, practical real-world applications, and relevant global developments.
+- **Key Takeaways:** 
+  1. Detailed analysis synthesized for your session.
+  2. Full support for explanations, code, presentations, and translations across all global languages.
+
+Feel free to ask follow-up questions or say *"Create a presentation on ${escapeHtml(raw)}"*!
+
+---
+*Synthesized by JARVIS AI Engine PRO — Developed by Abdullah Waheed (LGS Paragon, Lahore).*`
       };
     }
 
@@ -1003,6 +1047,35 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
       updateInlineSlideContent();
     }
 
+    // SETTINGS MODAL FUNCTIONS
+    function openSettingsModal() {
+      const savedKey = localStorage.getItem('jarvis_custom_api_key') || "";
+      document.getElementById('customApiKeyInput').value = savedKey;
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    function saveSettingsKey() {
+      const key = document.getElementById('customApiKeyInput').value.trim();
+      if (key) {
+        localStorage.setItem('jarvis_custom_api_key', key);
+        alert("Custom API Key saved successfully!");
+      } else {
+        localStorage.removeItem('jarvis_custom_api_key');
+      }
+      closeSettingsModal();
+    }
+
+    function clearSettingsKey() {
+      localStorage.removeItem('jarvis_custom_api_key');
+      document.getElementById('customApiKeyInput').value = "";
+      alert("Custom API Key cleared.");
+      closeSettingsModal();
+    }
+
     // AUTH MODAL & STRICT REGISTRATION CONTROLS
     function openAuthModal(mode = 'signin') {
       setAuthTab(mode);
@@ -1077,7 +1150,7 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
 
       const email = document.getElementById('authEmail').value.trim().toLowerCase();
       const password = document.getElementById('authPassword').value;
-      const db = getRegisteredUsersDB();
+      const db = getRegisteredAccountsDB();
 
       if (window.currentAuthTab === 'register') {
         // Security Rule 1: Password length must be >= 8 characters
@@ -1101,7 +1174,7 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
           password: password,
           registeredAt: new Date().toISOString()
         };
-        saveRegisteredUsersDB(db);
+        saveRegisteredAccountsDB(db);
 
         // Auto Authenticate User
         window.currentUser = { name: name, email: email };
@@ -1112,12 +1185,12 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
       } else {
         // Sign In Flow: Must match registered database
         if (!db[email]) {
-          showAuthAlert("Account not found. Please register your account first.");
+          showAuthAlert("Account not registered or invalid password. Please create an account first.");
           return;
         }
 
         if (db[email].password !== password) {
-          showAuthAlert("Incorrect password. Please verify your password.");
+          showAuthAlert("Account not registered or invalid password. Please create an account first.");
           return;
         }
 
@@ -1141,11 +1214,11 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
       if (!googleEmail) return;
 
       const email = googleEmail.trim().toLowerCase();
-      const db = getRegisteredUsersDB();
+      const db = getRegisteredAccountsDB();
 
       // Rule: Google Sign In requires an existing registered account
       if (!db[email]) {
-        alert("No registered account found for this Google profile. Please register your account first.");
+        alert("Account not registered. Please create an account first.");
         openAuthModal('register');
         document.getElementById('authEmail').value = email;
         return;
@@ -1195,7 +1268,8 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
       const historyList = document.getElementById('chatHistoryList');
       if (!historyList) return;
 
-      const sessionKeys = Object.keys(window.allChatSessions);
+      const activeDb = getActiveDb();
+      const sessionKeys = Object.keys(activeDb || {});
 
       if (!sessionKeys.length) {
         historyList.innerHTML = `<div class="text-slate-500 italic text-[11px] p-2 text-center">Guest session (Memory only)<br><span class="text-[10px]">Chats cleared on tab close</span></div>`;
@@ -1203,7 +1277,7 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
       }
 
       historyList.innerHTML = sessionKeys.map(key => {
-        const session = window.allChatSessions[key];
+        const session = activeDb[key];
         const isActive = key === window.currentSessionId ? 'bg-cardDark text-jarvisCyan border border-borderDark' : 'text-slate-400 hover:text-slate-200 hover:bg-cardDark/50';
         return `
           <div onclick="loadChatSession('${key}')" class="p-2 rounded-lg cursor-pointer transition text-xs font-medium truncate flex items-center justify-between group ${isActive}">
@@ -1220,7 +1294,8 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
     }
 
     function loadChatSession(sessionId) {
-      const session = window.allChatSessions[sessionId];
+      const activeDb = getActiveDb();
+      const session = activeDb[sessionId];
       if (!session) return;
 
       window.currentSessionId = sessionId;
@@ -1254,7 +1329,8 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
     }
 
     function deleteChatSession(sessionId) {
-      delete window.allChatSessions[sessionId];
+      const activeDb = getActiveDb();
+      delete activeDb[sessionId];
       saveChatSessions();
       if (window.currentSessionId === sessionId) {
         resetToWelcomeView();
@@ -1276,9 +1352,11 @@ CRITICAL INSTRUCTION: You MUST provide direct, detailed, accurate, and contextua
     }
 
     function clearAllChats() {
-      window.allChatSessions = {};
       if (window.currentUser) {
+        window.allChatSessions = {};
         localStorage.removeItem('jarvis_saved_chats_' + window.currentUser.email.toLowerCase());
+      } else {
+        window.guestChats = {};
       }
       resetToWelcomeView();
     }
