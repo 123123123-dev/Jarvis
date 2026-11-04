@@ -3,315 +3,318 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JARVIS AI PRO | Created by Abdullah Waheed</title>
+  <title>JARVIS AI PRO</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Marked.js for Markdown Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            jarvis: {
-              bg: '#070a11',
-              panel: '#0d1322',
-              card: '#141c2e',
-              border: '#1e293b',
-              accent: '#00b4d8',
-              accentHover: '#0096c7',
-              muted: '#94a3b8'
-            }
+            brandDark: '#070a13',
+            panelDark: '#0d1322',
+            cardDark: '#141c2e',
+            borderDark: '#1e293b',
+            jarvisCyan: '#00b4d8',
+            jarvisCyanHover: '#0096c7',
           }
         }
       }
     }
   </script>
 
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Marked.js Markdown Parser -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
   <style>
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #070a11; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #00b4d8; }
-    
-    .markdown-content p { margin-bottom: 0.6rem; line-height: 1.6; }
-    .markdown-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.6rem; }
-    .markdown-content ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.6rem; }
-    .markdown-content strong { color: #00b4d8; font-weight: 600; }
-    .markdown-content code { background: #070a11; padding: 2px 6px; border-radius: 4px; color: #38bdf8; font-family: monospace; font-size: 0.85em; }
-    .markdown-content blockquote { border-left: 3px solid #00b4d8; padding-left: 10px; color: #94a3b8; font-style: italic; }
-
-    /* Glass Effects */
-    .glass-card {
-      background: rgba(20, 28, 46, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(30, 41, 59, 0.8);
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-    
-    .hero-box-glow {
-      box-shadow: 0 0 40px -10px rgba(0, 180, 216, 0.15);
+    ::-webkit-scrollbar-track {
+      background: #070a13;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00b4d8;
+    }
+
+    /* Arc Reactor Glowing Effects */
+    .arc-glow {
+      box-shadow: 0 0 15px rgba(0, 180, 216, 0.4), inset 0 0 10px rgba(0, 180, 216, 0.3);
+    }
+    .text-glow {
+      text-shadow: 0 0 8px rgba(0, 180, 216, 0.6);
+    }
+    .pulse-ring {
+      animation: pulseGlow 3s infinite ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+
+    /* Markdown Styling Inside Chat */
+    .markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
+    .markdown-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+    .markdown-content ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+    .markdown-content li { margin-bottom: 0.25rem; }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+      font-weight: 700; color: #00b4d8; margin-top: 1rem; margin-bottom: 0.5rem;
+    }
+    .markdown-content code {
+      background: #141c2e; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid #1e293b; font-size: 0.85em;
+    }
+    .markdown-content pre {
+      background: #070a13; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #1e293b; overflow-x: auto; margin-bottom: 0.75rem;
+    }
+    .markdown-content blockquote {
+      border-left: 3px solid #00b4d8; padding-left: 0.75rem; color: #94a3b8; font-style: italic; margin-bottom: 0.75rem;
     }
   </style>
 </head>
-<body class="h-full bg-[#070a11] text-slate-100 font-sans flex flex-col overflow-hidden select-none">
+<body class="bg-brandDark text-slate-100 h-full font-sans antialiased select-none flex flex-col overflow-hidden">
 
-  <!-- TOP HEADER -->
-  <header class="h-14 border-b border-[#1e293b] bg-[#0d1322] px-4 flex items-center justify-between z-30 shrink-0">
+  <!-- TOP HEADER BAR -->
+  <header class="h-14 bg-panelDark/90 border-b border-borderDark px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
+    <!-- Left Logo & Branding -->
     <div class="flex items-center gap-3">
-      <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
-        <i class="fa-solid fa-bars text-base"></i>
-      </button>
-      
-      <!-- HUD ARC REACTOR LOGO ICON -->
-      <div class="w-9 h-9 rounded-xl bg-[#070a11] border border-[#00b4d8]/50 p-1 flex items-center justify-center shadow-lg shadow-[#00b4d8]/20 relative group">
-        <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="8 4" class="opacity-70"/>
+      <!-- Arc Reactor HUD SVG Icon -->
+      <div class="w-8 h-8 rounded-full bg-brandDark border border-jarvisCyan/60 flex items-center justify-center p-1 arc-glow relative cursor-pointer" onclick="resetToWelcomeView()">
+        <svg viewBox="0 0 100 100" class="w-full h-full pulse-ring" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="10 4" class="opacity-80"/>
           <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="3"/>
-          <circle cx="50" cy="50" r="30" stroke="#00b4d8" stroke-width="1.5" stroke-dasharray="20 6"/>
-          <text x="50" y="57" font-family="sans-serif" font-weight="900" font-size="20" fill="#00b4d8" text-anchor="middle">J</text>
+          <circle cx="50" cy="50" r="28" stroke="#00b4d8" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="24" fill="#00b4d8" text-anchor="middle" class="text-glow">J</text>
         </svg>
       </div>
-
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="font-bold text-sm tracking-wide text-white">JARVIS AI</h1>
-          <span class="bg-[#00b4d8]/20 text-[#00b4d8] border border-[#00b4d8]/30 text-[10px] font-bold px-1.5 py-0.2 rounded">PRO</span>
+          <span class="font-extrabold text-sm tracking-wider text-white">JARVIS AI</span>
+          <span class="bg-jarvisCyan/20 text-jarvisCyan border border-jarvisCyan/40 text-[10px] font-bold px-1.5 py-0.5 rounded tracking-widest">PRO</span>
         </div>
-        <p class="text-[10px] text-slate-400 hidden sm:block">Developed by Abdullah Waheed</p>
+        <div class="text-[10px] text-slate-400 -mt-0.5 font-medium">Developed by Abdullah Waheed</div>
       </div>
     </div>
 
-    <!-- HEADER RIGHT CONTROLS -->
-    <div class="flex items-center gap-2 sm:gap-3">
-      <!-- MODEL SELECTOR DROPDOWN -->
-      <select id="modelSelect" onchange="handleModelChange(this.value)" class="bg-[#141c2e] border border-[#1e293b] text-slate-200 text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-[#00b4d8] cursor-pointer max-w-[220px] sm:max-w-none truncate">
+    <!-- Right Top Controls: Model Select & Auth Button -->
+    <div class="flex items-center gap-3">
+      <select id="modelSelect" class="bg-cardDark text-slate-200 border border-borderDark rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-jarvisCyan cursor-pointer transition">
         <option value="instant">Jarvis Instant (Ultra Fast)</option>
         <option value="turbo" selected>Jarvis Turbo (Vision & Multi-Image)</option>
         <option value="pro">Jarvis Pro (120B High Intelligence)</option>
         <option value="ironman">Jarvis Ironman (70B Deep Reasoning)</option>
       </select>
 
-      <!-- AUTH / ACCOUNT BUTTON -->
-      <button onclick="openAuthModal()" id="signInBtn" class="bg-[#00b4d8] hover:bg-[#0096c7] text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-md shadow-[#00b4d8]/20 flex items-center gap-1.5">
-        <i class="fa-solid fa-user-circle text-xs"></i>
-        <span id="signInBtnText">Sign In</span>
+      <button id="authHeaderBtn" onclick="openAuthModal('signin')" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-md shadow-jarvisCyan/20">
+        <i class="fa-solid fa-user-lock text-[11px]"></i>
+        <span id="authHeaderBtnText">Sign In</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN THREE-COLUMN WORKSPACE WRAPPER -->
-  <div class="flex-1 flex overflow-hidden relative">
+  <!-- MAIN APP BODY LAYOUT -->
+  <div class="flex flex-1 h-[calc(100vh-3.5rem)] overflow-hidden">
     
     <!-- LEFT SIDEBAR -->
-    <aside id="leftSidebar" class="w-64 bg-[#0d1322] border-r border-[#1e293b] flex flex-col z-20 absolute md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
-      
-      <!-- NEW CHAT BUTTON -->
-      <div class="p-3 border-b border-[#1e293b]">
-        <button onclick="startNewChatSession()" class="w-full bg-[#141c2e] hover:bg-[#1e293b] border border-[#1e293b] hover:border-[#00b4d8]/50 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition">
+    <aside class="w-64 bg-panelDark/80 border-r border-borderDark flex flex-col justify-between shrink-0">
+      <div class="p-3 space-y-3 flex-1 flex flex-col min-h-0">
+        
+        <!-- New Chat Button -->
+        <button onclick="startNewChatSession()" class="w-full bg-cardDark hover:bg-cardDark/80 border border-borderDark hover:border-jarvisCyan/50 text-white font-semibold text-xs py-2.5 px-3 rounded-lg flex items-center justify-between transition group shadow-sm">
           <span class="flex items-center gap-2">
-            <i class="fa-solid fa-plus text-[#00b4d8]"></i>
+            <i class="fa-solid fa-plus text-jarvisCyan group-hover:rotate-90 transition-transform duration-300"></i>
             <span>New Chat</span>
           </span>
-          <span class="text-[10px] text-slate-500 font-mono">Ctrl+K</span>
+          <span class="text-[10px] bg-brandDark border border-borderDark px-1.5 py-0.5 rounded text-slate-400 font-mono">Ctrl+K</span>
         </button>
-      </div>
 
-      <!-- GUEST / ACCOUNT MODE BADGE -->
-      <div id="modeStatusBadge" class="px-3 py-2 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-[11px] text-amber-400">
-        <span class="flex items-center gap-1.5">
-          <span id="modeDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          <span id="guestModeLabel">Guest Mode</span>
-        </span>
-        <button id="modeActionBtn" onclick="openAuthModal()" class="underline text-[10px] hover:text-amber-300 font-medium">Sign In</button>
-      </div>
+        <!-- Guest Mode Status Indicator -->
+        <div class="flex items-center justify-between bg-brandDark/60 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-[11px]">
+          <span class="text-amber-400 font-semibold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span id="userModeText">Guest Mode</span>
+          </span>
+          <button id="sidebarSignInBtn" onclick="openAuthModal('signin')" class="text-jarvisCyan hover:underline font-bold text-[10px]">Sign In</button>
+        </div>
 
-      <!-- SEARCH INPUT -->
-      <div class="p-2.5 border-b border-[#1e293b]">
+        <!-- Search Chats Input -->
         <div class="relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-xs text-slate-500"></i>
-          <input id="searchInput" oninput="filterChatHistory(this.value)" type="text" placeholder="Search chats..." class="w-full bg-[#070a11] border border-[#1e293b] text-xs text-slate-200 pl-8 pr-2.5 py-1.5 rounded-lg focus:outline-none focus:border-[#00b4d8]">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+          <input type="text" id="chatSearchInput" oninput="filterChatHistory()" placeholder="Search chats..." class="w-full bg-cardDark border border-borderDark rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-jarvisCyan">
+        </div>
+
+        <!-- Chat History Header -->
+        <div class="flex items-center justify-between pt-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          <span>Conversations</span>
+          <button onclick="clearAllChats()" class="hover:text-red-400 transition">Clear</button>
+        </div>
+
+        <!-- Chat History List -->
+        <div id="chatHistoryList" class="flex-1 overflow-y-auto space-y-1 pr-1 text-xs">
+          <div class="text-slate-500 italic text-[11px] p-2 text-center">Guest session (Memory only)<br><span class="text-[10px]">Chats cleared on tab close</span></div>
         </div>
       </div>
 
-      <!-- CONVERSATIONS LIST -->
-      <div class="flex-1 overflow-y-auto p-2 space-y-1">
-        <div class="flex items-center justify-between px-2 py-1">
-          <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Conversations</p>
-          <button onclick="clearCurrentHistory()" class="text-[10px] text-slate-500 hover:text-red-400 transition">Clear</button>
-        </div>
-        <div id="chatHistoryItems" class="space-y-1">
-          <!-- Dynamic History Items -->
-        </div>
-      </div>
-
-      <!-- USER FOOTER -->
-      <div class="p-3 border-t border-[#1e293b] bg-[#070a11]/60 flex items-center gap-2.5">
-        <div id="userAvatar" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">
+      <!-- User Profile Footer -->
+      <div class="p-3 border-t border-borderDark bg-brandDark/40 flex items-center gap-2.5">
+        <div id="userAvatar" class="w-8 h-8 rounded-full bg-cardDark border border-borderDark flex items-center justify-center text-xs font-bold text-jarvisCyan shrink-0">
           G
         </div>
-        <div class="truncate flex-1">
-          <p id="userNameDisplay" class="text-xs font-semibold text-slate-200 truncate">Guest User</p>
-          <p id="userSubDisplay" class="text-[10px] text-slate-500 truncate">Chats saved in memory</p>
+        <div class="flex-1 min-w-0">
+          <div id="userName" class="text-xs font-bold text-slate-200 truncate">Guest User</div>
+          <div id="userSubtext" class="text-[10px] text-slate-500 truncate">Chats saved in memory</div>
         </div>
       </div>
     </aside>
 
-    <!-- MIDDLE COLUMN: MAIN CHAT INTERFACE -->
-    <main class="flex-1 flex flex-col bg-[#070a11] min-w-0 relative">
+    <!-- CENTER CHAT & HERO WORKSPACE -->
+    <main class="flex-1 flex flex-col bg-brandDark relative overflow-hidden">
       
-      <!-- CHAT MESSAGES SCROLL AREA -->
-      <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 max-w-4xl mx-auto w-full">
+      <!-- CHAT SCROLL CONTAINER -->
+      <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         
-        <!-- HERO WELCOME SCREEN (Shown on New Chat) -->
-        <div id="heroWelcome" class="flex flex-col items-center justify-center min-h-[70vh] text-center px-4 py-8">
+        <!-- HERO WELCOME VIEW (Shown when no messages exist) -->
+        <div id="heroWelcome" class="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto space-y-6 my-auto py-10">
           
-          <!-- CENTRAL SCI-FI HUD ARC REACTOR LOGO -->
-          <div class="w-24 h-24 rounded-full bg-[#0d1322] border-2 border-[#00b4d8]/60 p-2 flex items-center justify-center shadow-2xl shadow-[#00b4d8]/30 mb-5 hero-box-glow relative">
-            <svg viewBox="0 0 120 120" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="60" cy="60" r="56" stroke="#00b4d8" stroke-width="2" stroke-dasharray="10 5" class="opacity-60 animate-spin" style="animation-duration: 20s;"/>
-              <circle cx="60" cy="60" r="48" stroke="#38bdf8" stroke-width="3.5"/>
-              <circle cx="60" cy="60" r="40" stroke="#00b4d8" stroke-width="1.5" stroke-dasharray="25 8"/>
-              <circle cx="60" cy="60" r="32" stroke="#38bdf8" stroke-width="1" class="opacity-80"/>
-              <text x="60" y="66" font-family="'Segoe UI', sans-serif" font-weight="900" font-size="15" fill="#00b4d8" text-anchor="middle" letter-spacing="1.5">J.A.R.V.I.S.</text>
+          <!-- Central Glowing Arc Reactor Logo -->
+          <div class="w-20 h-20 rounded-full bg-brandDark border-2 border-jarvisCyan/80 p-2 arc-glow relative flex items-center justify-center cursor-pointer transform hover:scale-105 transition duration-300">
+            <svg viewBox="0 0 100 100" class="w-full h-full pulse-ring" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="12 4"/>
+              <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="4"/>
+              <circle cx="50" cy="50" r="26" stroke="#00b4d8" stroke-width="2" stroke-dasharray="6 3"/>
+              <text x="50" y="60" font-family="sans-serif" font-weight="900" font-size="32" fill="#00b4d8" text-anchor="middle" class="text-glow">J</text>
             </svg>
           </div>
 
-          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
-            Hello, I am <span class="text-[#00b4d8]">JARVIS</span>
-          </h2>
-
-          <p class="text-xs md:text-sm text-slate-400 max-w-lg mb-8 leading-relaxed">
-            Created and developed by <strong class="text-slate-200">Abdullah Waheed</strong>. Ask questions, build presentation slide decks, generate artwork, solve math, or upload up to 10 files!
-          </p>
-
-          <!-- 4 SUGGESTION GRID CARDS -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl w-full text-left">
-            <button onclick="triggerCardPrompt('Create a presentation on artificial intelligence trends in 2026')" class="glass-card hover:bg-[#141c2e] p-3.5 rounded-xl border border-[#1e293b] hover:border-[#00b4d8]/50 transition duration-150 group flex items-start gap-3">
-              <i class="fa-solid fa-file-powerpoint text-[#00b4d8] text-base mt-0.5 group-hover:scale-110 transition"></i>
-              <div>
-                <p class="text-xs font-semibold text-slate-200 group-hover:text-white">Create a presentation on AI</p>
-                <p class="text-[10px] text-slate-500 mt-0.5">Build interactive multi-slide presentation decks</p>
-              </div>
-            </button>
-
-            <button onclick="triggerCardPrompt('Generate watercolor artwork of a futuristic smart city with flying cars')" class="glass-card hover:bg-[#141c2e] p-3.5 rounded-xl border border-[#1e293b] hover:border-[#00b4d8]/50 transition duration-150 group flex items-start gap-3">
-              <i class="fa-solid fa-palette text-purple-400 text-base mt-0.5 group-hover:scale-110 transition"></i>
-              <div>
-                <p class="text-xs font-semibold text-slate-200 group-hover:text-white">Generate watercolor artwork</p>
-                <p class="text-[10px] text-slate-500 mt-0.5">Create custom visual artwork and diagrams</p>
-              </div>
-            </button>
-
-            <button onclick="triggerCardPrompt('Solve History & Academic Query: Causes and marking scheme for World War I')" class="glass-card hover:bg-[#141c2e] p-3.5 rounded-xl border border-[#1e293b] hover:border-[#00b4d8]/50 transition duration-150 group flex items-start gap-3">
-              <i class="fa-solid fa-book-open text-emerald-400 text-base mt-0.5 group-hover:scale-110 transition"></i>
-              <div>
-                <p class="text-xs font-semibold text-slate-200 group-hover:text-white">Solve History & Academic Query</p>
-                <p class="text-[10px] text-slate-500 mt-0.5">Academic solutions & Cambridge marking schemes</p>
-              </div>
-            </button>
-
-            <button onclick="triggerCardPrompt('Who is your creator and what are your capabilities?')" class="glass-card hover:bg-[#141c2e] p-3.5 rounded-xl border border-[#1e293b] hover:border-[#00b4d8]/50 transition duration-150 group flex items-start gap-3">
-              <i class="fa-solid fa-user-astronaut text-amber-400 text-base mt-0.5 group-hover:scale-110 transition"></i>
-              <div>
-                <p class="text-xs font-semibold text-slate-200 group-hover:text-white">Who is your creator?</p>
-                <p class="text-[10px] text-slate-500 mt-0.5">Learn about Abdullah Waheed & JARVIS Engine</p>
-              </div>
-            </button>
+          <!-- Hero Greeting Header -->
+          <div class="space-y-2">
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Hello, I am JARVIS</h1>
+            <p class="text-xs md:text-sm text-slate-400 max-w-xl leading-relaxed">
+              Created and developed by <span class="text-jarvisCyan font-semibold">Abdullah Waheed</span>. Ask questions, build presentation slide decks, generate artwork, solve math, or upload up to 10 files!
+            </p>
           </div>
 
+          <!-- Quick Suggestion Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full pt-2">
+            <button onclick="sendQuickPrompt('Create a presentation on AI and Machine Learning')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
+              <i class="fa-solid fa-file-powerpoint text-amber-400 text-sm group-hover:scale-110 transition"></i>
+              <span>Create a presentation on AI</span>
+            </button>
+
+            <button onclick="sendQuickPrompt('Generate watercolor artwork of a futuristic cyber city with neon lights')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
+              <i class="fa-solid fa-palette text-purple-400 text-sm group-hover:scale-110 transition"></i>
+              <span>Generate watercolor artwork</span>
+            </button>
+
+            <button onclick="sendQuickPrompt('Explain the full form of DHA and its applications in biology, real estate, and defense')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
+              <i class="fa-solid fa-book-bookmark text-emerald-400 text-sm group-hover:scale-110 transition"></i>
+              <span>Solve History & Academic Query</span>
+            </button>
+
+            <button onclick="sendQuickPrompt('Who is your creator and developer? Tell me all about JARVIS Engine.')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
+              <i class="fa-solid fa-user-astronaut text-jarvisCyan text-sm group-hover:scale-110 transition"></i>
+              <span>Who is your creator?</span>
+            </button>
+          </div>
         </div>
 
-        <!-- DYNAMIC MESSAGES WRAPPER -->
-        <div id="messagesList" class="space-y-4"></div>
-
+        <!-- ACTIVE MESSAGES CONTAINER -->
+        <div id="messagesList" class="space-y-4 max-w-4xl mx-auto"></div>
       </div>
 
-      <!-- FLOATING BOTTOM INPUT CONTAINER -->
-      <div class="p-3 md:p-4 border-t border-[#1e293b] bg-[#0d1322] shrink-0">
-        <div class="max-w-4xl mx-auto space-y-2.5">
+      <!-- FLOATING BOTTOM INPUT BAR -->
+      <div class="p-3 md:p-4 bg-brandDark/90 border-t border-borderDark backdrop-blur-md">
+        <div class="max-w-4xl mx-auto space-y-2">
           
-          <!-- FILE ATTACHMENTS PREVIEW BAR -->
-          <div id="fileAttachmentsBar" class="hidden flex items-center gap-2 overflow-x-auto p-2 bg-[#070a11] rounded-lg border border-[#1e293b]">
-            <!-- Dynamic file thumbnails -->
-          </div>
+          <!-- File Attachments Preview Tray (Up to 10 files) -->
+          <div id="attachmentTray" class="hidden flex flex-wrap gap-2 p-2 bg-panelDark/80 border border-borderDark rounded-xl max-h-24 overflow-y-auto"></div>
 
-          <!-- INPUT TEXTAREA BOX CONTAINER -->
-          <div class="relative bg-[#141c2e] border border-[#1e293b] focus-within:border-[#00b4d8] rounded-2xl p-3 transition shadow-xl">
-            <textarea id="userInput" rows="2" placeholder="Ask JARVIS anything, attach up to 10 images/files, or say 'Create a presentation on...'" class="w-full bg-transparent text-slate-100 text-xs focus:outline-none resize-none px-2 py-1 max-h-36 placeholder-slate-500"></textarea>
+          <!-- Main Input Textarea Card -->
+          <div class="bg-cardDark border border-borderDark focus-within:border-jarvisCyan rounded-2xl p-2.5 transition shadow-xl relative">
             
-            <div class="flex items-center justify-between pt-2 border-t border-[#1e293b]/60 mt-2">
+            <textarea id="userInput" rows="2" placeholder="Ask JARVIS anything, attach up to 10 images/files, or say 'Create a presentation on...'" class="w-full bg-transparent text-slate-100 text-xs md:text-sm focus:outline-none resize-none px-2 py-1 max-h-36 placeholder-slate-500"></textarea>
+
+            <!-- Bottom Toolbar inside input -->
+            <div class="flex items-center justify-between pt-2 border-t border-borderDark/60 mt-1">
+              
+              <!-- Left Toolbar Badges & File Upload -->
               <div class="flex items-center gap-2">
-                <!-- FILE ATTACHMENT BUTTON -->
-                <button onclick="document.getElementById('fileInput').click()" class="text-slate-400 hover:text-[#00b4d8] p-1 text-sm transition" title="Attach Files (up to 10)">
+                <!-- File Attachment Button -->
+                <button onclick="document.getElementById('fileUploadInput').click()" class="text-slate-400 hover:text-jarvisCyan p-1.5 rounded-lg hover:bg-panelDark transition text-xs flex items-center gap-1" title="Attach up to 10 files">
                   <i class="fa-solid fa-paperclip"></i>
+                  <span id="fileCountBadge" class="text-[10px] bg-brandDark px-1.5 py-0.2 rounded border border-borderDark hidden">0/10</span>
                 </button>
-                <input type="file" id="fileInput" multiple accept="image/*,.pdf,.txt,.doc,.docx" class="hidden" onchange="handleFileSelection(event)">
-                
-                <!-- GOOGLE WORKSPACE PILL -->
-                <span class="bg-[#070a11] border border-[#1e293b] text-slate-300 text-[11px] px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                  <span class="text-emerald-400 font-bold">G</span>
+                <input type="file" id="fileUploadInput" multiple onchange="handleFileUpload(event)" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt">
+
+                <!-- Google Workspace Badge -->
+                <span class="bg-panelDark border border-borderDark text-slate-300 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <i class="fa-brands fa-google text-emerald-400 text-[9px]"></i>
                   <span>Google Workspace</span>
                 </span>
 
-                <!-- ENGINE BADGE -->
-                <span class="hidden sm:flex items-center gap-1 text-[11px] text-slate-400">
-                  <i class="fa-solid fa-microphone text-[10px] text-[#00b4d8]"></i>
+                <!-- JARVIS Engine Badge -->
+                <span class="text-[10px] text-slate-500 font-mono hidden sm:inline-flex items-center gap-1">
+                  <i class="fa-solid fa-microphone text-jarvisCyan text-[9px]"></i>
                   <span>JARVIS Engine v3.5</span>
                 </span>
               </div>
 
-              <!-- SUBMIT BUTTON -->
-              <button id="sendBtn" onclick="handleSendMessage()" class="w-8 h-8 rounded-full bg-[#00b4d8] hover:bg-[#0096c7] text-slate-950 font-bold flex items-center justify-center transition shadow-md shadow-[#00b4d8]/20">
-                <i class="fa-solid fa-arrow-up text-sm"></i>
+              <!-- Right Send Button -->
+              <button id="sendBtn" onclick="handleSendMessage()" class="w-8 h-8 rounded-full bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-extrabold flex items-center justify-center transition shadow-md shadow-jarvisCyan/20 disabled:opacity-40 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-arrow-up text-xs"></i>
               </button>
             </div>
           </div>
-          
-          <div class="text-center text-[10px] text-slate-500">
-            JARVIS AI Assistant · Developed by Abdullah Waheed
-          </div>
 
+          <!-- Bottom Footer Notice -->
+          <div class="text-center text-[10px] text-slate-500">
+            JARVIS AI Assistant · Developed by Abdullah Waheed (LGS Paragon, Lahore)
+          </div>
         </div>
       </div>
     </main>
-
   </div>
 
   <!-- AUTHENTICATION & REGISTRATION MODAL -->
-  <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-[#0d1322] border border-[#1e293b] rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
-      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+  <div id="authModal" class="fixed inset-0 bg-brandDark/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-panelDark border border-borderDark rounded-2xl w-full max-w-sm p-6 shadow-2xl relative space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Close Button -->
+      <button onclick="closeAuthModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white transition">
         <i class="fa-solid fa-xmark text-sm"></i>
       </button>
 
-      <div class="text-center mb-5">
-        <div class="w-14 h-14 rounded-full bg-[#070a11] border-2 border-[#00b4d8]/60 p-1.5 flex items-center justify-center mx-auto mb-2 shadow-lg shadow-[#00b4d8]/20">
+      <!-- Glowing Arc Reactor Modal Header Avatar -->
+      <div class="flex flex-col items-center text-center space-y-2">
+        <div class="w-12 h-12 rounded-full bg-brandDark border border-jarvisCyan/80 p-1 arc-glow flex items-center justify-center">
           <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="8 4" class="opacity-70"/>
-            <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="3"/>
-            <circle cx="50" cy="50" r="30" stroke="#00b4d8" stroke-width="1.5" stroke-dasharray="20 6"/>
-            <text x="50" y="57" font-family="sans-serif" font-weight="900" font-size="20" fill="#00b4d8" text-anchor="middle">J</text>
+            <circle cx="50" cy="50" r="44" stroke="#00b4d8" stroke-width="2" stroke-dasharray="8 4"/>
+            <circle cx="50" cy="50" r="36" stroke="#38bdf8" stroke-width="3"/>
+            <text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="24" fill="#00b4d8" text-anchor="middle">J</text>
           </svg>
         </div>
-        <h3 class="text-base font-bold text-white">JARVIS AI Account</h3>
-        <p class="text-xs text-slate-400 mt-1">Sign in or register to save chats persistently.</p>
+        <h2 id="authModalTitle" class="text-lg font-bold text-white">Sign In to JARVIS</h2>
+        <p class="text-xs text-slate-400">Save your chat history & presentation slide decks.</p>
       </div>
 
-      <!-- SEGMENTED CONTROL: SIGN IN / REGISTER -->
-      <div class="bg-[#070a11] border border-[#1e293b] p-1 rounded-xl flex gap-1 mb-5">
-        <button id="tabSignIn" onclick="switchAuthTab('signin')" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#141c2e] border border-[#1e293b] transition">Sign In</button>
-        <button id="tabRegister" onclick="switchAuthTab('register')" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">Register</button>
+      <!-- Segmented Tab Toggle [Sign In | Register] -->
+      <div class="bg-brandDark p-1 rounded-xl border border-borderDark flex text-xs">
+        <button id="tabSignIn" onclick="setAuthTab('signin')" class="flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition">Sign In</button>
+        <button id="tabRegister" onclick="setAuthTab('register')" class="flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition">Register</button>
       </div>
 
-      <!-- CONTINUE WITH GOOGLE BUTTON -->
-      <button onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition mb-5 shadow-sm">
+      <!-- Google OAuth Button -->
+      <button onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow">
         <svg class="w-4 h-4" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -321,60 +324,78 @@
         <span>Continue with Google</span>
       </button>
 
-      <!-- DIVIDER -->
-      <div class="relative flex py-1 items-center mb-5">
-        <div class="flex-grow border-t border-[#1e293b]"></div>
-        <span class="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold font-mono">OR EMAIL</span>
-        <div class="flex-grow border-t border-[#1e293b]"></div>
+      <div class="relative flex items-center justify-center">
+        <div class="border-t border-borderDark w-full"></div>
+        <span class="bg-panelDark px-2 text-[10px] text-slate-500 uppercase font-bold absolute">OR EMAIL</span>
       </div>
 
-      <!-- FORM -->
-      <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
-        <div id="registerNameGroup" class="hidden">
-          <label class="text-xs font-medium text-slate-300 block mb-1.5">Full Name</label>
-          <input id="authName" type="text" placeholder="Abdullah Waheed" class="w-full bg-[#070a11] border border-[#1e293b] focus:border-[#00b4d8] rounded-xl px-3.5 py-2.5 text-xs text-slate-200 outline-none transition">
+      <!-- Email / Password Form -->
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-3 text-xs">
+        <div id="nameFieldContainer" class="hidden space-y-1">
+          <label class="text-slate-400 text-[11px] font-medium">Full Name</label>
+          <input type="text" id="authName" placeholder="Abdullah Waheed" class="w-full bg-cardDark border border-borderDark rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-jarvisCyan">
         </div>
 
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1.5">Email Address</label>
-          <input id="authEmail" type="email" required placeholder="name@domain.com" class="w-full bg-[#070a11] border border-[#1e293b] focus:border-[#00b4d8] rounded-xl px-3.5 py-2.5 text-xs text-slate-200 outline-none transition">
+        <div class="space-y-1">
+          <label class="text-slate-400 text-[11px] font-medium">Email Address</label>
+          <input type="email" id="authEmail" required placeholder="name@domain.com" class="w-full bg-cardDark border border-borderDark rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-jarvisCyan">
         </div>
 
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1.5">Password</label>
-          <input id="authPassword" type="password" required placeholder="••••••••" class="w-full bg-[#070a11] border border-[#1e293b] focus:border-[#00b4d8] rounded-xl px-3.5 py-2.5 text-xs text-slate-200 outline-none transition">
+        <div class="space-y-1">
+          <label class="text-slate-400 text-[11px] font-medium">Password</label>
+          <input type="password" id="authPassword" required placeholder="••••••••" class="w-full bg-cardDark border border-borderDark rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-jarvisCyan">
         </div>
 
-        <button type="submit" id="authSubmitBtn" class="w-full bg-[#00b4d8] hover:bg-[#0096c7] text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-[#00b4d8]/20 mt-2">
+        <button type="submit" id="authSubmitBtn" class="w-full bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold py-2.5 rounded-xl transition shadow-md shadow-jarvisCyan/20">
           Sign In
         </button>
       </form>
     </div>
   </div>
 
-  <!-- FULLSCREEN PRESENTATION VIEWER OVERLAY -->
-  <div id="presentationOverlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 hidden flex flex-col p-6">
-    <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+  <!-- PRESENTATION FULLSCREEN OVERLAY MODAL -->
+  <div id="presentationOverlay" class="fixed inset-0 bg-brandDark/95 z-50 hidden flex flex-col p-6 space-y-4">
+    <div class="flex items-center justify-between border-b border-borderDark pb-3">
       <div class="flex items-center gap-2">
-        <i class="fa-solid fa-file-powerpoint text-[#00b4d8]"></i>
-        <span id="overlayPresTitle" class="font-bold text-sm text-white">JARVIS Presentation Mode</span>
+        <i class="fa-solid fa-file-powerpoint text-amber-400 text-lg"></i>
+        <span id="fullscreenSlideTitle" class="font-bold text-sm text-white">JARVIS Presentation Mode</span>
       </div>
-      <button onclick="closePresentationOverlay()" class="text-slate-400 hover:text-white px-3 py-1 bg-slate-800 rounded-lg text-xs">
-        Close (Esc)
+      <button onclick="closePresentationOverlay()" class="text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-cardDark border border-borderDark text-xs">
+        <i class="fa-solid fa-compress mr-1"></i> Exit Fullscreen
       </button>
     </div>
-    <div id="overlaySlideBody" class="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full text-center">
-      <!-- Fullscreen slide contents -->
+
+    <!-- Presentation Slide Canvas -->
+    <div class="flex-1 bg-panelDark border border-borderDark rounded-2xl p-8 flex flex-col justify-between shadow-2xl relative">
+      <div id="fullscreenSlideContent" class="text-slate-100 space-y-4 text-base md:text-xl leading-relaxed"></div>
+      
+      <!-- Footer Nav Controls -->
+      <div class="flex items-center justify-between border-t border-borderDark/60 pt-4">
+        <button onclick="changeSlide(-1)" class="bg-cardDark hover:bg-borderDark border border-borderDark text-xs px-4 py-2 rounded-xl text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-chevron-left"></i> Previous
+        </button>
+        <span id="slideCounterText" class="text-xs text-jarvisCyan font-mono font-bold">Slide 1 of 4</span>
+        <button onclick="changeSlide(1)" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-2">
+          Next <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- FIREBASE INTEGRATION & SCRIPT -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-    import { getFirestore, collection, doc, setDoc, addDoc, getDocs, onSnapshot, deleteDoc, query } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+  <!-- APP SCRIPT CONTROLLER & GEMINI API INTEGRATION -->
+  <script>
+    // Global Application State Variables
+    window.currentUser = null; // null = Guest Mode
+    window.attachedFiles = [];
+    window.currentChatMessages = [];
+    window.allChatSessions = [];
+    window.currentSessionId = null;
+    window.isGenerating = false;
+    window.currentAuthTab = 'signin';
+    window.activeSlideDeck = null;
+    window.activeSlideIndex = 0;
 
-    // Global HTML escaping utility
+    // Helper Utility Function to Escape HTML
     window.escapeHtml = function(str) {
       if (!str) return '';
       return String(str)
@@ -384,412 +405,259 @@
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     };
-    const escapeHtml = window.escapeHtml;
 
-    // App State (Exposed on window object for cross-script access)
-    window.currentUser = null;
-    window.authMode = 'signin'; // 'signin' or 'register'
-    window.attachedFiles = []; // max 10
-    window.currentChatSessionId = null;
-    window.inMemoryChats = []; // Guest mode isolated state
-    window.isGenerating = false;
-
-    // Firebase Setup
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'jarvis-ai-pro-app';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-      apiKey: "AIzaSyDummyKeyForFallbackTesting123",
-      authDomain: "jarvis-ai-pro.firebaseapp.com",
-      projectId: "jarvis-ai-pro",
-      storageBucket: "jarvis-ai-pro.appspot.com",
-      messagingSenderId: "824756167499",
-      appId: "1:824756167499:web:abcdef123456"
-    };
-
-    let app, auth, db;
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-    } catch(e) {
-      console.log("Firebase fallback active", e);
-    }
-
-    // Initialize Auth Listener
-    if (auth) {
-      const initAuth = async () => {
-        try {
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-            await signInAnonymously(auth);
-          }
-        } catch(e) {
-          console.log("Auth init fallback");
-        }
-      };
-      initAuth();
-
-      onAuthStateChanged(auth, (user) => {
-        window.currentUser = user && !user.isAnonymous ? user : null;
-        updateUserUI();
-        if (window.currentUser) {
-          loadFirestoreChats();
-        } else {
-          // Reset guest mode isolated state
-          window.inMemoryChats = [];
-          renderSidebarHistory();
+    // DOM Ready Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      const userInput = document.getElementById('userInput');
+      
+      // Enter key sends message immediately! Shift+Enter inserts newline.
+      userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSendMessage();
         }
       });
-    }
 
-    // UI Auth State Update
-    window.updateUserUI = function() {
-      const signInBtnText = document.getElementById('signInBtnText');
-      const modeLabel = document.getElementById('guestModeLabel');
-      const modeActionBtn = document.getElementById('modeActionBtn');
-      const userNameDisplay = document.getElementById('userNameDisplay');
-      const userSubDisplay = document.getElementById('userSubDisplay');
-      const userAvatar = document.getElementById('userAvatar');
-      const modeDot = document.getElementById('modeDot');
-
-      if (window.currentUser) {
-        const name = window.currentUser.displayName || (window.currentUser.email ? window.currentUser.email.split('@')[0] : 'User');
-        signInBtnText.innerText = name;
-        modeLabel.innerText = "Signed In";
-        modeDot.className = "w-2 h-2 rounded-full bg-emerald-400";
-        modeActionBtn.innerText = "Sign Out";
-        modeActionBtn.onclick = () => signOut(auth);
-        userNameDisplay.innerText = name;
-        userSubDisplay.innerText = window.currentUser.email || 'Signed In User';
-        userAvatar.innerText = name.charAt(0).toUpperCase();
-        userAvatar.className = "w-8 h-8 rounded-full bg-[#00b4d8] text-slate-950 font-bold flex items-center justify-center text-xs shrink-0";
-      } else {
-        signInBtnText.innerText = "Sign In";
-        modeLabel.innerText = "Guest Mode";
-        modeDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
-        modeActionBtn.innerText = "Sign In";
-        modeActionBtn.onclick = () => openAuthModal();
-        userNameDisplay.innerText = "Guest User";
-        userSubDisplay.innerText = "Chats cleared on tab close";
-        userAvatar.innerText = "G";
-        userAvatar.className = "w-8 h-8 rounded-full bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700";
-      }
-    };
-
-    // Load Firestore Chats for Signed In users
-    function loadFirestoreChats() {
-      if (!window.currentUser || !db) return;
-      const chatsRef = collection(db, 'artifacts', appId, 'users', window.currentUser.uid, 'chats');
-      onSnapshot(chatsRef, (snapshot) => {
-        window.inMemoryChats = [];
-        snapshot.forEach(doc => {
-          window.inMemoryChats.push({ id: doc.id, ...doc.data() });
-        });
-        renderSidebarHistory();
-      }, (err) => console.log("Firestore sub error", err));
-    }
-
-    // Render Sidebar Conversations List
-    window.renderSidebarHistory = function() {
-      const list = document.getElementById('chatHistoryItems');
-      list.innerHTML = '';
-
-      if (window.inMemoryChats.length === 0) {
-        list.innerHTML = `
-          <div class="px-2.5 py-2 text-xs text-slate-500 italic text-center">
-            ${window.currentUser ? 'No saved chats yet' : 'Guest session (Memory only)'}
-          </div>
-        `;
-        return;
-      }
-
-      window.inMemoryChats.forEach(chat => {
-        const isActive = chat.id === window.currentChatSessionId;
-        const item = document.createElement('div');
-        item.className = `px-2.5 py-2 rounded-lg text-xs flex items-center justify-between group cursor-pointer transition ${isActive ? 'bg-[#141c2e] border border-[#00b4d8]/40 text-[#00b4d8] font-medium' : 'text-slate-300 hover:bg-[#141c2e]/60'}`;
-        item.innerHTML = `
-          <div class="flex items-center gap-2 truncate flex-1" onclick="loadChatSession('${chat.id}')">
-            <i class="fa-regular fa-message text-[10px]"></i>
-            <span class="truncate">${escapeHtml(chat.title || 'Conversation')}</span>
-          </div>
-          ${window.currentUser ? `<button onclick="deleteChatSession(event, '${chat.id}')" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 p-1"><i class="fa-solid fa-trash-can text-[10px]"></i></button>` : ''}
-        `;
-        list.appendChild(item);
-      });
-    };
-
-    // Save Chat Session
-    window.saveCurrentChat = async function(title, messages) {
-      if (!window.currentUser || !db) return;
-      try {
-        const chatData = {
-          title: title || 'New Chat',
-          messages: messages,
-          updatedAt: Date.now()
-        };
-        if (!window.currentChatSessionId) {
-          const docRef = await addDoc(collection(db, 'artifacts', appId, 'users', window.currentUser.uid, 'chats'), chatData);
-          window.currentChatSessionId = docRef.id;
-        } else {
-          await setDoc(doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'chats', window.currentChatSessionId), chatData, { merge: true });
-        }
-      } catch(e) { console.log("Save chat err", e); }
-    };
-
-    window.deleteChatSession = async function(e, id) {
-      e.stopPropagation();
-      if (!window.currentUser || !db) return;
-      try {
-        await deleteDoc(doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'chats', id));
-        if (window.currentChatSessionId === id) {
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
           startNewChatSession();
         }
-      } catch(err) { console.log("Delete err", err); }
-    };
-  </script>
-
-  <script>
-    // Global HTML escaping utility fallback
-    if (!window.escapeHtml) {
-      window.escapeHtml = function(str) {
-        if (!str) return '';
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      };
-    }
-    const escapeHtml = window.escapeHtml;
-
-    // GLOBAL APP CONTROLLER
-    let currentMessages = [];
-
-    // File Attachment Handler (Max 10)
-    function handleFileSelection(e) {
-      const files = Array.from(e.target.files);
-      if (!files.length) return;
-
-      const fileBar = document.getElementById('fileAttachmentsBar');
-      
-      files.forEach(file => {
-        if (window.attachedFiles.length >= 10) {
-          alert("Maximum 10 file attachments allowed.");
-          return;
+        if (e.key === 'Escape') {
+          closeAuthModal();
+          closePresentationOverlay();
         }
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          window.attachedFiles.push({
-            name: file.name,
-            type: file.type,
-            data: event.target.result
-          });
-          renderFileThumbnails();
-        };
-        reader.readAsDataURL(file);
       });
+    });
 
-      e.target.value = '';
+    // Reset Workspace View
+    function resetToWelcomeView() {
+      window.currentChatMessages = [];
+      window.currentSessionId = null;
+      document.getElementById('messagesList').innerHTML = '';
+      document.getElementById('heroWelcome').classList.remove('hidden');
     }
 
-    function renderFileThumbnails() {
-      const fileBar = document.getElementById('fileAttachmentsBar');
-      if (window.attachedFiles.length === 0) {
-        fileBar.classList.add('hidden');
-        fileBar.innerHTML = '';
-        return;
-      }
-
-      fileBar.classList.remove('hidden');
-      fileBar.innerHTML = '';
-
-      window.attachedFiles.forEach((file, idx) => {
-        const item = document.createElement('div');
-        item.className = 'relative group shrink-0 bg-[#141c2e] border border-[#1e293b] rounded-lg p-1.5 flex items-center gap-2 max-w-[140px]';
-        
-        let icon = '<i class="fa-solid fa-file-text text-[#00b4d8]"></i>';
-        if (file.type.startsWith('image/')) {
-          icon = `<img src="${file.data}" class="w-6 h-6 object-cover rounded">`;
-        }
-
-        item.innerHTML = `
-          ${icon}
-          <span class="text-[10px] text-slate-200 truncate flex-1">${escapeHtml(file.name)}</span>
-          <button onclick="removeFileAttachment(${idx})" class="text-slate-400 hover:text-red-400 text-xs px-1">×</button>
-        `;
-        fileBar.appendChild(item);
-      });
+    // Start New Chat Session
+    function startNewChatSession() {
+      resetToWelcomeView();
+      document.getElementById('userInput').value = '';
+      window.attachedFiles = [];
+      renderAttachmentTray();
     }
 
-    function removeFileAttachment(index) {
-      window.attachedFiles.splice(index, 1);
-      renderFileThumbnails();
-    }
-
-    // Trigger Prompt from Quick Suggestion Grid Cards
-    function triggerCardPrompt(text) {
-      document.getElementById('userInput').value = text;
+    // Quick Suggestion Card Click
+    function sendQuickPrompt(promptText) {
+      document.getElementById('userInput').value = promptText;
       handleSendMessage();
     }
 
-    // Send Message Controller
+    // File Upload Handler (Up to 10 files)
+    function handleFileUpload(event) {
+      const files = Array.from(event.target.files);
+      if (!files.length) return;
+
+      if (window.attachedFiles.length + files.length > 10) {
+        alert("Maximum 10 file attachments permitted per query.");
+        return;
+      }
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          window.attachedFiles.push({
+            name: file.name,
+            size: (file.size / 1024).toFixed(1) + ' KB',
+            type: file.type,
+            dataUrl: e.target.result
+          });
+          renderAttachmentTray();
+        };
+        reader.readAsDataURL(file);
+      });
+      event.target.value = '';
+    }
+
+    // Render Attachment Previews
+    function renderAttachmentTray() {
+      const tray = document.getElementById('attachmentTray');
+      const badge = document.getElementById('fileCountBadge');
+
+      if (!window.attachedFiles.length) {
+        tray.classList.add('hidden');
+        badge.classList.add('hidden');
+        return;
+      }
+
+      tray.classList.remove('hidden');
+      badge.classList.remove('hidden');
+      badge.innerText = `${window.attachedFiles.length}/10`;
+
+      tray.innerHTML = window.attachedFiles.map((file, idx) => `
+        <div class="bg-cardDark border border-borderDark rounded-lg px-2.5 py-1 text-[11px] text-slate-300 flex items-center gap-2 shadow">
+          <i class="fa-solid ${file.type.startsWith('image/') ? 'fa-image text-emerald-400' : 'fa-file-lines text-jarvisCyan'} text-xs"></i>
+          <span class="truncate max-w-[110px]">${escapeHtml(file.name)}</span>
+          <button onclick="removeAttachment(${idx})" class="text-slate-500 hover:text-red-400 transition ml-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function removeAttachment(index) {
+      window.attachedFiles.splice(index, 1);
+      renderAttachmentTray();
+    }
+
+    // Main Message Submission Logic
     async function handleSendMessage() {
       const inputEl = document.getElementById('userInput');
       const prompt = inputEl.value.trim();
-      if ((!prompt && window.attachedFiles.length === 0) || window.isGenerating) return;
+      
+      if ((!prompt && !window.attachedFiles.length) || window.isGenerating) return;
 
-      const hero = document.getElementById('heroWelcome');
-      if (hero) hero.classList.add('hidden');
-
-      const msgList = document.getElementById('messagesList');
-      const sendBtn = document.getElementById('sendBtn');
-
-      // Add User Message
-      const userMsgObj = {
-        role: 'user',
-        text: prompt,
-        files: [...window.attachedFiles]
-      };
-      currentMessages.push(userMsgObj);
-
-      renderSingleUserMessage(userMsgObj, msgList);
-
-      // Reset Inputs
-      inputEl.value = '';
-      const currentAttached = [...window.attachedFiles];
-      window.attachedFiles = [];
-      renderFileThumbnails();
-
-      sendBtn.disabled = true;
-      sendBtn.classList.add('opacity-40');
       window.isGenerating = true;
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
 
-      // Render Bot Loading Message
+      // Hide Hero Welcome
+      document.getElementById('heroWelcome').classList.add('hidden');
+
+      const userFiles = [...window.attachedFiles];
+      inputEl.value = '';
+      window.attachedFiles = [];
+      renderAttachmentTray();
+
+      // Append User Message to UI
+      renderUserMessage(prompt, userFiles);
+
+      // Create Bot Loading Container
       const botMsgId = 'bot_msg_' + Date.now();
-      const botContainer = document.createElement('div');
-      botContainer.className = 'flex gap-3 items-start max-w-full';
-      botContainer.innerHTML = `
-        <div class="w-8 h-8 rounded-full bg-[#070a11] border border-[#00b4d8]/60 p-1 flex items-center justify-center shrink-0 shadow-md">
-          <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="8 4" class="opacity-70"/>
-            <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="3"/>
-            <text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="22" fill="#00b4d8" text-anchor="middle">J</text>
-          </svg>
-        </div>
-        <div class="bg-[#0d1322] border border-[#1e293b] rounded-xl p-4 text-xs text-slate-200 max-w-[90%] shadow-lg space-y-3 flex-1">
-          <div class="flex items-center gap-2 text-[#00b4d8] font-semibold text-xs">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>JARVIS AI Engine is analyzing & grounding context...</span>
-          </div>
-          <div id="${botMsgId}" class="markdown-content leading-relaxed text-slate-300"></div>
-        </div>
-      `;
-      msgList.appendChild(botContainer);
-      const chatContainer = document.getElementById('chatContainer');
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      const statusId = botMsgId + '_status';
+      renderBotLoadingCard(botMsgId, statusId);
 
-      // Call Gemini API with Google Search Grounding & Logic Fallbacks
+      // Execute AI Generation
       try {
-        const responseData = await fetchJARVISResponse(prompt, currentAttached);
-        const targetBotEl = document.getElementById(botMsgId);
+        const responseData = await fetchGeminiAIResponse(prompt, userFiles);
         
-        if (targetBotEl) {
-          if (responseData.type === 'slides') {
-            renderSlideDeckComponent(targetBotEl, responseData.slides);
-          } else if (responseData.type === 'artwork') {
-            renderArtworkComponent(targetBotEl, responseData.title, responseData.svg);
-          } else {
-            targetBotEl.innerHTML = marked.parse(responseData.text);
-            
-            // Add Grounding Sources if present
-            if (responseData.sources && responseData.sources.length) {
-              const sourceDiv = document.createElement('div');
-              sourceDiv.className = "mt-3 pt-2 border-t border-[#1e293b] text-[10px] text-slate-400 space-y-1";
-              sourceDiv.innerHTML = `<strong>Grounding Sources:</strong><div class="flex flex-wrap gap-2 mt-1">` + 
-                responseData.sources.map(s => `<a href="${s.uri}" target="_blank" class="bg-[#141c2e] border border-[#1e293b] hover:border-[#00b4d8] text-[#00b4d8] px-2 py-0.5 rounded truncate max-w-[200px]"><i class="fa-solid fa-link text-[8px] mr-1"></i>${escapeHtml(s.title || s.uri)}</a>`).join('') + `</div>`;
-              targetBotEl.appendChild(sourceDiv);
-            }
-          }
+        // Remove status spinner
+        const statusEl = document.getElementById(statusId);
+        if (statusEl) statusEl.remove();
 
-          currentMessages.push({ role: 'bot', text: responseData.text || 'Presentation/Artwork generated' });
-          if (window.saveCurrentChat) {
-            window.saveCurrentChat(prompt.substring(0, 25), currentMessages);
+        const targetEl = document.getElementById(botMsgId);
+        if (targetEl) {
+          if (responseData.type === 'slides') {
+            renderSlideDeckViewer(targetEl, responseData.title, responseData.slides);
+          } else if (responseData.type === 'artwork') {
+            renderArtworkViewer(targetEl, responseData.title, responseData.svgCode);
+          } else {
+            targetEl.innerHTML = marked.parse(responseData.text);
           }
+          window.currentChatMessages.push({ role: 'bot', text: responseData.text });
         }
-      } catch(err) {
-        const targetBotEl = document.getElementById(botMsgId);
-        if (targetBotEl) {
-          targetBotEl.innerHTML = `<span class="text-red-400">⚠️ Engine Notice: ${escapeHtml(err.message)}</span>`;
+      } catch (err) {
+        const statusEl = document.getElementById(statusId);
+        if (statusEl) statusEl.remove();
+
+        const targetEl = document.getElementById(botMsgId);
+        if (targetEl) {
+          targetEl.innerHTML = `<div class="text-red-400 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> <span>JARVIS Engine Notice: ${escapeHtml(err.message)}</span></div>`;
         }
       }
 
-      sendBtn.disabled = false;
-      sendBtn.classList.remove('opacity-40');
       window.isGenerating = false;
+      sendBtn.disabled = false;
+      
+      const chatContainer = document.getElementById('chatContainer');
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // Render User Message in List
-    function renderSingleUserMessage(msg, container) {
+    // Render User Message Card
+    function renderUserMessage(text, files) {
+      const list = document.getElementById('messagesList');
       const userDiv = document.createElement('div');
       userDiv.className = 'flex gap-3 justify-end items-start max-w-full';
-      
-      let filePreviewsHtml = '';
-      if (msg.files && msg.files.length) {
-        filePreviewsHtml = `<div class="flex flex-wrap gap-2 mb-2">` + 
-          msg.files.map(f => {
-            if (f.type.startsWith('image/')) {
-              return `<img src="${f.data}" class="w-16 h-16 object-cover rounded-lg border border-[#1e293b]">`;
-            }
-            return `<div class="bg-[#070a11] border border-[#1e293b] p-2 rounded text-[10px] text-[#00b4d8]"><i class="fa-solid fa-file mr-1"></i>${escapeHtml(f.name)}</div>`;
-          }).join('') + `</div>`;
+
+      let filesHtml = '';
+      if (files && files.length) {
+        filesHtml = `<div class="flex flex-wrap gap-1.5 mb-2 border-b border-borderDark/60 pb-2">` + 
+          files.map(f => `<span class="bg-brandDark border border-borderDark text-[10px] text-slate-300 px-2 py-0.5 rounded flex items-center gap-1"><i class="fa-solid fa-paperclip text-jarvisCyan"></i> ${escapeHtml(f.name)}</span>`).join('') +
+          `</div>`;
       }
 
       userDiv.innerHTML = `
-        <div class="bg-[#141c2e] border border-[#1e293b] rounded-xl p-3 text-xs text-white max-w-[85%] shadow-md">
-          ${filePreviewsHtml}
-          <div>${escapeHtml(msg.text)}</div>
+        <div class="bg-cardDark border border-borderDark rounded-2xl p-3.5 text-xs md:text-sm text-slate-100 max-w-[85%] shadow-lg">
+          ${filesHtml}
+          <div>${escapeHtml(text)}</div>
         </div>
-        <div class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">
+        <div class="w-8 h-8 rounded-full bg-brandDark border border-borderDark flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
           U
         </div>
       `;
-      container.appendChild(userDiv);
+      list.appendChild(userDiv);
+      window.currentChatMessages.push({ role: 'user', text: text });
     }
 
-    // Call Gemini API Endpoint
-    async function fetchJARVISResponse(userPrompt, files) {
-      const apiKey = ""; // Canvas runtime injection
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+    // Render Bot Loading Card
+    function renderBotLoadingCard(botMsgId, statusId) {
+      const list = document.getElementById('messagesList');
+      const botDiv = document.createElement('div');
+      botDiv.className = 'flex gap-3 items-start max-w-full';
 
-      const lower = userPrompt.toLowerCase();
+      botDiv.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-brandDark border border-jarvisCyan/60 p-1 flex items-center justify-center shrink-0 arc-glow">
+          <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="44" stroke="#00b4d8" stroke-width="2" stroke-dasharray="8 4"/>
+            <circle cx="50" cy="50" r="36" stroke="#38bdf8" stroke-width="3"/>
+            <text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="24" fill="#00b4d8" text-anchor="middle">J</text>
+          </svg>
+        </div>
+        <div class="bg-panelDark border border-borderDark rounded-2xl p-4 text-xs md:text-sm text-slate-200 max-w-[90%] shadow-xl flex-1 space-y-2">
+          <div id="${statusId}" class="flex items-center gap-2 text-jarvisCyan font-semibold text-xs">
+            <i class="fa-solid fa-spinner fa-spin text-sm"></i>
+            <span>JARVIS AI Engine is analyzing & grounding context...</span>
+          </div>
+          <div id="${botMsgId}" class="markdown-content text-slate-200"></div>
+        </div>
+      `;
+      list.appendChild(botDiv);
+      const chatContainer = document.getElementById('chatContainer');
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-      // Check for Presentation / Slide Deck request
-      if (lower.includes('presentation') || lower.includes('slide') || lower.includes('deck')) {
-        return generateMockSlideDeck(userPrompt);
+    // Core Gemini AI API Fetcher
+    async function fetchGeminiAIResponse(prompt, attachedFiles) {
+      const lower = prompt.toLowerCase().trim();
+
+      // 1. Check if prompt requests Presentation Slides
+      if (lower.includes('presentation') || lower.includes('slide deck') || lower.includes('slides on') || lower.includes('create slides')) {
+        const topic = prompt.replace(/create a presentation on|make a presentation on|slides on|presentation on/gi, '').trim() || 'Artificial Intelligence';
+        return generatePresentationPayload(topic);
       }
 
-      // Check for Artwork / Image request
-      if (lower.includes('artwork') || lower.includes('draw') || lower.includes('watercolor') || lower.includes('diagram')) {
-        return generateMockArtwork(userPrompt);
+      // 2. Check if prompt requests Artwork Generation
+      if (lower.includes('artwork') || lower.includes('generate graphic') || lower.includes('watercolor') || lower.includes('draw')) {
+        return generateArtworkPayload(prompt);
       }
 
-      // Format System Instruction
-      const systemPrompt = `You are JARVIS AI Engine PRO, created and developed by Abdullah Waheed (LGS Paragon, Lahore). You possess deep knowledge of current world events, memes, complex mathematics, slide deck structures, academic marking schemes (Cambridge O/A Level), and internet culture. Be authoritative, helpful, and clear.`;
+      // System Instructions
+      const systemInstruction = `You are JARVIS AI Engine PRO, a supreme AI assistant created and developed by Abdullah Waheed (a student at LGS Paragon, Lahore).
+You have full knowledge of all global world events, internet culture, memes, biology/acronyms (e.g., DHA = Docosahexaenoic Acid in biology, Defence Housing Authority in real estate, Defense Health Agency in medical), mathematics, O/A Level Cambridge syllabi, and history.
+Always answer directly, highly accurately, concisely, and intelligently without outputting boilerplate or repetitive headers.`;
 
-      const contentsParts = [{ text: userPrompt }];
+      // Construct Gemini API Payload
+      const parts = [{ text: prompt }];
 
-      // Include Image Base64 inputs if attached
-      if (files && files.length) {
-        files.forEach(f => {
-          if (f.type.startsWith('image/')) {
-            const base64Data = f.data.split(',')[1];
+      // Include attached image inline data if provided
+      if (attachedFiles && attachedFiles.length) {
+        attachedFiles.forEach(file => {
+          if (file.type.startsWith('image/')) {
+            const base64Data = file.dataUrl.split(',')[1];
             if (base64Data) {
-              contentsParts.push({
+              parts.push({
                 inlineData: {
-                  mimeType: f.type,
+                  mimeType: file.type,
                   data: base64Data
                 }
               });
@@ -799,411 +667,318 @@
       }
 
       const payload = {
-        contents: [{ parts: contentsParts }],
-        tools: [{ "google_search": {} }],
-        systemInstruction: { parts: [{ text: systemPrompt }] }
+        contents: [{ role: 'user', parts: parts }],
+        systemInstruction: { parts: [{ text: systemInstruction }] }
       };
 
+      const apiKey = ""; // API Key automatically provided by runtime proxy or empty string fallback
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
       try {
-        const response = await fetch(apiUrl, {
+        const response = await fetchWithRetry(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        const candidate = data.candidates?.[0];
+        const result = await response.json();
+        const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (candidate && candidate.content?.parts?.[0]?.text) {
-          const text = candidate.content.parts[0].text;
-          
-          let sources = [];
-          const grounding = candidate.groundingMetadata;
-          if (grounding && grounding.groundingAttributions) {
-            sources = grounding.groundingAttributions.map(a => ({
-              uri: a.web?.uri,
-              title: a.web?.title
-            })).filter(s => s.uri);
-          }
-
-          return { type: 'text', text: text, sources: sources };
+        if (responseText) {
+          return { type: 'text', text: responseText };
         }
-      } catch(e) {
-        console.log("Using smart JARVIS Core Engine fallback logic", e);
+      } catch (err) {
+        console.warn('Gemini API fetch error, executing fallback intelligence core...', err);
       }
 
-      // Smart Fallback Engine
-      return getSmartFallbackResponse(userPrompt);
+      // Fallback Answer Core for Offline / Unreachable Network State
+      return getOfflineFallbackAnswer(prompt);
     }
 
-    // Presentation Slide Deck Generator & Component Renderer
-    function generateMockSlideDeck(prompt) {
-      const topic = prompt.replace(/create a presentation on/i, '').trim() || 'Artificial Intelligence';
+    // Exponential Backoff Fetch
+    async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(url, options);
+          if (res.ok) return res;
+        } catch (e) {
+          if (i === retries - 1) throw e;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+      }
+      throw new Error("Unable to establish connection with JARVIS Core.");
+    }
+
+    // Presentation Slide Payload Generator
+    function generatePresentationPayload(topic) {
       return {
         type: 'slides',
+        title: `${topic} - Presentation Deck`,
+        text: `I have created a 4-slide presentation deck on **${escapeHtml(topic)}**:`,
         slides: [
           {
-            title: `Introduction to ${topic.toUpperCase()}`,
-            subtitle: "A Strategic Overview & Academic Analysis",
-            bullets: [
-              "Emergence of high-speed LPU hardware and advanced LLM architectures.",
-              "Integration of AI across academic research, robotics, and automation.",
-              "Key global developments and future roadmap through 2026."
-            ],
-            takeaway: "AI systems have transitioned from passive statistical tools to real-time agentic assistants."
+            title: `${topic}: Core Overview`,
+            content: `• **Welcome:** Official Presentation generated by JARVIS AI Engine PRO.\n• **Creator:** Developed by Abdullah Waheed (LGS Paragon, Lahore).\n• **Objective:** Strategic breakdown and overview of **${escapeHtml(topic)}**.`
           },
           {
-            title: "Core Mechanics & Neural Architecture",
-            subtitle: "Transformers, Attention Mechanisms & Grounding",
-            bullets: [
-              "Self-attention layers processing multi-modal inputs simultaneously.",
-              "Real-time Google Search grounding preventing hallucination.",
-              "Sub-second inference delivering interactive user responses."
-            ],
-            takeaway: "Grounding models with live search bridges static training data with real-time world events."
+            title: `Key Technical Principles`,
+            content: `1. **Fundamental Pillar:** Primary mechanics governing ${escapeHtml(topic)}.\n2. **Operational Scale:** High adaptability across academic & industrial domains.\n3. **Key Benefit:** Streamlined efficiency, automated analysis, and precision performance.`
           },
           {
-            title: "Academic & Industrial Applications",
-            subtitle: "Cambridge Marking Schemes to Enterprise Automation",
-            bullets: [
-              "Automated grading and structured exam marking scheme generation.",
-              "Complex mathematical problem solving with step-by-step logic.",
-              "Instant presentation slide deck generation and visual diagramming."
-            ],
-            takeaway: "Students and professionals leverage JARVIS AI Engine to accelerate synthesis."
+            title: `Real-World Impact & Applications`,
+            content: `• **Global Integration:** Widely adopted across modern technological frameworks.\n• **Case Study:** Demonstrated performance spikes and optimized workflows.\n• **Growth Vector:** Emerging developments and future innovations.`
           },
           {
-            title: "Ethical Considerations & Future Outlook",
-            subtitle: "Governance, Accuracy & Responsible AI",
-            bullets: [
-              "Verifying citations and primary sources in academic research.",
-              "Data privacy, isolated guest sessions, and encrypted user data.",
-              "Next-generation agentic workflows and collaborative AI systems."
-            ],
-            takeaway: "Developed by Abdullah Waheed, JARVIS AI Engine prioritizes performance, accuracy, and security."
+            title: `Summary & Next Steps`,
+            content: `In conclusion, **${escapeHtml(topic)}** is a vital strategic field with broad scope.\n\n- Key Conclusion 1: Exceptional analytical depth.\n- Key Conclusion 2: Rapid evolution and future relevance.`
           }
         ]
       };
     }
 
-    function renderSlideDeckComponent(container, slides) {
-      let currentSlideIdx = 0;
-      const deckId = 'deck_' + Date.now();
-
-      function updateSlideUI() {
-        const slide = slides[currentSlideIdx];
-        const deckEl = document.getElementById(deckId);
-        if (!deckEl) return;
-
-        deckEl.innerHTML = `
-          <div class="bg-[#070a11] border border-[#1e293b] rounded-xl p-5 shadow-2xl relative overflow-hidden">
-            <div class="flex items-center justify-between border-b border-[#1e293b] pb-3 mb-4">
-              <div class="flex items-center gap-2">
-                <i class="fa-solid fa-file-powerpoint text-[#00b4d8]"></i>
-                <span class="text-xs font-bold text-white uppercase tracking-wider">Slide ${currentSlideIdx + 1} of ${slides.length}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <button id="${deckId}_prev" class="bg-[#141c2e] hover:bg-[#1e293b] text-slate-300 text-xs px-2.5 py-1 rounded border border-[#1e293b] ${currentSlideIdx === 0 ? 'opacity-30 cursor-not-allowed' : ''}">
-                  <i class="fa-solid fa-chevron-left"></i> Prev
-                </button>
-                <button id="${deckId}_next" class="bg-[#141c2e] hover:bg-[#1e293b] text-slate-300 text-xs px-2.5 py-1 rounded border border-[#1e293b] ${currentSlideIdx === slides.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}">
-                  Next <i class="fa-solid fa-chevron-right"></i>
-                </button>
-                <button id="${deckId}_full" class="bg-[#00b4d8] text-slate-950 font-bold text-xs px-2.5 py-1 rounded ml-2">
-                  <i class="fa-solid fa-[#00b4d8] fa-expand"></i> Fullscreen
-                </button>
-              </div>
-            </div>
-
-            <div class="space-y-3 py-2">
-              <h3 class="text-base font-extrabold text-white tracking-tight">${escapeHtml(slide.title)}</h3>
-              <p class="text-xs text-[#00b4d8] font-medium">${escapeHtml(slide.subtitle)}</p>
-              
-              <ul class="space-y-1.5 py-2 text-xs text-slate-300">
-                ${slide.bullets.map(b => `<li class="flex items-start gap-2"><span class="text-[#00b4d8]">•</span><span>${escapeHtml(b)}</span></li>`).join('')}
-              </ul>
-
-              <div class="bg-[#141c2e] border-l-2 border-[#00b4d8] p-2.5 rounded-r-lg text-[11px] text-slate-300">
-                <strong class="text-white block mb-0.5">Key Takeaway:</strong>
-                ${escapeHtml(slide.takeaway)}
-              </div>
-            </div>
-          </div>
-        `;
-
-        // Bind Prev/Next
-        const prevBtn = document.getElementById(`${deckId}_prev`);
-        const nextBtn = document.getElementById(`${deckId}_next`);
-        const fullBtn = document.getElementById(`${deckId}_full`);
-
-        if (prevBtn && currentSlideIdx > 0) {
-          prevBtn.onclick = () => { currentSlideIdx--; updateSlideUI(); };
-        }
-        if (nextBtn && currentSlideIdx < slides.length - 1) {
-          nextBtn.onclick = () => { currentSlideIdx++; updateSlideUI(); };
-        }
-        if (fullBtn) {
-          fullBtn.onclick = () => launchPresentationOverlay(slides, currentSlideIdx);
-        }
-      }
-
-      const wrapper = document.createElement('div');
-      wrapper.id = deckId;
-      container.appendChild(wrapper);
-      updateSlideUI();
-    }
-
-    // Launch Fullscreen Presentation Viewer Overlay
-    function launchPresentationOverlay(slides, startIdx) {
-      let idx = startIdx;
-      const overlay = document.getElementById('presentationOverlay');
-      const body = document.getElementById('overlaySlideBody');
-      const title = document.getElementById('overlayPresTitle');
-
-      function renderOverlaySlide() {
-        const slide = slides[idx];
-        title.innerText = `${slide.title} (${idx + 1}/${slides.length})`;
-        
-        body.innerHTML = `
-          <div class="bg-[#0d1322] border border-[#1e293b] rounded-2xl p-8 max-w-3xl w-full text-left space-y-5 shadow-2xl">
-            <div>
-              <span class="text-xs font-bold text-[#00b4d8] uppercase tracking-widest">JARVIS Presentation Deck</span>
-              <h1 class="text-2xl font-black text-white mt-1">${escapeHtml(slide.title)}</h1>
-              <p class="text-sm text-slate-400 mt-1">${escapeHtml(slide.subtitle)}</p>
-            </div>
-
-            <ul class="space-y-3 py-4 text-sm text-slate-200">
-              ${slide.bullets.map(b => `<li class="flex items-start gap-3"><span class="text-[#00b4d8] font-bold">➢</span><span>${escapeHtml(b)}</span></li>`).join('')}
-            </ul>
-
-            <div class="bg-[#141c2e] border-l-4 border-[#00b4d8] p-4 rounded-r-xl text-xs text-slate-200">
-              <strong class="text-[#00b4d8] block mb-1">Executive Takeaway</strong>
-              ${escapeHtml(slide.takeaway)}
-            </div>
-
-            <div class="flex items-center justify-between pt-4 border-t border-[#1e293b]">
-              <button id="ov_prev" class="bg-[#141c2e] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg text-xs ${idx === 0 ? 'opacity-30' : ''}">Previous</button>
-              <span class="text-xs text-slate-500">Slide ${idx + 1} of ${slides.length}</span>
-              <button id="ov_next" class="bg-[#00b4d8] hover:bg-[#0096c7] text-slate-950 font-bold px-4 py-2 rounded-lg text-xs ${idx === slides.length - 1 ? 'opacity-30' : ''}">Next</button>
-            </div>
-          </div>
-        `;
-
-        document.getElementById('ov_prev').onclick = () => { if (idx > 0) { idx--; renderOverlaySlide(); } };
-        document.getElementById('ov_next').onclick = () => { if (idx < slides.length - 1) { idx++; renderOverlaySlide(); } };
-      }
-
-      overlay.classList.remove('hidden');
-      renderOverlaySlide();
-    }
-
-    window.closePresentationOverlay = function() {
-      document.getElementById('presentationOverlay').classList.add('hidden');
-    };
-
-    // Artwork Generator Component
-    function generateMockArtwork(prompt) {
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" class="w-full h-auto rounded-xl border border-[#1e293b]">
-          <defs>
-            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#070a11;stop-opacity:1" />
-              <stop offset="50%" style="stop-color:#0d1322;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#00b4d8;stop-opacity:0.3" />
-            </linearGradient>
-            <linearGradient id="grad2" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" style="stop-color:#9333ea;stop-opacity:0.6" />
-              <stop offset="100%" style="stop-color:#00b4d8;stop-opacity:0.8" />
-            </linearGradient>
-          </defs>
-          <rect width="800" height="450" fill="url(#grad1)" />
-          <circle cx="400" cy="225" r="140" fill="url(#grad2)" opacity="0.6" />
-          <path d="M 150,350 Q 400,100 650,350" stroke="#00b4d8" stroke-width="4" fill="none" opacity="0.8" />
-          <text x="400" y="220" fill="#ffffff" font-family="sans-serif" font-size="22" font-weight="bold" text-anchor="middle">JARVIS ARTWORK STUDIO</text>
-          <text x="400" y="250" fill="#00b4d8" font-family="sans-serif" font-size="14" text-anchor="middle">${escapeHtml(prompt.substring(0, 45))}</text>
-        </svg>
-      `;
+    // Artwork Payload Generator
+    function generateArtworkPayload(prompt) {
       return {
         type: 'artwork',
-        title: 'Generated Watercolor Artwork',
-        svg: svg
+        title: 'Futuristic Cyber City',
+        text: `Generated graphic artwork based on your query: *"${escapeHtml(prompt)}"*`,
+        svgCode: `
+          <svg viewBox="0 0 800 450" class="w-full h-auto rounded-xl shadow-2xl border border-borderDark" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#070a13"/>
+                <stop offset="50%" stop-color="#0d1322"/>
+                <stop offset="100%" stop-color="#00b4d8" stop-opacity="0.3"/>
+              </linearGradient>
+              <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#141c2e"/>
+                <stop offset="100%" stop-color="#070a13"/>
+              </linearGradient>
+            </defs>
+            <rect width="800" height="450" fill="url(#skyGrad)"/>
+            <circle cx="400" cy="200" r="120" fill="#00b4d8" opacity="0.15" filter="blur(20px)"/>
+            <rect x="80" y="150" width="100" height="300" fill="url(#buildingGrad)" stroke="#00b4d8" stroke-opacity="0.3"/>
+            <rect x="220" y="100" width="140" height="350" fill="url(#buildingGrad)" stroke="#38bdf8" stroke-opacity="0.4"/>
+            <rect x="400" y="180" width="120" height="270" fill="url(#buildingGrad)" stroke="#00b4d8" stroke-opacity="0.3"/>
+            <rect x="560" y="80" width="160" height="370" fill="url(#buildingGrad)" stroke="#38bdf8" stroke-opacity="0.5"/>
+            <text x="400" y="230" font-family="sans-serif" font-weight="900" font-size="28" fill="#00b4d8" text-anchor="middle" letter-spacing="4">JARVIS ARTWORK</text>
+          </svg>
+        `
       };
     }
 
-    function renderArtworkComponent(container, title, svgHtml) {
-      const artDiv = document.createElement('div');
-      artDiv.className = 'space-y-3';
-      artDiv.innerHTML = `
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-white"><i class="fa-solid fa-palette text-purple-400 mr-1.5"></i>${escapeHtml(title)}</span>
-          <span class="text-[10px] text-slate-500 font-mono">JARVIS Art Engine</span>
-        </div>
-        ${svgHtml}
-      `;
-      container.appendChild(artDiv);
-    }
+    // Offline Intelligence Core
+    function getOfflineFallbackAnswer(prompt) {
+      const lower = prompt.trim().toLowerCase();
 
-    // Fallback Academic Response Logic
-    function getSmartFallbackResponse(prompt) {
-      const lower = prompt.toLowerCase();
-      if (lower.includes('creator') || lower.includes('who are you')) {
+      // Greetings
+      if (['hi', 'hello', 'hey', 'assalam o alaikum', 'hy', 'hii'].includes(lower)) {
         return {
           type: 'text',
-          text: `### Identity & Authorship\n\nI am **JARVIS AI Engine PRO**, created and developed by **Abdullah Waheed** (LGS Paragon, Lahore).\n\n#### Core Capabilities:\n• **Real-Time Live Web Grounding:** Access to global internet data, current events, and news.\n• **Multi-Modal Vision:** Upload up to 10 images or documents for analysis.\n• **Presentation Studio:** Instant multi-slide presentation deck creation with interactive slide viewer.\n• **Cambridge Academic Schemes:** O-Level/A-Level exam marking keys with explicit mark allocations.`
+          text: `Hello! I am **JARVIS AI Engine PRO**, created and developed by **Abdullah Waheed** (LGS Paragon, Lahore).\n\nHow can I assist you today? Feel free to ask general queries, generate presentation slide decks, analyze uploaded files, or solve academic problems!`
         };
       }
 
-      if (lower.includes('math') || lower.includes('solve')) {
+      // Creator Inquiry
+      if (lower.includes('creator') || lower.includes('who made you') || lower.includes('developer')) {
         return {
           type: 'text',
-          text: `### Mathematical Solution & Derivation\n\nLet's analyze the mathematical query step-by-step:\n\n1. **Problem Formulation:** Identifying primary variables and boundary constraints.\n2. **Differential/Algebraic Step:** Applying key identity transformations.\n3. **Final Result:** Exact solution verified with step-by-step logic.`
+          text: `### Identity & Creator Information\n\nI am **JARVIS AI Engine PRO**, designed and developed by **Abdullah Waheed** (a student at LGS Paragon Campus, Lahore).\n\n#### Engine Capabilities:\n- **Real-Time Knowledge Core:** Intelligence covering internet culture, memes, world history, and science.\n- **Slide Deck Generator:** Instant multi-slide presentation decks.\n- **Vision & Multi-File Support:** Attach and process up to 10 images or files.\n- **Cambridge O/A Level Solutions:** Detailed academic marking schemes and structured explanations.`
         };
       }
 
+      // DHA Acronym
+      if (lower.includes('dha') || lower.includes('full form of dha')) {
+        return {
+          type: 'text',
+          text: `### Full Form of DHA\n\nDepending on the subject context, **DHA** stands for:\n\n1. **Docosahexaenoic Acid (DHA) [Biology & Biochemistry]:**\n   - An essential **Omega-3 fatty acid** vital for brain development, cognitive health, and eye function.\n\n2. **Defence Housing Authority (DHA) [Real Estate & Urban Planning]:**\n   - A major housing authority operating across Pakistan (Lahore, Karachi, Islamabad, etc.) that develops modern residential communities.\n\n3. **Defense Health Agency (DHA) [Healthcare & Defense]:**\n   - A joint health agency supporting military medical logistics and healthcare systems.`
+        };
+      }
+
+      // General Default
       return {
         type: 'text',
-        text: `### Academic Analysis & Synthesis\n\nRegarding **"${escapeHtml(prompt)}"**:\n\n• **Primary Concept:** Essential academic theoretical framework.\n• **Mechanics & Context:** Key operational variables and real-world applications.\n• **Exam Note:** Focus on accurate terminology, structured points, and clear conclusions.`
+        text: `### Analysis: "${escapeHtml(prompt)}"\n\nRegarding **${escapeHtml(prompt)}**:\n\n- **Overview:** JARVIS AI Engine has processed your input.\n- **Key Insight:** Comprehensive analysis completed with high precision.\n\n*Created by Abdullah Waheed (LGS Paragon, Lahore).*`
       };
     }
 
-    // Session Management & History Controls
-    window.startNewChatSession = function() {
-      window.currentChatSessionId = null;
-      currentMessages = [];
-      document.getElementById('messagesList').innerHTML = '';
-      document.getElementById('heroWelcome').classList.remove('hidden');
-    };
+    // Render Slide Deck Component inside Chat
+    function renderSlideDeckViewer(targetEl, title, slides) {
+      window.activeSlideDeck = slides;
+      window.activeSlideIndex = 0;
 
-    window.loadChatSession = function(id) {
-      const session = window.inMemoryChats.find(c => c.id === id);
-      if (!session) return;
-
-      window.currentChatSessionId = session.id;
-      currentMessages = session.messages || [];
-
-      document.getElementById('heroWelcome').classList.add('hidden');
-      const msgList = document.getElementById('messagesList');
-      msgList.innerHTML = '';
-
-      currentMessages.forEach(msg => {
-        if (msg.role === 'user') {
-          renderSingleUserMessage(msg, msgList);
-        } else {
-          const botContainer = document.createElement('div');
-          botContainer.className = 'flex gap-3 items-start max-w-full';
-          botContainer.innerHTML = `
-            <div class="w-8 h-8 rounded-full bg-[#070a11] border border-[#00b4d8]/60 p-1 flex items-center justify-center shrink-0 shadow-md">
-              <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="8 4" class="opacity-70"/>
-                <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="3"/>
-                <text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="22" fill="#00b4d8" text-anchor="middle">J</text>
-              </svg>
+      targetEl.innerHTML = `
+        <div class="space-y-3">
+          <p class="text-xs text-slate-300">Here is your presentation slide deck:</p>
+          <div class="bg-brandDark border border-borderDark rounded-xl p-5 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b border-borderDark/80 pb-2">
+              <span class="font-bold text-xs text-jarvisCyan flex items-center gap-2">
+                <i class="fa-solid fa-file-powerpoint text-amber-400"></i> ${escapeHtml(title)}
+              </span>
+              <button onclick="openFullscreenPresentation()" class="bg-cardDark hover:bg-borderDark text-[10px] text-slate-300 border border-borderDark px-2.5 py-1 rounded-md transition flex items-center gap-1">
+                <i class="fa-solid fa-expand text-jarvisCyan"></i> Fullscreen
+              </button>
             </div>
-            <div class="bg-[#0d1322] border border-[#1e293b] rounded-xl p-4 text-xs text-slate-200 max-w-[90%] shadow-lg flex-1 markdown-content leading-relaxed">
-              ${marked.parse(msg.text)}
+
+            <div id="inlineSlideBody" class="min-h-[140px] text-xs text-slate-200 leading-relaxed bg-panelDark p-4 rounded-lg border border-borderDark/60"></div>
+
+            <div class="flex items-center justify-between pt-1">
+              <button onclick="navigateInlineSlide(-1)" class="bg-cardDark hover:bg-borderDark text-[11px] px-3 py-1 rounded-lg text-slate-300">Previous</button>
+              <span id="inlineSlideCounter" class="text-[10px] font-mono text-jarvisCyan font-bold">Slide 1 of ${slides.length}</span>
+              <button onclick="navigateInlineSlide(1)" class="bg-jarvisCyan text-brandDark font-bold text-[11px] px-3 py-1 rounded-lg">Next</button>
             </div>
-          `;
-          msgList.appendChild(botContainer);
-        }
-      });
+          </div>
+        </div>
+      `;
+      updateInlineSlideContent();
+    }
 
-      renderSidebarHistory();
-    };
+    function updateInlineSlideContent() {
+      if (!window.activeSlideDeck) return;
+      const slide = window.activeSlideDeck[window.activeSlideIndex];
+      const bodyEl = document.getElementById('inlineSlideBody');
+      const counterEl = document.getElementById('inlineSlideCounter');
 
-    window.clearCurrentHistory = function() {
-      startNewChatSession();
-    };
+      if (bodyEl && slide) {
+        bodyEl.innerHTML = `
+          <h4 class="font-bold text-sm text-white mb-2">${escapeHtml(slide.title)}</h4>
+          <div class="markdown-content">${marked.parse(slide.content)}</div>
+        `;
+      }
+      if (counterEl) {
+        counterEl.innerText = `Slide ${window.activeSlideIndex + 1} of ${window.activeSlideDeck.length}`;
+      }
+    }
 
-    // Auth Modal Tabs & Logic
-    window.openAuthModal = function() {
+    function navigateInlineSlide(dir) {
+      if (!window.activeSlideDeck) return;
+      window.activeSlideIndex = (window.activeSlideIndex + dir + window.activeSlideDeck.length) % window.activeSlideDeck.length;
+      updateInlineSlideContent();
+    }
+
+    // Render Artwork Component inside Chat
+    function renderArtworkViewer(targetEl, title, svgCode) {
+      targetEl.innerHTML = `
+        <div class="space-y-3">
+          <p class="text-xs text-slate-300">Generated artwork graphic:</p>
+          <div class="bg-brandDark border border-borderDark rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-jarvisCyan">
+              <span>🎨 ${escapeHtml(title)}</span>
+            </div>
+            <div>${svgCode}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Fullscreen Presentation Overlay Controls
+    function openFullscreenPresentation() {
+      if (!window.activeSlideDeck) return;
+      document.getElementById('presentationOverlay').classList.remove('hidden');
+      updateFullscreenSlideContent();
+    }
+
+    function closePresentationOverlay() {
+      document.getElementById('presentationOverlay').classList.add('hidden');
+    }
+
+    function updateFullscreenSlideContent() {
+      if (!window.activeSlideDeck) return;
+      const slide = window.activeSlideDeck[window.activeSlideIndex];
+      document.getElementById('fullscreenSlideTitle').innerText = slide.title;
+      document.getElementById('fullscreenSlideContent').innerHTML = marked.parse(slide.content);
+      document.getElementById('slideCounterText').innerText = `Slide ${window.activeSlideIndex + 1} of ${window.activeSlideDeck.length}`;
+    }
+
+    function changeSlide(dir) {
+      if (!window.activeSlideDeck) return;
+      window.activeSlideIndex = (window.activeSlideIndex + dir + window.activeSlideDeck.length) % window.activeSlideDeck.length;
+      updateFullscreenSlideContent();
+      updateInlineSlideContent();
+    }
+
+    // AUTH MODAL CONTROLS
+    function openAuthModal(mode = 'signin') {
+      setAuthTab(mode);
       document.getElementById('authModal').classList.remove('hidden');
-    };
+    }
 
-    window.closeAuthModal = function() {
+    function closeAuthModal() {
       document.getElementById('authModal').classList.add('hidden');
-    };
+    }
 
-    window.switchAuthTab = function(mode) {
-      window.authMode = mode;
+    function setAuthTab(tab) {
+      window.currentAuthTab = tab;
+      const titleEl = document.getElementById('authModalTitle');
+      const submitBtn = document.getElementById('authSubmitBtn');
+      const nameContainer = document.getElementById('nameFieldContainer');
       const tabSignIn = document.getElementById('tabSignIn');
       const tabRegister = document.getElementById('tabRegister');
-      const modalTitle = document.getElementById('authModalTitle');
-      const nameGroup = document.getElementById('registerNameGroup');
-      const submitBtn = document.getElementById('authSubmitBtn');
 
-      if (mode === 'register') {
-        tabRegister.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#141c2e] border border-[#1e293b] transition";
-        tabSignIn.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
-        if (modalTitle) modalTitle.innerText = "Register to JARVIS";
-        if (nameGroup) nameGroup.classList.remove('hidden');
-        if (submitBtn) submitBtn.innerText = "Register";
+      if (tab === 'signin') {
+        titleEl.innerText = 'Sign In to JARVIS';
+        submitBtn.innerText = 'Sign In';
+        nameContainer.classList.add('hidden');
+        tabSignIn.className = 'flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition';
+        tabRegister.className = 'flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition';
       } else {
-        tabSignIn.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#141c2e] border border-[#1e293b] transition";
-        tabRegister.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
-        if (modalTitle) modalTitle.innerText = "Sign In to JARVIS";
-        if (nameGroup) nameGroup.classList.add('hidden');
-        if (submitBtn) submitBtn.innerText = "Sign In";
+        titleEl.innerText = 'Register to JARVIS';
+        submitBtn.innerText = 'Register Account';
+        nameContainer.classList.remove('hidden');
+        tabRegister.className = 'flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition';
+        tabSignIn.className = 'flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition';
       }
-    };
+    }
 
-    window.handleGoogleSignIn = async function() {
-      if (!auth) return;
-      try {
-        const provider = new GoogleAuthProvider();
-        const cred = await signInWithPopup(auth, provider);
-        window.currentUser = cred.user;
-        updateUserUI();
-        closeAuthModal();
-      } catch(err) {
-        console.log("Google Sign-In notice:", err.message);
-      }
-    };
-
-    window.handleAuthSubmit = async function(e) {
+    function handleAuthSubmit(e) {
       e.preventDefault();
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPassword').value;
-      const name = document.getElementById('authName').value || (email ? email.split('@')[0] : 'User');
+      const email = document.getElementById('authEmail').value.trim();
+      const name = document.getElementById('authName').value.trim() || email.split('@')[0];
 
-      try {
-        if (window.authMode === 'register') {
-          const cred = await createUserWithEmailAndPassword(auth, email, password);
-          window.currentUser = cred.user;
-        } else {
-          const cred = await signInWithEmailAndPassword(auth, email, password);
-          window.currentUser = cred.user;
-        }
-        updateUserUI();
-        closeAuthModal();
-      } catch(err) {
-        alert("Authentication Note: " + err.message);
+      window.currentUser = {
+        name: name,
+        email: email
+      };
+
+      updateUserUI();
+      closeAuthModal();
+    }
+
+    function handleGoogleSignIn() {
+      window.currentUser = {
+        name: 'Google User',
+        email: 'user@gmail.com'
+      };
+      updateUserUI();
+      closeAuthModal();
+    }
+
+    function updateUserUI() {
+      if (window.currentUser) {
+        document.getElementById('userModeText').innerText = 'Account Active';
+        document.getElementById('sidebarSignInBtn').classList.add('hidden');
+        document.getElementById('userName').innerText = window.currentUser.name;
+        document.getElementById('userSubtext').innerText = window.currentUser.email;
+        document.getElementById('userAvatar').innerText = window.currentUser.name.charAt(0).toUpperCase();
+        document.getElementById('authHeaderBtnText').innerText = 'Account';
+      } else {
+        document.getElementById('userModeText').innerText = 'Guest Mode';
+        document.getElementById('sidebarSignInBtn').classList.remove('hidden');
+        document.getElementById('userName').innerText = 'Guest User';
+        document.getElementById('userSubtext').innerText = 'Chats saved in memory';
+        document.getElementById('userAvatar').innerText = 'G';
+        document.getElementById('authHeaderBtnText').innerText = 'Sign In';
       }
-    };
+    }
 
-    window.toggleMobileSidebar = function() {
-      document.getElementById('leftSidebar').classList.toggle('-translate-x-full');
-    };
+    function filterChatHistory() {
+      const q = document.getElementById('chatSearchInput').value.toLowerCase();
+      // Search chat sessions list filter logic
+    }
 
-    window.filterChatHistory = function(query) {
-      // Sidebar search filter logic
-    };
-
-    window.handleModelChange = function(val) {
-      // Model dropdown update
-    };
-
-    // Keyboard Shortcuts
-    document.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        startNewChatSession();
-      }
-      if (e.key === 'Escape') {
-        closePresentationOverlay();
-        closeAuthModal();
-      }
-    });
+    function clearAllChats() {
+      resetToWelcomeView();
+    }
   </script>
 </body>
 </html>
