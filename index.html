@@ -32,7 +32,7 @@
   </script>
 
   <style>
-    /* Custom Scrollbar */
+    /* Custom Scrollbar Styling */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -48,22 +48,22 @@
       background: #00b4d8;
     }
 
-    /* Arc Reactor Glowing Effects */
+    /* Arc Reactor Glowing Effects & Animations */
     .arc-glow {
-      box-shadow: 0 0 15px rgba(0, 180, 216, 0.4), inset 0 0 10px rgba(0, 180, 216, 0.3);
+      box-shadow: 0 0 15px rgba(0, 180, 216, 0.45), inset 0 0 10px rgba(0, 180, 216, 0.3);
     }
     .text-glow {
-      text-shadow: 0 0 8px rgba(0, 180, 216, 0.6);
+      text-shadow: 0 0 10px rgba(0, 180, 216, 0.7);
     }
     .pulse-ring {
       animation: pulseGlow 3s infinite ease-in-out;
     }
     @keyframes pulseGlow {
-      0%, 100% { opacity: 0.6; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.03); }
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.04); }
     }
 
-    /* Markdown Styling Inside Chat */
+    /* Markdown Styling Inside Chat Messages */
     .markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
     .markdown-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
     .markdown-content ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
@@ -86,9 +86,8 @@
 
   <!-- TOP HEADER BAR -->
   <header class="h-14 bg-panelDark/90 border-b border-borderDark px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
-    <!-- Left Logo & Branding -->
+    <!-- Left Branding & Arc Reactor Logo -->
     <div class="flex items-center gap-3">
-      <!-- Arc Reactor HUD SVG Icon -->
       <div class="w-8 h-8 rounded-full bg-brandDark border border-jarvisCyan/60 flex items-center justify-center p-1 arc-glow relative cursor-pointer" onclick="resetToWelcomeView()">
         <svg viewBox="0 0 100 100" class="w-full h-full pulse-ring" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="10 4" class="opacity-80"/>
@@ -106,7 +105,7 @@
       </div>
     </div>
 
-    <!-- Right Top Controls: Model Select & Auth Button -->
+    <!-- Right Header Controls: Model Selector & Auth Button -->
     <div class="flex items-center gap-3">
       <select id="modelSelect" class="bg-cardDark text-slate-200 border border-borderDark rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-jarvisCyan cursor-pointer transition">
         <option value="instant">Jarvis Instant (Ultra Fast)</option>
@@ -115,21 +114,21 @@
         <option value="ironman">Jarvis Ironman (70B Deep Reasoning)</option>
       </select>
 
-      <button id="authHeaderBtn" onclick="openAuthModal('signin')" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-md shadow-jarvisCyan/20">
+      <button id="authHeaderBtn" onclick="handleAuthNavClick()" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-md shadow-jarvisCyan/20">
         <i class="fa-solid fa-user-lock text-[11px]"></i>
         <span id="authHeaderBtnText">Sign In</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN APP BODY LAYOUT -->
+  <!-- MAIN APPLICATION BODY -->
   <div class="flex flex-1 h-[calc(100vh-3.5rem)] overflow-hidden">
     
-    <!-- LEFT SIDEBAR -->
+    <!-- LEFT NAVIGATION SIDEBAR -->
     <aside class="w-64 bg-panelDark/80 border-r border-borderDark flex flex-col justify-between shrink-0">
       <div class="p-3 space-y-3 flex-1 flex flex-col min-h-0">
         
-        <!-- New Chat Button -->
+        <!-- New Chat Session Button -->
         <button onclick="startNewChatSession()" class="w-full bg-cardDark hover:bg-cardDark/80 border border-borderDark hover:border-jarvisCyan/50 text-white font-semibold text-xs py-2.5 px-3 rounded-lg flex items-center justify-between transition group shadow-sm">
           <span class="flex items-center gap-2">
             <i class="fa-solid fa-plus text-jarvisCyan group-hover:rotate-90 transition-transform duration-300"></i>
@@ -138,28 +137,28 @@
           <span class="text-[10px] bg-brandDark border border-borderDark px-1.5 py-0.5 rounded text-slate-400 font-mono">Ctrl+K</span>
         </button>
 
-        <!-- Guest Mode Status Indicator -->
+        <!-- Session & Auth Mode Status Indicator -->
         <div class="flex items-center justify-between bg-brandDark/60 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-[11px]">
-          <span class="text-amber-400 font-semibold flex items-center gap-1.5">
+          <span id="userModeBadge" class="text-amber-400 font-semibold flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
             <span id="userModeText">Guest Mode</span>
           </span>
           <button id="sidebarSignInBtn" onclick="openAuthModal('signin')" class="text-jarvisCyan hover:underline font-bold text-[10px]">Sign In</button>
         </div>
 
-        <!-- Search Chats Input -->
+        <!-- Search Filter -->
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
           <input type="text" id="chatSearchInput" oninput="filterChatHistory()" placeholder="Search chats..." class="w-full bg-cardDark border border-borderDark rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-jarvisCyan">
         </div>
 
-        <!-- Chat History Header -->
+        <!-- Conversations Header -->
         <div class="flex items-center justify-between pt-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
           <span>Conversations</span>
           <button onclick="clearAllChats()" class="hover:text-red-400 transition">Clear</button>
         </div>
 
-        <!-- Chat History List -->
+        <!-- Chat History Session List -->
         <div id="chatHistoryList" class="flex-1 overflow-y-auto space-y-1 pr-1 text-xs">
           <div class="text-slate-500 italic text-[11px] p-2 text-center">Guest session (Memory only)<br><span class="text-[10px]">Chats cleared on tab close</span></div>
         </div>
@@ -172,21 +171,21 @@
         </div>
         <div class="flex-1 min-w-0">
           <div id="userName" class="text-xs font-bold text-slate-200 truncate">Guest User</div>
-          <div id="userSubtext" class="text-[10px] text-slate-500 truncate">Chats saved in memory</div>
+          <div id="userSubtext" class="text-[10px] text-slate-500 truncate">Chats cleared on tab close</div>
         </div>
       </div>
     </aside>
 
-    <!-- CENTER CHAT & HERO WORKSPACE -->
+    <!-- CENTER WORKSPACE: HERO & CHAT CONTAINER -->
     <main class="flex-1 flex flex-col bg-brandDark relative overflow-hidden">
       
-      <!-- CHAT SCROLL CONTAINER -->
+      <!-- CHAT SCROLL AREA -->
       <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         
-        <!-- HERO WELCOME VIEW (Shown when no messages exist) -->
+        <!-- HERO WELCOME SCREEN (Shown when no messages exist) -->
         <div id="heroWelcome" class="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto space-y-6 my-auto py-10">
           
-          <!-- Central Glowing Arc Reactor Logo -->
+          <!-- Central Arc Reactor HUD Logo -->
           <div class="w-20 h-20 rounded-full bg-brandDark border-2 border-jarvisCyan/80 p-2 arc-glow relative flex items-center justify-center cursor-pointer transform hover:scale-105 transition duration-300">
             <svg viewBox="0 0 100 100" class="w-full h-full pulse-ring" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="50" cy="50" r="46" stroke="#00b4d8" stroke-width="2" stroke-dasharray="12 4"/>
@@ -196,7 +195,7 @@
             </svg>
           </div>
 
-          <!-- Hero Greeting Header -->
+          <!-- Hero Heading & Creator Attribution -->
           <div class="space-y-2">
             <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Hello, I am JARVIS</h1>
             <p class="text-xs md:text-sm text-slate-400 max-w-xl leading-relaxed">
@@ -204,7 +203,7 @@
             </p>
           </div>
 
-          <!-- Quick Suggestion Cards Grid -->
+          <!-- 4 Interactive Suggestion Cards -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full pt-2">
             <button onclick="sendQuickPrompt('Create a presentation on AI and Machine Learning')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
               <i class="fa-solid fa-file-powerpoint text-amber-400 text-sm group-hover:scale-110 transition"></i>
@@ -228,41 +227,37 @@
           </div>
         </div>
 
-        <!-- ACTIVE MESSAGES CONTAINER -->
+        <!-- MESSAGES CONTAINER -->
         <div id="messagesList" class="space-y-4 max-w-4xl mx-auto"></div>
       </div>
 
-      <!-- FLOATING BOTTOM INPUT BAR -->
+      <!-- FLOATING INPUT TOOLBAR CONTAINER -->
       <div class="p-3 md:p-4 bg-brandDark/90 border-t border-borderDark backdrop-blur-md">
         <div class="max-w-4xl mx-auto space-y-2">
           
-          <!-- File Attachments Preview Tray (Up to 10 files) -->
+          <!-- File Attachments Tray -->
           <div id="attachmentTray" class="hidden flex flex-wrap gap-2 p-2 bg-panelDark/80 border border-borderDark rounded-xl max-h-24 overflow-y-auto"></div>
 
-          <!-- Main Input Textarea Card -->
+          <!-- Input Card -->
           <div class="bg-cardDark border border-borderDark focus-within:border-jarvisCyan rounded-2xl p-2.5 transition shadow-xl relative">
-            
             <textarea id="userInput" rows="2" placeholder="Ask JARVIS anything, attach up to 10 images/files, or say 'Create a presentation on...'" class="w-full bg-transparent text-slate-100 text-xs md:text-sm focus:outline-none resize-none px-2 py-1 max-h-36 placeholder-slate-500"></textarea>
 
-            <!-- Bottom Toolbar inside input -->
+            <!-- Bottom Toolbar -->
             <div class="flex items-center justify-between pt-2 border-t border-borderDark/60 mt-1">
               
-              <!-- Left Toolbar Badges & File Upload -->
+              <!-- Left Toolbar Controls -->
               <div class="flex items-center gap-2">
-                <!-- File Attachment Button -->
                 <button onclick="document.getElementById('fileUploadInput').click()" class="text-slate-400 hover:text-jarvisCyan p-1.5 rounded-lg hover:bg-panelDark transition text-xs flex items-center gap-1" title="Attach up to 10 files">
                   <i class="fa-solid fa-paperclip"></i>
                   <span id="fileCountBadge" class="text-[10px] bg-brandDark px-1.5 py-0.2 rounded border border-borderDark hidden">0/10</span>
                 </button>
                 <input type="file" id="fileUploadInput" multiple onchange="handleFileUpload(event)" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt">
 
-                <!-- Google Workspace Badge -->
                 <span class="bg-panelDark border border-borderDark text-slate-300 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                   <i class="fa-brands fa-google text-emerald-400 text-[9px]"></i>
                   <span>Google Workspace</span>
                 </span>
 
-                <!-- JARVIS Engine Badge -->
                 <span class="text-[10px] text-slate-500 font-mono hidden sm:inline-flex items-center gap-1">
                   <i class="fa-solid fa-microphone text-jarvisCyan text-[9px]"></i>
                   <span>JARVIS Engine v3.5</span>
@@ -276,9 +271,9 @@
             </div>
           </div>
 
-          <!-- Bottom Footer Notice -->
+          <!-- Footer Credit -->
           <div class="text-center text-[10px] text-slate-500">
-            JARVIS AI Assistant · Developed by Abdullah Waheed (LGS Paragon, Lahore)
+            JARVIS AI Assistant - Developed by Abdullah Waheed
           </div>
         </div>
       </div>
@@ -294,7 +289,7 @@
         <i class="fa-solid fa-xmark text-sm"></i>
       </button>
 
-      <!-- Glowing Arc Reactor Modal Header Avatar -->
+      <!-- Glowing Arc Reactor Modal Avatar Header -->
       <div class="flex flex-col items-center text-center space-y-2">
         <div class="w-12 h-12 rounded-full bg-brandDark border border-jarvisCyan/80 p-1 arc-glow flex items-center justify-center">
           <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -382,13 +377,13 @@
     </div>
   </div>
 
-  <!-- APP SCRIPT CONTROLLER & GEMINI API INTEGRATION -->
+  <!-- MAIN SCRIPT CONTROLLER -->
   <script>
-    // Global Application State Variables
+    // Global State Bindings
     window.currentUser = null; // null = Guest Mode
     window.attachedFiles = [];
     window.currentChatMessages = [];
-    window.allChatSessions = [];
+    window.allChatSessions = {};
     window.currentSessionId = null;
     window.isGenerating = false;
     window.currentAuthTab = 'signin';
@@ -408,6 +403,21 @@
 
     // DOM Ready Initialization
     document.addEventListener('DOMContentLoaded', () => {
+      // Check localStorage for saved auth session
+      const savedUser = localStorage.getItem('jarvis_authenticated_user');
+      if (savedUser) {
+        try {
+          window.currentUser = JSON.parse(savedUser);
+          const savedSessions = localStorage.getItem('jarvis_saved_chats_' + window.currentUser.email);
+          if (savedSessions) {
+            window.allChatSessions = JSON.parse(savedSessions);
+          }
+        } catch (e) { console.error('Error reading stored user session', e); }
+      }
+
+      updateUserUI();
+      renderSidebarHistory();
+
       const userInput = document.getElementById('userInput');
       
       // Enter key sends message immediately! Shift+Enter inserts newline.
@@ -420,7 +430,7 @@
 
       // Keyboard shortcuts
       document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
           e.preventDefault();
           startNewChatSession();
         }
@@ -437,6 +447,7 @@
       window.currentSessionId = null;
       document.getElementById('messagesList').innerHTML = '';
       document.getElementById('heroWelcome').classList.remove('hidden');
+      renderSidebarHistory();
     }
 
     // Start New Chat Session
@@ -521,7 +532,17 @@
       const sendBtn = document.getElementById('sendBtn');
       sendBtn.disabled = true;
 
-      // Hide Hero Welcome
+      // Ensure active session ID
+      if (!window.currentSessionId) {
+        window.currentSessionId = 'session_' + Date.now();
+        window.allChatSessions[window.currentSessionId] = {
+          id: window.currentSessionId,
+          title: prompt.length > 28 ? prompt.substring(0, 28) + '...' : prompt || 'File Upload Query',
+          messages: []
+        };
+      }
+
+      // Hide Hero Welcome Screen
       document.getElementById('heroWelcome').classList.add('hidden');
 
       const userFiles = [...window.attachedFiles];
@@ -529,7 +550,7 @@
       window.attachedFiles = [];
       renderAttachmentTray();
 
-      // Append User Message to UI
+      // Append User Message to UI & Session
       renderUserMessage(prompt, userFiles);
 
       // Create Bot Loading Container
@@ -541,7 +562,7 @@
       try {
         const responseData = await fetchGeminiAIResponse(prompt, userFiles);
         
-        // Remove status spinner
+        // Remove status spinner cleanly
         const statusEl = document.getElementById(statusId);
         if (statusEl) statusEl.remove();
 
@@ -554,7 +575,13 @@
           } else {
             targetEl.innerHTML = marked.parse(responseData.text);
           }
-          window.currentChatMessages.push({ role: 'bot', text: responseData.text });
+          
+          // Save bot response to session
+          const session = window.allChatSessions[window.currentSessionId];
+          if (session) {
+            session.messages.push({ role: 'bot', text: responseData.text, type: responseData.type, slides: responseData.slides, svgCode: responseData.svgCode, title: responseData.title });
+            saveChatSessions();
+          }
         }
       } catch (err) {
         const statusEl = document.getElementById(statusId);
@@ -568,6 +595,7 @@
 
       window.isGenerating = false;
       sendBtn.disabled = false;
+      renderSidebarHistory();
       
       const chatContainer = document.getElementById('chatContainer');
       chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -596,7 +624,12 @@
         </div>
       `;
       list.appendChild(userDiv);
-      window.currentChatMessages.push({ role: 'user', text: text });
+
+      const session = window.allChatSessions[window.currentSessionId];
+      if (session) {
+        session.messages.push({ role: 'user', text: text, files: files });
+        saveChatSessions();
+      }
     }
 
     // Render Bot Loading Card
@@ -798,7 +831,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       // General Default
       return {
         type: 'text',
-        text: `### Analysis: "${escapeHtml(prompt)}"\n\nRegarding **${escapeHtml(prompt)}**:\n\n- **Overview:** JARVIS AI Engine has processed your input.\n- **Key Insight:** Comprehensive analysis completed with high precision.\n\n*Created by Abdullah Waheed (LGS Paragon, Lahore).*`
+        text: `### Analysis: "${escapeHtml(prompt)}"\n\nRegarding **${escapeHtml(prompt)}**:\n\n- **Overview:** JARVIS AI Engine has processed your query directly.\n- **Key Insight:** Real-time synthesis complete.\n\n*Created by Abdullah Waheed (LGS Paragon, Lahore).*`
       };
     }
 
@@ -897,7 +930,7 @@ Always answer directly, highly accurately, concisely, and intelligently without 
       updateInlineSlideContent();
     }
 
-    // AUTH MODAL CONTROLS
+    // AUTH MODAL & USER SESSION CONTROLS
     function openAuthModal(mode = 'signin') {
       setAuthTab(mode);
       document.getElementById('authModal').classList.remove('hidden');
@@ -905,6 +938,19 @@ Always answer directly, highly accurately, concisely, and intelligently without 
 
     function closeAuthModal() {
       document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function handleAuthNavClick() {
+      if (window.currentUser) {
+        // Sign Out
+        window.currentUser = null;
+        localStorage.removeItem('jarvis_authenticated_user');
+        window.allChatSessions = {};
+        updateUserUI();
+        resetToWelcomeView();
+      } else {
+        openAuthModal('signin');
+      }
     }
 
     function setAuthTab(tab) {
@@ -933,13 +979,14 @@ Always answer directly, highly accurately, concisely, and intelligently without 
     function handleAuthSubmit(e) {
       e.preventDefault();
       const email = document.getElementById('authEmail').value.trim();
-      const name = document.getElementById('authName').value.trim() || email.split('@')[0];
+      const name = document.getElementById('authName').value.trim() || (email ? email.split('@')[0] : 'User');
 
       window.currentUser = {
         name: name,
         email: email
       };
 
+      localStorage.setItem('jarvis_authenticated_user', JSON.stringify(window.currentUser));
       updateUserUI();
       closeAuthModal();
     }
@@ -949,36 +996,113 @@ Always answer directly, highly accurately, concisely, and intelligently without 
         name: 'Google User',
         email: 'user@gmail.com'
       };
+      localStorage.setItem('jarvis_authenticated_user', JSON.stringify(window.currentUser));
       updateUserUI();
       closeAuthModal();
     }
 
     function updateUserUI() {
       if (window.currentUser) {
-        document.getElementById('userModeText').innerText = 'Account Active';
+        document.getElementById('userModeBadge').className = 'text-emerald-400 font-semibold flex items-center gap-1.5';
+        document.getElementById('userModeBadge').innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span id="userModeText">Account Active</span>';
         document.getElementById('sidebarSignInBtn').classList.add('hidden');
         document.getElementById('userName').innerText = window.currentUser.name;
-        document.getElementById('userSubtext').innerText = window.currentUser.email;
+        document.getElementById('userSubtext').innerText = 'Cloud Sync Enabled';
         document.getElementById('userAvatar').innerText = window.currentUser.name.charAt(0).toUpperCase();
-        document.getElementById('authHeaderBtnText').innerText = 'Account';
+        document.getElementById('authHeaderBtnText').innerText = 'Sign Out';
       } else {
-        document.getElementById('userModeText').innerText = 'Guest Mode';
+        document.getElementById('userModeBadge').className = 'text-amber-400 font-semibold flex items-center gap-1.5';
+        document.getElementById('userModeBadge').innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span><span id="userModeText">Guest Mode</span>';
         document.getElementById('sidebarSignInBtn').classList.remove('hidden');
         document.getElementById('userName').innerText = 'Guest User';
-        document.getElementById('userSubtext').innerText = 'Chats saved in memory';
+        document.getElementById('userSubtext').innerText = 'Chats cleared on tab close';
         document.getElementById('userAvatar').innerText = 'G';
         document.getElementById('authHeaderBtnText').innerText = 'Sign In';
       }
     }
 
+    function saveChatSessions() {
+      if (window.currentUser) {
+        localStorage.setItem('jarvis_saved_chats_' + window.currentUser.email, JSON.stringify(window.allChatSessions));
+      }
+    }
+
+    function renderSidebarHistory() {
+      const historyList = document.getElementById('chatHistoryList');
+      if (!historyList) return;
+
+      const sessionKeys = Object.keys(window.allChatSessions);
+
+      if (!sessionKeys.length) {
+        historyList.innerHTML = `<div class="text-slate-500 italic text-[11px] p-2 text-center">Guest session (Memory only)<br><span class="text-[10px]">Chats cleared on tab close</span></div>`;
+        return;
+      }
+
+      historyList.innerHTML = sessionKeys.map(key => {
+        const session = window.allChatSessions[key];
+        const isActive = key === window.currentSessionId ? 'bg-cardDark text-jarvisCyan border border-borderDark' : 'text-slate-400 hover:text-slate-200 hover:bg-cardDark/50';
+        return `
+          <div onclick="loadChatSession('${key}')" class="p-2 rounded-lg cursor-pointer transition text-xs font-medium truncate flex items-center gap-2 ${isActive}">
+            <i class="fa-regular fa-comment text-slate-500 text-[11px]"></i>
+            <span class="truncate">${escapeHtml(session.title)}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function loadChatSession(sessionId) {
+      const session = window.allChatSessions[sessionId];
+      if (!session) return;
+
+      window.currentSessionId = sessionId;
+      document.getElementById('heroWelcome').classList.add('hidden');
+      const list = document.getElementById('messagesList');
+      list.innerHTML = '';
+
+      session.messages.forEach(msg => {
+        if (msg.role === 'user') {
+          renderUserMessage(msg.text, msg.files);
+        } else {
+          const botMsgId = 'bot_msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5);
+          renderBotLoadingCard(botMsgId, botMsgId + '_status');
+          document.getElementById(botMsgId + '_status')?.remove();
+          const targetEl = document.getElementById(botMsgId);
+          if (targetEl) {
+            if (msg.type === 'slides') {
+              renderSlideDeckViewer(targetEl, msg.title, msg.slides);
+            } else if (msg.type === 'artwork') {
+              renderArtworkViewer(targetEl, msg.title, msg.svgCode);
+            } else {
+              targetEl.innerHTML = marked.parse(msg.text || '');
+            }
+          }
+        }
+      });
+
+      renderSidebarHistory();
+      const chatContainer = document.getElementById('chatContainer');
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
     function filterChatHistory() {
       const q = document.getElementById('chatSearchInput').value.toLowerCase();
-      // Search chat sessions list filter logic
+      const items = document.querySelectorAll('#chatHistoryList > div');
+      items.forEach(item => {
+        if (item.innerText.toLowerCase().includes(q)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
     }
 
     function clearAllChats() {
+      window.allChatSessions = {};
+      if (window.currentUser) {
+        localStorage.removeItem('jarvis_saved_chats_' + window.currentUser.email);
+      }
       resetToWelcomeView();
-<!-- Link external JavaScript file -->
-  <script src="code.js"></script>
+    }
+  </script>
 </body>
 </html>
