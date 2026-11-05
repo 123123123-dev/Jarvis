@@ -49,7 +49,7 @@
       50% { opacity: 1; transform: scale(1.05); }
     }
 
-    /* Markdown Styling for AI Answers */
+    /* Markdown Content Clean Styling */
     .markdown-content p { margin-bottom: 0.85rem; line-height: 1.65; }
     .markdown-content ul { list-style-type: disc; padding-left: 1.3rem; margin-bottom: 0.85rem; }
     .markdown-content ol { list-style-type: decimal; padding-left: 1.3rem; margin-bottom: 0.85rem; }
@@ -97,10 +97,10 @@
       </div>
     </div>
 
-    <!-- Right Header Controls: Stacked Model Selector Menu (Positioned DIRECTLY LEFT of Voice Button), Voice Toggle & Auth -->
+    <!-- Right Header Controls: STACKED MODEL SELECTOR (Placed DIRECTLY to the LEFT of Voice Toggle) -->
     <div class="flex items-center gap-1.5 sm:gap-2.5">
       
-      <!-- STACKED MODEL SELECTOR DROPDOWN MENU -->
+      <!-- STACKED MODEL SELECTOR DROPDOWN -->
       <select id="modelSelect" class="bg-cardDark text-slate-200 border border-borderDark hover:border-jarvisCyan/60 rounded-lg text-xs px-2 py-1.5 focus:outline-none focus:border-jarvisCyan cursor-pointer transition max-w-[130px] sm:max-w-none font-medium truncate">
         <option value="turbo" selected>⚡ JARVIS Turbo (Vision & Speed)</option>
         <option value="elite">🧠 JARVIS Elite (Deep Reasoning)</option>
@@ -1110,4 +1110,34 @@ System Rules:
       window.chatHistory.push({ role: 'model', parts: [{ text: directFallback }] });
       return directFallback;
     }
-<!-- ... existing code -->
+
+    // Initialize Page & Session Setup
+    window.addEventListener('DOMContentLoaded', () => {
+      initSessionFromUrl();
+
+      // Keyboard Shortcut Ctrl+K for New Chat
+      window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          startNewChatSession();
+        }
+      });
+
+      // Textarea Auto-expand & Enter to Send
+      const input = document.getElementById('userInput');
+      if (input) {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+          }
+        });
+        input.addEventListener('input', () => {
+          input.style.height = 'auto';
+          input.style.height = Math.min(input.scrollHeight, 144) + 'px';
+        });
+      }
+    });
+  </script>
+</body>
+</html>
