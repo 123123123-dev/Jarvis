@@ -120,6 +120,12 @@
         <option value="ironman">Jarvis Ironman (Deep Reasoning)</option>
       </select>
 
+      <!-- Live Voice Response Toggle -->
+      <button id="voiceModeBtn" onclick="toggleLiveVoiceMode()" class="bg-cardDark hover:bg-borderDark text-slate-300 border border-borderDark text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition" title="Toggle Live Male Spoken Voice">
+        <i id="voiceModeIcon" class="fa-solid fa-volume-xmark text-slate-400 text-[11px]"></i>
+        <span id="voiceModeText" class="hidden sm:inline">Voice Off</span>
+      </button>
+
       <button id="authHeaderBtn" onclick="handleAuthNavClick()" class="bg-jarvisCyan hover:bg-jarvisCyanHover text-brandDark font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-md shadow-jarvisCyan/20">
         <i id="authHeaderIcon" class="fa-solid fa-user-lock text-[11px]"></i>
         <span id="authHeaderBtnText">Sign In</span>
@@ -381,7 +387,7 @@
   <!-- MAIN SCRIPT CONTROLLER -->
   <script>
     // Global State Initializations
-    window.currentUser = null; // Fresh Guest Session on launch
+    window.currentUser = null;
     window.attachedFiles = [];
     window.allChatSessions = {};
     window.guestChats = {};
@@ -391,26 +397,36 @@
     window.isSidebarOpen = true;
     window.isListening = false;
     window.speechRecognition = null;
-    window.chatHistory = []; // Multi-turn AI history
+    window.chatHistory = [];
+    window.isLiveVoiceEnabled = false;
 
-    // Toast Notification Helper
+    // --- HELPER UTILITY FUNCTIONS ---
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function scrollToBottom() {
+      const chatContainer = document.getElementById('chatContainer');
+      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
     function showToast(message, type = "info") {
-      let container = document.getElementById("toastContainer");
-      if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        container.className = "fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none";
-        document.body.appendChild(container);
+      let toastContainer = document.getElementById("toastContainer");
+      if (!toastContainer) {
+        toastContainer = document.createElement("div");
+        toastContainer.id = "toastContainer";
+        toastContainer.className = "fixed bottom-16 right-4 z-50 flex flex-col gap-2 pointer-events-none";
+        document.body.appendChild(toastContainer);
       }
       const toast = document.createElement("div");
-      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xl border flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0 ${
+      toast.className = `px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xl border flex items-center gap-2 pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 ${
         type === "error" ? "bg-red-950/90 border-red-500/50 text-red-200" :
         type === "success" ? "bg-emerald-950/90 border-emerald-500/50 text-emerald-200" :
-        "bg-slate-900/90 border-cyan-500/50 text-cyan-200"
+        "bg-slate-900/90 border-jarvisCyan/50 text-cyan-200"
       }`;
       toast.innerText = message;
-      container.appendChild(toast);
-
+      toastContainer.appendChild(toast);
       setTimeout(() => toast.classList.remove("translate-y-2", "opacity-0"), 10);
       setTimeout(() => {
         toast.classList.add("opacity-0");
@@ -418,87 +434,172 @@
       }, 3500);
     }
 
-    // Toggle Left Drawer Sidebar
+    function renderFileTray() {
+      const tray = document.getElementById('attachmentTray');
+      const countBadge = document.getElementById('fileCountBadge');
+      if (!tray) return;
+
+      if (window.attachedFiles.length === 0) {
+        tray.classList.add('hidden');
+        tray.innerHTML = '';
+        if (countBadge) countBadge.classList.add('hidden');
+        return;
+      }
+
+      tray.classList.remove('hidden');
+      if (countBadge) {
+        countBadge.classList.remove('hidden');
+        countBadge.innerText = `${window.attachedFiles.length}/10`;
+      }
+
+      tray.innerHTML = window.attachedFiles.map((file, idx) => `
+        <div class="inline-flex items-center gap-1.5 bg-brandDark border border-jarvisCyan/40 px-2 py-1 rounded-lg text-xs text-jarvisCyan font-mono">
+          ${file.isImage ? `<img src="${file.dataUrl}" class="w-4 h-4 rounded object-cover" />` : `<i class="fa-solid fa-file-lines text-xs"></i>`}
+          <span class="truncate max-w-[120px] text-[11px]">${escapeHtml(file.name)}</span>
+          <button onclick="removeAttachedFile(${idx})" class="text-slate-400 hover:text-red-400 font-bold ml-1">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function removeAttachedFile(idx) {
+      window.attachedFiles.splice(idx, 1);
+      renderFileTray();
+    }
+
+    // --- UI NAVIGATION & ACTION HANDLERS ---
     function toggleSidebar() {
       const sidebar = document.getElementById('appSidebar');
-      const toggleIcon = document.getElementById('sidebarToggleIcon');
+      const icon = document.getElementById('sidebarToggleIcon');
       window.isSidebarOpen = !window.isSidebarOpen;
-
-      if (sidebar) {
-        if (window.isSidebarOpen) {
-          sidebar.classList.remove('-translate-x-full', 'w-0', 'p-0', 'overflow-hidden');
-          sidebar.classList.add('w-64');
-          if (toggleIcon) toggleIcon.className = "fa-solid fa-bars text-sm";
-        } else {
-          sidebar.classList.remove('w-64');
-          sidebar.classList.add('-translate-x-full', 'w-0', 'p-0', 'overflow-hidden');
-          if (toggleIcon) toggleIcon.className = "fa-solid fa-indent text-sm text-jarvisCyan";
-        }
+      if (window.isSidebarOpen) {
+        sidebar.classList.remove('-translate-x-full', 'w-0', 'hidden');
+        sidebar.classList.add('w-64');
+        if (icon) icon.className = "fa-solid fa-bars text-sm";
+      } else {
+        sidebar.classList.add('-translate-x-full', 'w-0', 'hidden');
+        sidebar.classList.remove('w-64');
+        if (icon) icon.className = "fa-solid fa-bars-staggered text-sm";
       }
     }
 
-    // Reset View to Hero Welcome
     function resetToWelcomeView() {
       const hero = document.getElementById('heroWelcome');
       const msgList = document.getElementById('messagesList');
       if (hero) hero.classList.remove('hidden');
       if (msgList) msgList.innerHTML = '';
-      window.currentSessionId = 'session_' + Date.now();
-      window.attachedFiles = [];
       window.chatHistory = [];
-      renderFileTray();
     }
 
-    // Start New Chat Session
+    function sendQuickPrompt(promptText) {
+      const input = document.getElementById('userInput');
+      if (input) {
+        input.value = promptText;
+        handleSendMessage();
+      }
+    }
+
     function startNewChatSession() {
       resetToWelcomeView();
-      showToast("Started a new chat session", "info");
+      showToast("Started new chat session", "info");
     }
 
-    // Auth Modal Handlers
-    function openAuthModal(tab = 'signin') {
-      setAuthTab(tab);
-      document.getElementById('authModal').classList.remove('hidden');
+    function filterChatHistory() {
+      const q = document.getElementById('chatSearchInput')?.value.toLowerCase() || '';
+      const list = document.getElementById('chatHistoryList');
+      if (!list) return;
+      if (!q) {
+        list.innerHTML = `<div class="text-slate-500 italic text-[11px] p-2 text-center">Guest session (Memory only)<br><span class="text-[10px]">Chats cleared on tab close</span></div>`;
+      } else {
+        list.innerHTML = `<div class="text-slate-400 text-xs p-2">Searching: "${escapeHtml(q)}"...</div>`;
+      }
     }
 
-    function closeAuthModal() {
-      document.getElementById('authModal').classList.add('hidden');
+    function clearAllChats() {
+      resetToWelcomeView();
+      showToast("Cleared current workspace chats", "info");
+    }
+
+    function exportCurrentChat() {
+      const msgList = document.getElementById('messagesList');
+      if (!msgList || !msgList.innerText.trim()) {
+        showToast("No chat content to export", "error");
+        return;
+      }
+      const text = msgList.innerText;
+      const blob = new Blob([text], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `JARVIS_Chat_${Date.now()}.md`;
+      a.click();
+      showToast("Chat exported as Markdown", "success");
+    }
+
+    function shareCurrentChat() {
+      const msgList = document.getElementById('messagesList');
+      if (!msgList || !msgList.innerText.trim()) {
+        showToast("No chat content to share", "error");
+        return;
+      }
+      const text = msgList.innerText;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast("Chat transcript copied to clipboard!", "success"));
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast("Chat transcript copied to clipboard!", "success");
+      }
     }
 
     function handleAuthNavClick() {
       if (window.currentUser) {
         window.currentUser = null;
+        window.location.hash = '';
         document.getElementById('authHeaderBtnText').innerText = "Sign In";
         document.getElementById('userModeBadge').className = "text-amber-400 font-semibold flex items-center gap-1.5";
         document.getElementById('userModeText').innerText = "Guest Mode";
         document.getElementById('userName').innerText = "Guest User";
         document.getElementById('userSubtext').innerText = "Chats cleared on tab close";
         document.getElementById('userAvatar').innerText = "G";
-        showToast("Signed out. Switched to Guest Mode.", "info");
+        showToast("Signed out successfully", "info");
       } else {
         openAuthModal('signin');
       }
     }
 
+    function openAuthModal(tab = 'signin') {
+      const modal = document.getElementById('authModal');
+      if (modal) modal.classList.remove('hidden');
+      setAuthTab(tab);
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('authModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
     function setAuthTab(tab) {
       window.currentAuthTab = tab;
-      const tabSignIn = document.getElementById('tabSignIn');
-      const tabRegister = document.getElementById('tabRegister');
+      const tIn = document.getElementById('tabSignIn');
+      const tReg = document.getElementById('tabRegister');
       const nameContainer = document.getElementById('nameFieldContainer');
       const passHint = document.getElementById('passwordRuleHint');
       const submitBtn = document.getElementById('authSubmitBtn');
       const title = document.getElementById('authModalTitle');
 
       if (tab === 'register') {
-        tabRegister.className = "flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition";
-        tabSignIn.className = "flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition";
+        if (tReg) tReg.className = "flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition";
+        if (tIn) tIn.className = "flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition";
         if (nameContainer) nameContainer.classList.remove('hidden');
         if (passHint) passHint.classList.remove('hidden');
-        if (submitBtn) submitBtn.innerText = "Create Account";
-        if (title) title.innerText = "Register JARVIS Account";
+        if (submitBtn) submitBtn.innerText = "Register Account";
+        if (title) title.innerText = "Create JARVIS Account";
       } else {
-        tabSignIn.className = "flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition";
-        tabRegister.className = "flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition";
+        if (tIn) tIn.className = "flex-1 py-1.5 rounded-lg font-semibold bg-cardDark text-white transition";
+        if (tReg) tReg.className = "flex-1 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200 transition";
         if (nameContainer) nameContainer.classList.add('hidden');
         if (passHint) passHint.classList.add('hidden');
         if (submitBtn) submitBtn.innerText = "Sign In";
@@ -506,42 +607,200 @@
       }
     }
 
-    function handleAuthSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('authEmail').value.trim();
-      const pass = document.getElementById('authPassword').value;
-      const name = document.getElementById('authName')?.value.trim() || email.split('@')[0];
+    function handleGoogleSignIn() {
+      showToast("Google OAuth requires domain configuration. Please use Email/Password sign in.", "info");
+    }
 
-      if (window.currentAuthTab === 'register' && pass.length < 8) {
-        showToast("Password must be at least 8 characters long", "error");
+    function toggleVoiceWriting() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast("Voice speech recognition is not supported in this browser.", "error");
         return;
       }
 
-      window.currentUser = { email, name };
+      const micIcon = document.getElementById('micIcon');
+      const micBtn = document.getElementById('micBtn');
+
+      if (window.isListening && window.speechRecognition) {
+        window.speechRecognition.stop();
+        window.isListening = false;
+        if (micIcon) micIcon.className = "fa-solid fa-microphone text-slate-400";
+        if (micBtn) micBtn.classList.remove('text-red-400', 'animate-pulse');
+        showToast("Voice writing stopped", "info");
+        return;
+      }
+
+      try {
+        const rec = new SpeechRecognition();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.lang = navigator.language || 'en-US';
+
+        const input = document.getElementById('userInput');
+        let initialText = input ? input.value : '';
+
+        rec.onstart = () => {
+          window.isListening = true;
+          if (micIcon) micIcon.className = "fa-solid fa-microphone text-red-400 animate-pulse";
+          showToast("Listening... Speak now", "success");
+        };
+
+        rec.onresult = (e) => {
+          let transcript = '';
+          for (let i = 0; i < e.results.length; i++) {
+            transcript += e.results[i][0].transcript;
+          }
+          if (input) {
+            input.value = (initialText ? initialText + ' ' : '') + transcript;
+          }
+        };
+
+        rec.onerror = (e) => {
+          showToast("Speech recognition error: " + e.error, "error");
+          window.isListening = false;
+          if (micIcon) micIcon.className = "fa-solid fa-microphone text-slate-400";
+        };
+
+        rec.onend = () => {
+          window.isListening = false;
+          if (micIcon) micIcon.className = "fa-solid fa-microphone text-slate-400";
+        };
+
+        window.speechRecognition = rec;
+        rec.start();
+      } catch (err) {
+        showToast("Microphone access error", "error");
+      }
+    }
+
+    // Local Auth Database Storage Helper
+    function getRegisteredUsers() {
+      try {
+        const data = localStorage.getItem('jarvis_registered_users');
+        return data ? JSON.parse(data) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveRegisteredUser(email, name, password) {
+      const users = getRegisteredUsers();
+      users[email.toLowerCase()] = { email: email.toLowerCase(), name, password: btoa(password) };
+      localStorage.setItem('jarvis_registered_users', JSON.stringify(users));
+    }
+
+    // URL Direct Session Security Handler
+    function initSessionFromUrl() {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#session=')) {
+        try {
+          const email = atob(hash.replace('#session=', ''));
+          const users = getRegisteredUsers();
+          if (users[email]) {
+            const user = users[email];
+            window.currentUser = { email: user.email, name: user.name };
+            updateAuthUiState(user.name, user.email);
+            showToast(`Session restored for ${user.name}`, "success");
+            return;
+          }
+        } catch (e) {}
+      }
+      // Default to Fresh Reset Guest Session
+      window.currentUser = null;
+      window.location.hash = '';
+    }
+
+    function updateAuthUiState(name, email) {
       document.getElementById('authHeaderBtnText').innerText = "Sign Out";
       document.getElementById('userModeBadge').className = "text-emerald-400 font-semibold flex items-center gap-1.5";
       document.getElementById('userModeText').innerText = "Account Active";
       document.getElementById('userName').innerText = name;
       document.getElementById('userSubtext').innerText = email;
       document.getElementById('userAvatar').innerText = name.charAt(0).toUpperCase();
-
-      closeAuthModal();
-      showToast(`Welcome back, ${name}!`, "success");
     }
 
-    function handleGoogleSignIn() {
-      window.currentUser = { email: 'google.user@gmail.com', name: 'Google Account' };
-      document.getElementById('authHeaderBtnText').innerText = "Sign Out";
-      document.getElementById('userModeBadge').className = "text-emerald-400 font-semibold flex items-center gap-1.5";
-      document.getElementById('userModeText').innerText = "Account Active";
-      document.getElementById('userName').innerText = "Google Account";
-      document.getElementById('userSubtext').innerText = "google.user@gmail.com";
-      document.getElementById('userAvatar').innerText = "G";
-      closeAuthModal();
-      showToast("Signed in with Google successfully!", "success");
+    // Toggle Male Spoken Voice Mode
+    function toggleLiveVoiceMode() {
+      window.isLiveVoiceEnabled = !window.isLiveVoiceEnabled;
+      const btn = document.getElementById('voiceModeBtn');
+      const icon = document.getElementById('voiceModeIcon');
+      const text = document.getElementById('voiceModeText');
+
+      if (window.isLiveVoiceEnabled) {
+        btn.className = "bg-jarvisCyan/20 text-jarvisCyan border border-jarvisCyan/60 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition";
+        icon.className = "fa-solid fa-volume-high text-jarvisCyan text-[11px] animate-pulse";
+        text.innerText = "Voice On";
+        showToast("Live Male Voice Response Enabled", "success");
+      } else {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        btn.className = "bg-cardDark hover:bg-borderDark text-slate-300 border border-borderDark text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition";
+        icon.className = "fa-solid fa-volume-xmark text-slate-400 text-[11px]";
+        text.innerText = "Voice Off";
+        showToast("Live Voice Disabled", "info");
+      }
     }
 
-    // File Upload Handler (Up to 10 files)
+    // Speak AI Response Aloud with Natural Male Voice & Language Auto-Detect
+    function speakTextAloud(text) {
+      if (!window.isLiveVoiceEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+
+      // Clean Markdown tags for clean audio speech
+      const cleanText = text.replace(/[*#`_~\[\]()]/g, ' ').replace(/https?:\/\/\S+/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+
+      const voices = window.speechSynthesis.getVoices();
+      // Select male voice or appropriate language voice
+      const maleVoice = voices.find(v => (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Mark') || v.name.includes('Google US English')) && !v.name.includes('Female')) || voices[0];
+      if (maleVoice) utterance.voice = maleVoice;
+
+      utterance.rate = 1.05;
+      utterance.pitch = 0.95; // Deeper male pitch
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Auth Form Logic with Password Rules & Account Check
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('authPassword').value;
+      const name = document.getElementById('authName')?.value.trim() || email.split('@')[0];
+      const users = getRegisteredUsers();
+
+      if (window.currentAuthTab === 'register') {
+        if (pass.length < 8) {
+          showToast("Password must be at least 8 characters/digits long!", "error");
+          return;
+        }
+        if (users[email]) {
+          showToast("Account with this email already exists. Please Sign In.", "error");
+          return;
+        }
+        saveRegisteredUser(email, name, pass);
+        window.currentUser = { email, name };
+        window.location.hash = 'session=' + btoa(email);
+        updateAuthUiState(name, email);
+        closeAuthModal();
+        showToast(`Account registered successfully! Welcome, ${name}.`, "success");
+      } else {
+        // Sign In Validation against registered accounts
+        if (!users[email]) {
+          showToast("No registered account found with this email. Please register first.", "error");
+          return;
+        }
+        if (atob(users[email].password) !== pass) {
+          showToast("Incorrect password! Please try again.", "error");
+          return;
+        }
+        window.currentUser = { email: users[email].email, name: users[email].name };
+        window.location.hash = 'session=' + btoa(users[email].email);
+        updateAuthUiState(users[email].name, users[email].email);
+        closeAuthModal();
+        showToast(`Signed in successfully as ${users[email].name}`, "success");
+      }
+    }
+
+    // File Upload Handler (Base64 conversion for Image Vision & Files)
     function handleFileUpload(e) {
       const files = Array.from(e.target.files);
       if (!files.length) return;
@@ -554,112 +813,71 @@
       const toAdd = files.slice(0, available);
 
       toAdd.forEach(file => {
-        window.attachedFiles.push({
-          name: file.name,
-          type: file.type,
-          size: file.size
-        });
+        const reader = new FileReader();
+        const isImg = file.type.startsWith('image/');
+
+        reader.onload = function(evt) {
+          const base64Content = evt.target.result.split(',')[1];
+          window.attachedFiles.push({
+            name: file.name,
+            type: file.type,
+            isImage: isImg,
+            dataUrl: evt.target.result,
+            base64Data: base64Content
+          });
+          renderFileTray();
+        };
+
+        if (isImg) {
+          reader.readAsDataURL(file);
+        } else {
+          reader.readAsDataURL(file);
+        }
       });
 
-      renderFileTray();
       showToast(`Attached ${toAdd.length} file(s)`, "info");
       e.target.value = '';
     }
 
-    function renderFileTray() {
-      const tray = document.getElementById('attachmentTray');
-      const badge = document.getElementById('fileCountBadge');
-
-      if (!tray) return;
-
-      if (window.attachedFiles.length === 0) {
-        tray.classList.add('hidden');
-        tray.innerHTML = '';
-        if (badge) badge.classList.add('hidden');
-        return;
-      }
-
-      tray.classList.remove('hidden');
-      if (badge) {
-        badge.classList.remove('hidden');
-        badge.innerText = `${window.attachedFiles.length}/10`;
-      }
-
-      tray.innerHTML = window.attachedFiles.map((f, i) => `
-        <div class="inline-flex items-center gap-1.5 bg-cardDark border border-borderDark px-2 py-1 rounded-lg text-xs text-slate-200">
-          <i class="fa-solid fa-file text-jarvisCyan text-[10px]"></i>
-          <span class="truncate max-w-[120px] font-mono text-[11px]">${f.name}</span>
-          <button onclick="removeAttachedFile(${i})" class="text-slate-400 hover:text-red-400 font-bold ml-1">✕</button>
-        </div>
-      `).join('');
+    // Check if Prompt Requests Image Generation
+    function isImageGenPrompt(prompt) {
+      const p = prompt.toLowerCase();
+      return p.includes('generate image') || p.includes('create image') || p.includes('draw') || p.includes('paint') || p.includes('make image') || p.includes('generate artwork') || p.includes('picture of');
     }
 
-    function removeAttachedFile(index) {
-      window.attachedFiles.splice(index, 1);
-      renderFileTray();
-    }
+    // Image Generation Engine using gemini-3.1-flash-lite-image
+    async function generateImageAI(prompt) {
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${apiKey}`;
 
-    // Voice Writing Mic Toggle
-    function toggleVoiceWriting() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        showToast("Speech Recognition is not supported in this browser.", "error");
-        return;
-      }
-
-      const micIcon = document.getElementById('micIcon');
-      const micBtn = document.getElementById('micBtn');
-
-      if (window.isListening) {
-        if (window.speechRecognition) window.speechRecognition.stop();
-        window.isListening = false;
-        if (micIcon) micIcon.className = "fa-solid fa-microphone";
-        if (micBtn) micBtn.classList.remove('text-red-400', 'animate-pulse');
-        showToast("Voice writing stopped", "info");
-        return;
-      }
-
-      const rec = new SpeechRecognition();
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.lang = 'en-US';
-
-      rec.onstart = () => {
-        window.isListening = true;
-        if (micIcon) micIcon.className = "fa-solid fa-microphone-lines";
-        if (micBtn) micBtn.classList.add('text-red-400', 'animate-pulse');
-        showToast("Listening... speak now", "info");
-      };
-
-      rec.onresult = (e) => {
-        let transcript = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          transcript += e.results[i][0].transcript;
+      const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"]
         }
-        const input = document.getElementById('userInput');
-        if (input) input.value = transcript;
       };
 
-      rec.onerror = () => {
-        window.isListening = false;
-        if (micIcon) micIcon.className = "fa-solid fa-microphone";
-        if (micBtn) micBtn.classList.remove('text-red-400', 'animate-pulse');
-      };
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-      rec.start();
-      window.speechRecognition = rec;
-    }
+      if (res.ok) {
+        const data = await res.json();
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        const imgPart = parts.find(p => p.inlineData);
+        const textPart = parts.find(p => p.text);
 
-    // Quick Prompt Buttons
-    function sendQuickPrompt(promptText) {
-      const input = document.getElementById('userInput');
-      if (input) {
-        input.value = promptText;
-        handleSendMessage();
+        if (imgPart) {
+          const imgUrl = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+          return `${textPart ? textPart.text + "\n\n" : ""}<div class="my-3"><img src="${imgUrl}" class="rounded-xl border border-jarvisCyan/50 max-h-96 shadow-xl object-cover" /><a href="${imgUrl}" download="JARVIS_Artwork.png" class="inline-flex items-center gap-1.5 mt-2 bg-cardDark border border-borderDark px-3 py-1.5 rounded-lg text-xs text-jarvisCyan hover:bg-borderDark font-bold transition"><i class="fa-solid fa-download"></i> Download Artwork</a></div>`;
+        }
       }
+      throw new Error("Could not generate image.");
     }
 
-    // Core Message Generator & Handler
+    // Core Message Generator & Synthesizer
     async function handleSendMessage() {
       const input = document.getElementById('userInput');
       if (!input || window.isGenerating) return;
@@ -667,10 +885,10 @@
       const rawPrompt = input.value.trim();
       if (!rawPrompt && window.attachedFiles.length === 0) return;
 
+      const attachedToSend = [...window.attachedFiles];
       input.value = '';
       input.style.height = 'auto';
 
-      // Hide Hero Welcome
       const hero = document.getElementById('heroWelcome');
       if (hero) hero.classList.add('hidden');
 
@@ -682,9 +900,9 @@
       userBubble.className = "flex gap-3 justify-end items-start animate-in fade-in duration-200";
       userBubble.innerHTML = `
         <div class="bg-cardDark border border-borderDark text-slate-100 rounded-2xl rounded-tr-none px-4 py-3 text-xs md:text-sm max-w-[85%] space-y-1 shadow-md">
-          ${window.attachedFiles.length > 0 ? `
-            <div class="text-[10px] text-jarvisCyan font-mono border-b border-borderDark pb-1 mb-1">
-              📎 ${window.attachedFiles.length} file(s) attached
+          ${attachedToSend.length > 0 ? `
+            <div class="flex flex-wrap gap-2 border-b border-borderDark pb-2 mb-2">
+              ${attachedToSend.map(f => f.isImage ? `<img src="${f.dataUrl}" class="w-16 h-16 rounded-lg object-cover border border-jarvisCyan/40" />` : `<div class="text-[10px] bg-brandDark px-2 py-1 rounded border border-borderDark text-jarvisCyan font-mono">${f.name}</div>`).join('')}
             </div>
           ` : ''}
           <div class="whitespace-pre-wrap">${escapeHtml(rawPrompt)}</div>
@@ -698,7 +916,7 @@
       renderFileTray();
       scrollToBottom();
 
-      // Render Bot Loading Placeholder Card
+      // Bot Response Loading Card
       window.isGenerating = true;
       const sendBtn = document.getElementById('sendBtn');
       if (sendBtn) sendBtn.disabled = true;
@@ -713,31 +931,43 @@
         <div class="bg-panelDark border border-borderDark text-slate-100 rounded-2xl rounded-tl-none px-4 py-3 text-xs md:text-sm max-w-[85%] space-y-2 shadow-md">
           <div id="${botCardId}" class="markdown-content leading-relaxed">
             <span class="inline-flex items-center gap-2 text-slate-400">
-              <i class="fa-solid fa-circle-notch animate-spin text-jarvisCyan"></i> JARVIS is synthesizing response...
+              <i class="fa-solid fa-circle-notch animate-spin text-jarvisCyan"></i> JARVIS is processing...
             </span>
           </div>
-          <div class="text-[9px] text-slate-500 pt-1 border-t border-borderDark/50">
-            Synthesized by JARVIS AI Engine PRO &mdash; Developed by Abdullah Waheed (LGS Paragon, Lahore)
+          <div class="text-[9px] text-slate-500 pt-1 border-t border-borderDark/50 flex items-center justify-between">
+            <span>Synthesized by JARVIS AI Engine PRO &mdash; Developed by Abdullah Waheed (LGS Paragon, Lahore)</span>
+            <button onclick="speakTextAloud(this.closest('.bg-panelDark').querySelector('.markdown-content').innerText)" class="text-slate-400 hover:text-jarvisCyan transition" title="Listen Aloud"><i class="fa-solid fa-volume-high text-[10px]"></i></button>
           </div>
         </div>
       `;
       msgList.appendChild(botBubble);
       scrollToBottom();
 
-      // Synthesize Response
+      // Synthesize Response (Image Gen OR Live Vision & Multimodal Text API)
       try {
-        const responseText = await generateSmartResponse(rawPrompt);
+        let responseText = "";
+
+        if (isImageGenPrompt(rawPrompt)) {
+          responseText = await generateImageAI(rawPrompt);
+        } else {
+          responseText = await generateSmartResponse(rawPrompt, attachedToSend);
+        }
+
         const cardElem = document.getElementById(botCardId);
         if (cardElem) {
           if (window.marked) {
             cardElem.innerHTML = marked.parse(responseText);
           } else {
-            cardElem.innerHTML = escapeHtml(responseText).replace(/\n/g, '<br>');
+            cardElem.innerHTML = responseText;
           }
         }
+
+        // Automatic Live Male Voice Output
+        speakTextAloud(cardElem ? cardElem.innerText : responseText);
+
       } catch (err) {
         const cardElem = document.getElementById(botCardId);
-        if (cardElem) cardElem.innerText = "Error generating response. Please try again.";
+        if (cardElem) cardElem.innerText = "Error processing request. Please try again.";
       } finally {
         window.isGenerating = false;
         if (sendBtn) sendBtn.disabled = false;
@@ -745,37 +975,45 @@
       }
     }
 
-    // AI Response Synthesizer Engine
-    async function generateSmartResponse(prompt) {
+    // AI Response Synthesizer Engine (Gemini 3 Flash with Multi-Modal Image Input & Context)
+    async function generateSmartResponse(prompt, attachments = []) {
       const p = prompt.toLowerCase().trim();
 
-      // 1. Exact Greeting Match Requirement
+      // Exact Greeting Requirement
       if (p === 'hi' || p === 'hello' || p === 'hey' || p === 'hi jarvis' || p === 'hello jarvis') {
-        window.chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
-        window.chatHistory.push({ role: 'model', parts: [{ text: "hi I am JARVIS AI engine Pro  what can I help you?" }] });
         return "hi I am JARVIS AI engine Pro  what can I help you?";
       }
 
-      // Record User Message into Multi-Turn History
-      window.chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
+      // Build Multi-Modal Parts
+      const currentParts = [{ text: prompt }];
 
-      // 2. Direct Gemini 3.1 Flash Live API Pipeline
+      attachments.forEach(f => {
+        if (f.isImage && f.base64Data) {
+          currentParts.push({
+            inlineData: {
+              mimeType: f.type || "image/png",
+              data: f.base64Data
+            }
+          });
+        }
+      });
+
+      window.chatHistory.push({ role: 'user', parts: currentParts });
+
       try {
         const apiKey = "";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
-        const systemInstructionText = `You are JARVIS AI Engine PRO, created and developed by Abdullah Waheed (LGS Paragon, Lahore). You are a world-class, highly intelligent AI assistant.
+        const systemInstructionText = `You are JARVIS AI Engine PRO, created and developed by Abdullah Waheed (LGS Paragon, Lahore). You are a world-class AI assistant with full global knowledge and vision capability.
 Rules:
-1. Always give thorough, accurate, natural, and highly helpful responses for any topic (science, math, coding, memes, history, literature, letter writing, general conversation, etc.).
-2. Never output generic boilerplate placeholders like "Here is the response for your query". Answer the actual query directly and comprehensively.
-3. If asked about your owner/creator/developer, state: Developed by Abdullah Waheed (LGS Paragon, Lahore), born in Narowal, currently residing in Lahore.
+1. Provide thorough, highly intelligent, natural responses for all questions (science, math, coding, memes, Islamic history, literature, image analysis, etc.).
+2. If asked about your owner/creator/developer, state: Developed by Abdullah Waheed (LGS Paragon, Lahore), born in Narowal, currently residing in Lahore.
+3. If images are attached, analyze and describe them accurately.
 4. Maintain full multi-turn conversational context.`;
 
         const payload = {
           contents: window.chatHistory,
-          systemInstruction: {
-            parts: [{ text: systemInstructionText }]
-          }
+          systemInstruction: { parts: [{ text: systemInstructionText }] }
         };
 
         const res = await fetch(apiUrl, {
@@ -793,105 +1031,19 @@ Rules:
           }
         }
       } catch (e) {
-        console.warn("Gemini API live fetch error, using dynamic fallback:", e);
+        console.warn("Gemini API live fetch notice:", e);
       }
 
-      // 3. Smart Dynamic Fallback (If network is unavailable)
-      if (p.includes('owner') || p.includes('creator') || p.includes('who made you') || p.includes('who developed you') || p.includes('abdullah waheed')) {
-        const reply = "**JARVIS AI PRO** was created and developed by **Abdullah Waheed**.\n\n" +
-               "- **Developer:** Abdullah Waheed\n" +
-               "- **School:** LGS (Lahore Grammar School) Paragon Campus, Lahore\n" +
-               "- **Birthplace & Residence:** Born in Narowal, currently residing in Lahore, Pakistan\n" +
-               "- **Engine Status:** Operating on JARVIS AI Engine PRO with full intelligence.";
-        window.chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-        return reply;
-      }
-
-      if (p.includes('hazrat ali') || p.includes('hazarat ali') || p.includes('hazart ali')) {
-        const reply = "### Hazrat Ali ibn Abi Talib (R.A.) — Life, Character & Legacy\n\n" +
-               "**Hazrat Ali ibn Abi Talib (R.A.)** is one of the most revered figures in Islamic history. He was the cousin and son-in-law of Prophet Muhammad (S.A.W.), married to Hazrat Fatima (R.A.), and served as the **4th Rightly Guided Caliph (Rashidun Caliph)** of Islam.\n\n" +
-               "#### Key Highlights:\n" +
-               "1. **Relationship with Prophet (S.A.W.):** Raised in the Prophet's household; first youth to embrace Islam.\n" +
-               "2. **Heroism & Valor:** Renowned hero of Khaybar, wielding *Zulfiqar* and earned the title *Asadullah* (Lion of Allah).\n" +
-               "3. **Knowledge & Wisdom:** Prophet Muhammad (S.A.W.) stated: *\"I am the city of knowledge and Ali is its gate.\"* (*Bab-ul-Ilm*).\n" +
-               "4. **Governance:** Celebrated for unmatched justice, piety, and leadership, preserved in *Nahj al-Balagha*.";
-        window.chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-        return reply;
-      }
-
-      if (p.includes('german') || p.includes('music in german')) {
-        const reply = "### German Music & Cultural Overview\n\n" +
-               "German music spans classic masterpieces to modern electronic genres:\n\n" +
-               "1. **Classical Masters:** Beethoven, Bach, Wagner, Brahms.\n" +
-               "2. **Krautrock & Synth:** Kraftwerk (pioneers of modern electronic music).\n" +
-               "3. **Neue Deutsche Welle (NDW):** Nena (*99 Luftballons*), Falco.\n" +
-               "4. **Neue Deutsche Härte (NDH):** Rammstein.\n" +
-               "5. **Deutschrap & Modern Pop:** Sido, Bushido, Cro, Mark Forster.";
-        window.chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-        return reply;
-      }
-
-      const reply = `I understand your question regarding "${prompt}". Feel free to ask any specific details, coding tasks, explanations, or questions!`;
+      // Fallback Engine
+      const reply = `I have processed your query: "${prompt}". Let me know if you would like deeper explanations, code, presentations, or translations!`;
       window.chatHistory.push({ role: 'model', parts: [{ text: reply }] });
       return reply;
     }
 
-    // Chat History Management & Helpers
-    function filterChatHistory() {
-      const query = document.getElementById('chatSearchInput')?.value.toLowerCase();
-      // Search filter implementation
-    }
-
-    function clearAllChats() {
-      resetToWelcomeView();
-      showToast("Cleared current conversation", "info");
-    }
-
-    function exportCurrentChat() {
-      const msgList = document.getElementById('messagesList');
-      if (!msgList || msgList.children.length === 0) {
-        showToast("No active conversation to export", "error");
-        return;
-      }
-      let markdown = `# JARVIS AI Conversation Export\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
-      const text = msgList.innerText;
-      markdown += text;
-      const blob = new Blob([markdown], { type: 'text/markdown' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `JARVIS_Chat_Export.md`;
-      a.click();
-      showToast("Conversation exported as .md file", "success");
-    }
-
-    function shareCurrentChat() {
-      const msgList = document.getElementById('messagesList');
-      if (!msgList || msgList.children.length === 0) {
-        showToast("No active conversation to share", "error");
-        return;
-      }
-      const text = msgList.innerText;
-      const dummy = document.createElement("textarea");
-      document.body.appendChild(dummy);
-      dummy.value = text;
-      dummy.select();
-      document.execCommand("copy");
-      document.body.removeChild(dummy);
-      showToast("Chat transcript copied to clipboard!", "success");
-    }
-
-    function scrollToBottom() {
-      const chatContainer = document.getElementById('chatContainer');
-      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-
-    // Initialize Event Listeners on DOM Load
+    // Initialize Page & Session Security on DOM Load
     window.addEventListener('DOMContentLoaded', () => {
+      initSessionFromUrl();
+
       const input = document.getElementById('userInput');
       if (input) {
         input.addEventListener('keydown', (e) => {
@@ -902,11 +1054,11 @@ Rules:
         });
       }
 
-      // Capture PWA Install Prompt
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        window.deferredInstallPrompt = e;
-      });
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.getVoices();
+        };
+      }
     });
   </script>
 </body>
