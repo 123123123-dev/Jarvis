@@ -102,11 +102,11 @@
       
       <!-- STACKED MODEL SELECTOR DROPDOWN MENU -->
       <select id="modelSelect" class="bg-cardDark text-slate-200 border border-borderDark hover:border-jarvisCyan/60 rounded-lg text-xs px-2 py-1.5 focus:outline-none focus:border-jarvisCyan cursor-pointer transition max-w-[130px] sm:max-w-none font-medium truncate">
-        <option value="turbo" selected>⚡ JARVIS Turbo (Vision & Multi-Image)</option>
-        <option value="instant">🚀 JARVIS Ultra-Fast Engine v3.5</option>
-        <option value="pro">🧠 JARVIS Pro (Deep Reasoning)</option>
-        <option value="code">💻 JARVIS Code & Math Specialist</option>
-        <option value="dalle3">🎨 OpenAI DALL-E 3 Image Generator</option>
+        <option value="turbo" selected>⚡ JARVIS Turbo (Vision & Speed)</option>
+        <option value="elite">🧠 JARVIS Elite (Deep Reasoning)</option>
+        <option value="pro">🚀 JARVIS Pro (Advanced Dual Engine)</option>
+        <option value="instant">⚡ JARVIS Instant (Fast Web Search)</option>
+        <option value="dalle3">🎨 JARVIS Vision & DALL-E 3 (Image Studio)</option>
       </select>
 
       <!-- Live Voice Response Toggle Button -->
@@ -981,7 +981,12 @@
         return "hi I am JARVIS AI engine Pro  what can I help you?";
       }
 
-      // 2. CREATOR GUARD (ONLY triggers when asking specifically about JARVIS's creator/owner)
+      // 2. CONVERSATIONAL FRIENDLY INTENT RULE
+      if (['how are you', 'how are you doing', 'how are u', 'how r u', 'how are you jarvis', 'how are you doing jarvis'].includes(p)) {
+        return "I'm doing great, operational at 100%! How are you doing today? How can I assist you?";
+      }
+
+      // 3. CREATOR GUARD (ONLY triggers when asking specifically about JARVIS's creator/owner)
       const isCreatorQuery = (
         (p.includes('who created you') || p.includes('who made you') || p.includes('who is your developer') || p.includes('who is your creator') || p.includes('who is your owner') || p.includes('who built jarvis') || p.includes('who developed jarvis')) ||
         (p.includes('abdullah waheed') && (p.includes('who') || p.includes('tell me about')))
@@ -997,7 +1002,7 @@
 I am an advanced artificial intelligence system custom-built by Abdullah Waheed to assist with deep reasoning, coding, document generation, image synthesis, live web search, and multi-file analysis! How can I assist you today?`;
       }
 
-      // 3. SPECIAL REAL-WORLD KNOWLEDGE HANDLERS (e.g., DHA, Acronyms, Common Questions)
+      // 4. SPECIAL REAL-WORLD KNOWLEDGE HANDLERS (e.g., DHA, Acronyms, Common Questions)
       if (p === 'dha' || p.includes('full form of dha') || p.includes('what is dha') || p.includes('dha stands for')) {
         return `**DHA** stands for several prominent real-world entities depending on the context:
 
@@ -1015,7 +1020,7 @@ I am an advanced artificial intelligence system custom-built by Abdullah Waheed 
    - An organic compound widely used as a non-toxic preservative, antibacterial, and fungicide in cosmetic products and pharmaceuticals.`;
       }
 
-      // 4. DYNAMIC LIVE AI API QUERY (Gemini 3 Flash with Search Grounding)
+      // 5. DYNAMIC LIVE AI API QUERY (Gemini 3 Flash with Search Grounding)
       const currentParts = [{ text: prompt }];
       attachments.forEach(f => {
         if (f.isImage && f.base64Data) {
@@ -1039,8 +1044,9 @@ System Rules:
 1. Provide direct, comprehensive, factually accurate, real-world answers to ANY query (news, personalities like Elon Musk/Ambani/Hitler, acronyms like DHA, places, science, history, letters, coding, math).
 2. NEVER use static canned template phrases like "Information regarding:...", "Topic Overview:...", "Direct Summary:...", "Here is detailed information regarding...", or "I have received your request regarding:". Answer the user's prompt directly in clean Markdown.
 3. If user greets with "hi", "hello", "hey", output strictly: "hi I am JARVIS AI engine Pro  what can I help you?"
-4. If asked about your developer/creator, state clearly: Developed by Abdullah Waheed (LGS Paragon, Lahore).
-5. If user requests letters or leave applications, draft the full complete letter with proper Subject, Salutation, Body, and Sign-off.`;
+4. If user asks "how are you" or "how are you doing", output naturally: "I'm doing great, operational at 100%! How are you doing today? How can I assist you?"
+5. If asked about your developer/creator, state clearly: Developed by Abdullah Waheed (LGS Paragon, Lahore).
+6. If user requests letters or leave applications, draft the full complete letter with proper Subject, Salutation, Body, and Sign-off.`;
 
         const payload = {
           contents: window.chatHistory,
@@ -1080,7 +1086,7 @@ System Rules:
         console.warn("Gemini Live Grounding API notice:", e);
       }
 
-      // 5. LIVE WIKIPEDIA REST API ENCYCLOPEDIA FALLBACK (Ensures live world knowledge even if API fails)
+      // 6. LIVE WIKIPEDIA REST API ENCYCLOPEDIA FALLBACK (Ensures live world knowledge even if API fails)
       try {
         const searchWord = prompt.replace(/what is|who is|tell me about|full form of|how is/gi, '').trim();
         const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchWord)}`;
@@ -1098,33 +1104,10 @@ System Rules:
       }
 
       // Final Dynamic Natural Response (Zero Boilerplate)
-      const directFallback = `Here is the comprehensive factual detail regarding **${prompt}**:\n\n` +
+      const directFallback = `Here is the factual detail regarding **${prompt}**:\n\n` +
         `This topic encompasses key real-world developments, historical context, and technical specifications. Feel free to ask for deeper technical breakdowns, custom code, formal letter drafts, or DALL-E 3 visual artwork!`;
       
       window.chatHistory.push({ role: 'model', parts: [{ text: directFallback }] });
       return directFallback;
     }
-
-    // Initialize Page & Session Security on DOM Load
-    window.addEventListener('DOMContentLoaded', () => {
-      initSessionFromUrl();
-
-      const input = document.getElementById('userInput');
-      if (input) {
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-          }
-        });
-      }
-
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = () => {
-          window.speechSynthesis.getVoices();
-        };
-      }
-    });
-  </script>
-</body>
-</html>
+<!-- ... existing code -->
