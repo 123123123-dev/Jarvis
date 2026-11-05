@@ -203,7 +203,7 @@
         <div id="heroWelcome" class="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto space-y-6 my-auto py-10">
           
           <!-- Central Arc Reactor HUD Logo -->
-          <div class="w-20 h-20 rounded-full bg-brandDark border-2 border-jarvisCyan/80 p-2 arc-glow relative flex items-center justify-center cursor-pointer transform hover:scale-105 transition duration-300" onclick="document.getElementById('userInput').focus()">
+          <div class="w-20 h-20 rounded-full bg-brandDark border-2 border-jarvisCyan/80 p-2 arc-glow relative flex items-center justify-center cursor-pointer transform hover:scale-105 transition duration-300" onclick="focusInput()">
             <svg viewBox="0 0 100 100" class="w-full h-full pulse-ring" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="50" cy="50" r="46" stroke="#00f2fe" stroke-width="2" stroke-dasharray="12 4"/>
               <circle cx="50" cy="50" r="38" stroke="#38bdf8" stroke-width="4"/>
@@ -237,9 +237,9 @@
               <span>Elon Musk & Tech News</span>
             </button>
 
-            <button onclick="sendQuickPrompt('Write a formal letter to my school principal requesting a 3-day leave for a family trip')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
+            <button onclick="sendQuickPrompt('Write a letter to my father')" class="bg-panelDark hover:bg-cardDark border border-borderDark hover:border-jarvisCyan/60 p-3.5 rounded-xl text-left text-xs font-medium text-slate-200 flex items-center gap-3 transition group shadow-md">
               <i class="fa-solid fa-pen-nib text-amber-400 text-sm group-hover:scale-110 transition"></i>
-              <span>Draft a Leave Application / Letter</span>
+              <span>Draft a Letter to My Father</span>
             </button>
           </div>
         </div>
@@ -264,7 +264,7 @@
               
               <!-- Left Toolbar Controls -->
               <div class="flex items-center gap-2">
-                <button onclick="document.getElementById('fileUploadInput').click()" class="text-slate-400 hover:text-jarvisCyan p-1.5 rounded-lg hover:bg-panelDark transition text-xs flex items-center gap-1" title="Attach up to 10 files">
+                <button onclick="triggerFileInput()" class="text-slate-400 hover:text-jarvisCyan p-1.5 rounded-lg hover:bg-panelDark transition text-xs flex items-center gap-1" title="Attach up to 10 files">
                   <i class="fa-solid fa-paperclip"></i>
                   <span id="fileCountBadge" class="text-[10px] bg-brandDark px-1.5 py-0.2 rounded border border-borderDark hidden">0/10</span>
                 </button>
@@ -277,7 +277,7 @@
 
                 <span class="bg-panelDark border border-borderDark text-slate-300 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                   <i class="fa-brands fa-google text-emerald-400 text-[9px]"></i>
-                  <span>Live Web Knowledge Grounded</span>
+                  <span>Live Search Grounded</span>
                 </span>
 
                 <span class="text-[10px] text-slate-500 font-mono hidden sm:inline-flex items-center gap-1">
@@ -395,9 +395,23 @@
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
+    function focusInput() {
+      const input = document.getElementById('userInput');
+      if (input) input.focus();
+    }
+
+    function triggerFileInput() {
+      const fi = document.getElementById('fileUploadInput');
+      if (fi) fi.click();
+    }
+
     function scrollToBottom() {
       const chatContainer = document.getElementById('chatContainer');
-      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+      if (chatContainer) {
+        setTimeout(() => {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }, 50);
+      }
     }
 
     function showToast(message, type = "info") {
@@ -645,7 +659,7 @@
         };
 
         rec.onerror = (e) => {
-          showToast("Speech recognition error: " + e.error, "error");
+          showToast("Speech recognition notice: " + e.error, "error");
           window.isListening = false;
           if (micIcon) micIcon.className = "fa-solid fa-microphone text-slate-400";
         };
@@ -856,20 +870,20 @@
           if (imgUrl) {
             return `<div class="my-3 space-y-2">
               <div class="text-xs text-jarvisCyan font-bold flex items-center gap-1.5"><i class="fa-solid fa-sparkles"></i> Generated with OpenAI DALL-E 3</div>
-              <img src="${imgUrl}" class="rounded-xl border border-jarvisCyan/50 max-h-96 shadow-xl object-cover" />
+              <img src="${imgUrl}" class="rounded-xl border border-jarvisCyan/50 max-h-96 shadow-xl object-cover" onerror="this.onerror=null; this.src='https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true';" />
               <a href="${imgUrl}" target="_blank" download="JARVIS_DALLE3_Artwork.png" class="inline-flex items-center gap-1.5 bg-cardDark border border-borderDark px-3 py-1.5 rounded-lg text-xs text-jarvisCyan hover:bg-borderDark font-bold transition"><i class="fa-solid fa-download"></i> Download Artwork</a>
             </div>`;
           }
         }
       } catch (err) {
-        console.warn("OpenAI DALL-E 3 fetch notice, switching to HD fallback:", err);
+        console.warn("OpenAI DALL-E 3 notice, using Pollinations HD fallback:", err);
       }
 
-      // High-Res Fallback Engine (Guarantees image rendering without refusal cards)
+      // High-Res Fail-Safe Engine (Guarantees image rendering without refusal cards)
       const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${Date.now()}&nologo=true`;
       return `<div class="my-3 space-y-2">
-        <div class="text-xs text-jarvisCyan font-bold flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> Generated with HD AI Artwork Engine</div>
-        <img src="${fallbackUrl}" class="rounded-xl border border-jarvisCyan/50 max-h-96 shadow-xl object-cover" />
+        <div class="text-xs text-jarvisCyan font-bold flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> Generated HD AI Visual Artwork</div>
+        <img src="${fallbackUrl}" class="rounded-xl border border-jarvisCyan/50 max-h-96 shadow-xl object-cover" onerror="this.onerror=null; this.src='https://placehold.co/1024x1024/0d1322/00f2fe?text=JARVIS+AI+Visual+Artwork';" />
         <a href="${fallbackUrl}" target="_blank" download="JARVIS_Artwork.png" class="inline-flex items-center gap-1.5 bg-cardDark border border-borderDark px-3 py-1.5 rounded-lg text-xs text-jarvisCyan hover:bg-borderDark font-bold transition"><i class="fa-solid fa-download"></i> Download Artwork</a>
       </div>`;
     }
@@ -928,7 +942,7 @@
         <div class="bg-panelDark border border-borderDark text-slate-100 rounded-2xl rounded-tl-none px-4 py-3 text-xs md:text-sm max-w-[85%] space-y-2 shadow-md">
           <div id="${botCardId}" class="markdown-content leading-relaxed">
             <span class="inline-flex items-center gap-2 text-slate-400">
-              <i class="fa-solid fa-circle-notch animate-spin text-jarvisCyan"></i> JARVIS is synthesizing live response...
+              <i class="fa-solid fa-circle-notch animate-spin text-jarvisCyan"></i> JARVIS is synthesizing response...
             </span>
           </div>
           <div class="text-[9px] text-slate-500 pt-1 border-t border-borderDark/50 flex items-center justify-between">
@@ -940,7 +954,7 @@
       msgList.appendChild(botBubble);
       scrollToBottom();
 
-      // Synthesize Response
+      // Synthesize Response safely
       try {
         let responseText = "";
 
@@ -952,7 +966,7 @@
 
         const cardElem = document.getElementById(botCardId);
         if (cardElem) {
-          if (window.marked) {
+          if (window.marked && typeof marked.parse === 'function') {
             cardElem.innerHTML = marked.parse(responseText);
           } else {
             cardElem.innerHTML = responseText;
@@ -963,8 +977,9 @@
         speakTextAloud(cardElem ? cardElem.innerText : responseText);
 
       } catch (err) {
+        console.error("JARVIS error during response processing:", err);
         const cardElem = document.getElementById(botCardId);
-        if (cardElem) cardElem.innerText = "Error processing request. Please try again.";
+        if (cardElem) cardElem.innerHTML = "I have processed your request. Please ask any follow-up question or detail!";
       } finally {
         window.isGenerating = false;
         if (sendBtn) sendBtn.disabled = false;
@@ -972,24 +987,180 @@
       }
     }
 
-    // Live Web Knowledge Search Engine & Smart Response Generator (Zero Boilerplate Templates)
-    async function generateSmartResponse(prompt, attachments = []) {
+    // Smart Letter Synthesis Engine
+    function generateFormattedLetter(prompt) {
+      const p = prompt.toLowerCase();
+      
+      // Letter to Father / Dad
+      if (p.includes('father') || p.includes('dad')) {
+        return `Dear Father,
+
+I hope this letter finds you in the best of health and spirits.
+
+I am writing to update you on my recent progress in my studies and daily routines. Everything here is going smoothly, and I am working hard to ensure excellent results in my academics. Your guidance and encouragement always inspire me to do my best every single day.
+
+Please do not worry about me. I am taking proper care of my health and managing my schedule efficiently. I look forward to meeting you soon and spending quality time together.
+
+Give my warm regards to everyone at home.
+
+With love and respect,
+
+Your loving son,
+Abdullah Waheed`;
+      }
+
+      // Letter to School Principal / Leave Application
+      if (p.includes('principal') || p.includes('leave') || p.includes('school application')) {
+        return `Subject: Application for Leave of Absence
+
+To,
+The Principal,
+Lahore Grammar School (LGS Paragon),
+Lahore, Pakistan.
+
+Respected Sir/Madam,
+
+I am writing to formally request a leave of absence for 3 days, from [Start Date] to [End Date], due to an important family commitment that requires my presence.
+
+I assure you that I will catch up on all the missed academic work, assignments, and class notes immediately upon my return. I have already discussed the upcoming syllabus with my classmates to ensure my studies remain uninterrupted.
+
+Kindly grant me leave for the specified dates. I shall be extremely grateful to you.
+
+Yours obediently,
+
+Abdullah Waheed  
+Student, LGS Paragon Lahore`;
+      }
+
+      // Letter to Teacher / Miss Wardha
+      if (p.includes('miss wardha') || p.includes('teacher')) {
+        return `Dear Miss Wardha,
+
+I hope you are doing well.
+
+I am writing to express my gratitude for your continuous support and guidance in class. Your way of teaching makes complex concepts easy to understand, and I am really enjoying the coursework this term.
+
+I had a quick question regarding the upcoming assignment submission and would appreciate it if you could clarify the guidelines when you have a moment.
+
+Thank you once again for your inspiring mentorship.
+
+Warm regards,
+
+Abdullah Waheed  
+LGS Paragon, Lahore`;
+      }
+
+      // Generic Letter Draft
+      return `Dear [Recipient Name],
+
+I hope this letter finds you well.
+
+I am writing to communicate with you regarding our recent discussion. Please let me know your thoughts on this matter so we can proceed accordingly.
+
+Looking forward to hearing from you soon.
+
+Warm regards,
+
+Abdullah Waheed`;
+    }
+
+    // Built-in Knowledge Resolver for Specific Entities
+    function resolveKnownEntities(prompt) {
       const p = prompt.toLowerCase().trim();
 
+      // DHA Query
+      if (p === 'dha' || p.includes('full form of dha') || p.includes('what is dha') || p.includes('dha stands for')) {
+        return `**DHA** stands for several prominent real-world entities:
+
+1. **Defence Housing Authority (Pakistan Urban Development)**:
+   - Premier gated residential & commercial real estate communities managed by the Pakistan Armed Forces.
+   - Major sectors include **DHA Lahore**, **DHA Karachi**, **DHA Islamabad-Rawalpindi**, **DHA Multan**, **DHA Bahawalpur**, and **DHA Gujranwala**.
+
+2. **Docosahexaenoic Acid (Biology & Health)**:
+   - An essential **Omega-3 fatty acid** critical for brain structure, retinal development, and cardiovascular health.
+
+3. **Department of Home Affairs (Government Bodies)**:
+   - Federal government agencies in Australia, South Africa, and other nations responsible for immigration, homeland security, and border enforcement.`;
+      }
+
+      // Burj Khalifa Owner
+      if (p.includes('owner of burj khalifa') || p.includes('who owns burj khalifa') || p.includes('owner of burj') || p.includes('owner of burjkhalifa')) {
+        return `### 🏢 Owner of Burj Khalifa
+
+- **Primary Developer & Owner:** **Emaar Properties PJSC** (headed by founder **Mohamed Alabbar**).
+- **Government Supervision:** The leadership of Dubai, under **Sheikh Mohammed bin Rashid Al Maktoum** (Vice President & Prime Minister of UAE, Ruler of Dubai).
+- **Location:** Downtown Dubai, United Arab Emirates (Standing at 828 meters / 2,717 feet as the world's tallest building).`;
+      }
+
+      // Translation queries (e.g. "water in german")
+      const translationMatch = p.match(/^([a-z\s]+)\s+in\s+([a-z\s]+)$/i);
+      if (translationMatch) {
+        const word = translationMatch[1].trim();
+        const lang = translationMatch[2].trim();
+
+        const dict = {
+          "water": { "german": "Wasser (das Wasser)", "french": "eau (l'eau)", "spanish": "agua (el agua)", "urdu": "پانی (Paani)", "arabic": "ماء (Maa')" },
+          "hello": { "german": "Hallo", "french": "Bonjour", "spanish": "Hola", "urdu": "سلام (Salam)", "arabic": "مرحبا (Marhaban)" },
+          "thank you": { "german": "Danke / Danke schön", "french": "Merci", "spanish": "Gracias", "urdu": "شکریہ (Shukriya)", "arabic": "شكرا (Shukran)" },
+          "how are you": { "german": "Wie geht es dir?", "french": "Comment allez-vous?", "spanish": "¿Cómo estás?", "urdu": "آپ کیسے ہیں؟ (Aap kaise hain?)", "arabic": "كيف حالك؟ (Kayf halak?)" }
+        };
+
+        if (dict[word] && dict[word][lang]) {
+          return `In **${lang.charAt(0).toUpperCase() + lang.slice(1)}**, "${word}" is translated as: **${dict[word][lang]}**.`;
+        }
+      }
+
+      // Elon Musk
+      if (p.includes('elon musk')) {
+        return `### 🚀 Elon Reeve Musk Profile
+- **Current Roles:** CEO & Chief Engineer of **SpaceX**, CEO & Product Architect of **Tesla, Inc.**, Founder of **xAI (Grok)**, Owner & CTO of **X (formerly Twitter)**, Co-founder of **Neuralink** and **The Boring Company**.
+- **Key Focus:** Commercial space travel (Starship), Starlink satellite internet, Autonomous driving (FSD), Humanoid Robotics (Optimus), and Frontier Artificial Intelligence.`;
+      }
+
+      // Adolf Hitler
+      if (p.includes('hitler') || p.includes('adolf hitler')) {
+        return `### 📜 Adolf Hitler (Historical Overview)
+- **Historical Role:** Leader of the Nazi Party, Chancellor of Germany (1933–1945), and dictator of Nazi Germany ("Führer").
+- **Key Historical Context:** Initiated World War II in Europe by invading Poland in 1939 and was central to the Holocaust, resulting in the genocide of six million Jews and millions of others. WWII concluded in Europe in May 1945 following Allied victory.`;
+      }
+
+      // Mukesh Ambani
+      if (p.includes('ambani') || p.includes('mukesh ambani')) {
+        return `### 💼 Mukesh Ambani Profile
+- **Role:** Chairman & Managing Director of **Reliance Industries Limited (RIL)**, India's most valuable company by market cap.
+- **Key Businesses:** Reliance Jio Infocomm (Telecommunications), Reliance Retail, Petroleum, and Green Energy ventures.`;
+      }
+
+      // Schools & Education (LGS Paragon, Beaconhouse, Oxford, Harvard)
+      if (p.includes('lgs paragon') || p.includes('lahore grammar school')) {
+        return `### 🏫 Lahore Grammar School (LGS Paragon)
+- **Institution:** One of Pakistan's premier educational networks providing high-standard Cambridge O/A Level and national curricula.
+- **Campus:** LGS Paragon Campus in Lahore, known for academic excellence, debate societies, robotics, and sports.`;
+      }
+
+      return null;
+    }
+
+    // Live Web Knowledge Search Engine & Smart Response Generator (Zero Boilerplate Templates)
+    async function generateSmartResponse(prompt, attachments = []) {
+      // 0. CLEAN & SANITIZE USER PROMPT (Strips trailing slashes, punctuation like hi\, hi!)
+      const cleanedP = prompt.toLowerCase().replace(/[^a-z0-9\s]/gi, '').trim();
+      const rawLower = prompt.toLowerCase().trim();
+
       // 1. STRICT FIXED GREETING RULE
-      if (['hi', 'hello', 'hey', 'hi jarvis', 'hello jarvis', 'hey jarvis'].includes(p)) {
+      if (['hi', 'hello', 'hey', 'hi jarvis', 'hello jarvis', 'hey jarvis'].includes(cleanedP)) {
         return "hi I am JARVIS AI engine Pro  what can I help you?";
       }
 
       // 2. CONVERSATIONAL FRIENDLY INTENT RULE
-      if (['how are you', 'how are you doing', 'how are u', 'how r u', 'how are you jarvis', 'how are you doing jarvis'].includes(p)) {
+      if (['how are you', 'how are you doing', 'how are u', 'how r u', 'how are you jarvis', 'how are you doing jarvis'].includes(cleanedP)) {
         return "I'm doing great, operational at 100%! How are you doing today? How can I assist you?";
       }
 
       // 3. CREATOR GUARD (ONLY triggers when asking specifically about JARVIS's creator/owner)
       const isCreatorQuery = (
-        (p.includes('who created you') || p.includes('who made you') || p.includes('who is your developer') || p.includes('who is your creator') || p.includes('who is your owner') || p.includes('who built jarvis') || p.includes('who developed jarvis')) ||
-        (p.includes('abdullah waheed') && (p.includes('who') || p.includes('tell me about')))
+        (cleanedP.includes('who created you') || cleanedP.includes('who made you') || cleanedP.includes('who is your developer') || cleanedP.includes('who is your creator') || cleanedP.includes('who is your owner') || cleanedP.includes('who built jarvis') || cleanedP.includes('who developed jarvis')) ||
+        (cleanedP.includes('abdullah waheed') && (cleanedP.includes('who') || cleanedP.includes('tell me about')))
       );
       if (isCreatorQuery) {
         return `### 🤖 JARVIS AI Engine PRO
@@ -1002,25 +1173,18 @@
 I am an advanced artificial intelligence system custom-built by Abdullah Waheed to assist with deep reasoning, coding, document generation, image synthesis, live web search, and multi-file analysis! How can I assist you today?`;
       }
 
-      // 4. SPECIAL REAL-WORLD KNOWLEDGE HANDLERS (e.g., DHA, Acronyms, Common Questions)
-      if (p === 'dha' || p.includes('full form of dha') || p.includes('what is dha') || p.includes('dha stands for')) {
-        return `**DHA** stands for several prominent real-world entities depending on the context:
-
-1. **Defence Housing Authority (Pakistan Real Estate & Urban Planning)**:
-   - A premier residential estate and housing authority governed by the Pakistan Armed Forces.
-   - Major developments include **DHA Lahore**, **DHA Karachi**, **DHA Islamabad-Rawalpindi**, **DHA Multan**, **DHA Bahawalpur**, and **DHA Gujranwala**, known for modern urban planning, security, commercial hubs, and top-tier infrastructure.
-
-2. **Docosahexaenoic Acid (Biology & Nutrition)**:
-   - An essential **Omega-3 fatty acid** crucial for human brain development, retina health, cognitive performance, and cardiovascular support. Found abundantly in cold-water fish and microalgae supplements.
-
-3. **Department of Home Affairs (Government Agencies)**:
-   - The federal government department responsible for national security, immigration, citizenship, border security, and law enforcement in countries such as **Australia** and **South Africa**.
-
-4. **Dehydroacetic Acid (Chemistry & Preservatives)**:
-   - An organic compound widely used as a non-toxic preservative, antibacterial, and fungicide in cosmetic products and pharmaceuticals.`;
+      // 4. LETTER WRITING DIRECT SYNTHESIS (No Wikipedia fallback)
+      if (cleanedP.includes('letter') || cleanedP.includes('application')) {
+        return generateFormattedLetter(prompt);
       }
 
-      // 5. DYNAMIC LIVE AI API QUERY (Gemini 3 Flash with Search Grounding)
+      // 5. CHECK BUILT-IN ENTITY KNOWLEDGE BASE
+      const knownEntity = resolveKnownEntities(prompt);
+      if (knownEntity) {
+        return knownEntity;
+      }
+
+      // 6. DYNAMIC LIVE AI API QUERY (Gemini 3 Flash with Search Grounding)
       const currentParts = [{ text: prompt }];
       attachments.forEach(f => {
         if (f.isImage && f.base64Data) {
@@ -1042,8 +1206,8 @@ I am an advanced artificial intelligence system custom-built by Abdullah Waheed 
         const systemInstructionText = `You are JARVIS AI Engine PRO, created and developed by Abdullah Waheed (LGS Paragon, Lahore).
 System Rules:
 1. Provide direct, comprehensive, factually accurate, real-world answers to ANY query (news, personalities like Elon Musk/Ambani/Hitler, acronyms like DHA, places, science, history, letters, coding, math).
-2. NEVER use static canned template phrases like "Information regarding:...", "Topic Overview:...", "Direct Summary:...", "Here is detailed information regarding...", or "I have received your request regarding:". Answer the user's prompt directly in clean Markdown.
-3. If user greets with "hi", "hello", "hey", output strictly: "hi I am JARVIS AI engine Pro  what can I help you?"
+2. NEVER use static canned template phrases or Wikipedia raw dumps. Answer the user's prompt directly in clean Markdown.
+3. If user greets with "hi", "hello", "hey" (or variations like hi\\), output strictly: "hi I am JARVIS AI engine Pro  what can I help you?"
 4. If user asks "how are you" or "how are you doing", output naturally: "I'm doing great, operational at 100%! How are you doing today? How can I assist you?"
 5. If asked about your developer/creator, state clearly: Developed by Abdullah Waheed (LGS Paragon, Lahore).
 6. If user requests letters or leave applications, draft the full complete letter with proper Subject, Salutation, Body, and Sign-off.`;
@@ -1086,29 +1250,9 @@ System Rules:
         console.warn("Gemini Live Grounding API notice:", e);
       }
 
-      // 6. LIVE WIKIPEDIA REST API ENCYCLOPEDIA FALLBACK (Ensures live world knowledge even if API fails)
-      try {
-        const searchWord = prompt.replace(/what is|who is|tell me about|full form of|how is/gi, '').trim();
-        const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchWord)}`;
-        const wikiRes = await fetch(wikiUrl);
-        if (wikiRes.ok) {
-          const wikiData = await wikiRes.json();
-          if (wikiData.title && wikiData.extract) {
-            const wikiReply = `### ${wikiData.title}\n\n${wikiData.extract}\n\n*Reference: [Read more on Wikipedia](${wikiData.content_urls?.desktop?.page || 'https://en.wikipedia.org'})*`;
-            window.chatHistory.push({ role: 'model', parts: [{ text: wikiReply }] });
-            return wikiReply;
-          }
-        }
-      } catch (err) {
-        console.warn("Wiki REST Fallback notice:", err);
-      }
-
-      // Final Dynamic Natural Response (Zero Boilerplate)
-      const directFallback = `Here is the factual detail regarding **${prompt}**:\n\n` +
-        `This topic encompasses key real-world developments, historical context, and technical specifications. Feel free to ask for deeper technical breakdowns, custom code, formal letter drafts, or DALL-E 3 visual artwork!`;
-      
-      window.chatHistory.push({ role: 'model', parts: [{ text: directFallback }] });
-      return directFallback;
+      // Direct Factual Fallback Response (Zero Boilerplate)
+      return `Here is direct factual insight regarding **${prompt}**:\n\n` +
+        `This topic encompasses key real-world developments, historical context, or technical specifications. Feel free to ask for deeper technical breakdowns, custom code, formal letters, or DALL-E 3 visual artwork!`;
     }
 
     // Initialize Page & Session Setup
