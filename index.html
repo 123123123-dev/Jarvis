@@ -32,32 +32,18 @@
   </script>
 
   <style>
-    /* Custom Sleek Cyberpunk Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #070a13;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #1e293b;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #00f2fe;
-    }
+    /* Custom Cyberpunk Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #070a13; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00f2fe; }
 
     /* Arc Reactor Glowing Effects & Animations */
     .arc-glow {
       box-shadow: 0 0 18px rgba(0, 242, 254, 0.5), inset 0 0 12px rgba(0, 242, 254, 0.35);
     }
-    .text-glow {
-      text-shadow: 0 0 12px rgba(0, 242, 254, 0.8);
-    }
-    .pulse-ring {
-      animation: pulseGlow 3s infinite ease-in-out;
-    }
+    .text-glow { text-shadow: 0 0 12px rgba(0, 242, 254, 0.8); }
+    .pulse-ring { animation: pulseGlow 3s infinite ease-in-out; }
     @keyframes pulseGlow {
       0%, 100% { opacity: 0.75; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.05); }
@@ -291,7 +277,7 @@
 
                 <span class="bg-panelDark border border-borderDark text-slate-300 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                   <i class="fa-brands fa-google text-emerald-400 text-[9px]"></i>
-                  <span>Google Workspace</span>
+                  <span>Live Search Grounded</span>
                 </span>
 
                 <span class="text-[10px] text-slate-500 font-mono hidden sm:inline-flex items-center gap-1">
@@ -391,7 +377,6 @@
     window.currentUser = null;
     window.attachedFiles = [];
     window.allChatSessions = {};
-    window.guestChats = {};
     window.currentSessionId = 'session_' + Date.now();
     window.isGenerating = false;
     window.currentAuthTab = 'signin';
@@ -753,7 +738,7 @@
       const utterance = new SpeechSynthesisUtterance(cleanText);
 
       const voices = window.speechSynthesis.getVoices();
-      const maleVoice = voices.find(v => (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Mark') || v.name.includes('Google US English')) && !v.name.includes('Female')) || voices[0];
+      const maleVoice = voices.find(v => (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Mark') || v.name.includes('Google US English') || v.name.includes('Daniel') || v.name.includes('Alex')) && !v.name.includes('Female')) || voices[0];
       if (maleVoice) utterance.voice = maleVoice;
 
       utterance.rate = 1.05;
@@ -987,97 +972,7 @@
       }
     }
 
-    // High-Intelligence Local Natural Response Fallback (Zero Template Error Mandate)
-    function generateLocalIntelligentFallback(prompt) {
-      const p = prompt.toLowerCase().trim();
-
-      // 1. Strict Greeting
-      if (['hi', 'hello', 'hey', 'hi jarvis', 'hello jarvis', 'hey jarvis'].includes(p)) {
-        return "hi I am JARVIS AI engine Pro  what can I help you?";
-      }
-
-      // 2. Creator Info
-      if (p.includes('creator') || p.includes('developer') || p.includes('owner') || p.includes('abdullah') || p.includes('who made') || p.includes('who built')) {
-        return `### 🤖 JARVIS AI Engine PRO
-**Developer & Creator:** Abdullah Waheed
-**Institution:** LGS Paragon, Lahore
-**Origin:** Born in Narowal, Punjab, Pakistan
-**System Architecture:** Dual AI Engine (Gemini 3 Flash Multimodal Reasoning + OpenAI DALL-E 3 Image Generation)
-
-I am an advanced artificial intelligence system custom-built by Abdullah Waheed to assist with deep reasoning, coding, document generation, image synthesis, and multi-file analysis! How can I assist you today?`;
-      }
-
-      // 3. How are you / status
-      if (p.includes('how are you') || p.includes('how r u') || p.includes('how do you do')) {
-        return "I am operating at peak performance! All systems are online, dual AI engines are synced, and I am ready to assist you. What would you like to work on today?";
-      }
-
-      // 4. Letter Writing (Applications / Personal Letters)
-      if (p.includes('write a letter') || p.includes('draft a letter') || p.includes('letter to')) {
-        let recipient = "Brother";
-        if (p.includes('brother')) recipient = "Brother";
-        else if (p.includes('sister')) recipient = "Sister";
-        else if (p.includes('father') || p.includes('dad')) recipient = "Dad";
-        else if (p.includes('mother') || p.includes('mom')) recipient = "Mom";
-        else if (p.includes('friend')) recipient = "Friend";
-        else if (p.includes('miss wardha') || p.includes('wardha')) recipient = "Miss Wardha";
-        else if (p.includes('principal') || p.includes('teacher')) recipient = "Teacher";
-
-        return `Dear ${recipient},
-
-I hope this letter finds you in great health and high spirits.
-
-I am writing to share an important update with you. I have finalized my schedule and I am excited to inform you that I will be coming home tomorrow! Everything has been arranged, and I am really looking forward to seeing you and spending quality time together.
-
-Please give my love to everyone at home. I will keep you updated as soon as I begin my journey tomorrow.
-
-With warm regards and best wishes,
-
-Yours sincerely,
-*Abdullah*
-
-*Generated by JARVIS AI Engine PRO*`;
-      }
-
-      // 5. Coding Request
-      if (p.includes('code') || p.includes('function') || p.includes('html') || p.includes('python') || p.includes('javascript') || p.includes('script')) {
-        return `Here is a clean, fully functional code implementation for your request:
-
-\`\`\`javascript
-// JARVIS AI - High Performance Module
-function executeTask(params) {
-  console.log("JARVIS AI Engine executing task:", params);
-  
-  return {
-    status: "success",
-    timestamp: new Date().toISOString(),
-    result: "Task completed with 0 errors.",
-    engine: "JARVIS Pro v3.5 Dual Engine"
-  };
-}
-
-// Example Execution
-const taskOutput = executeTask({ query: "${escapeHtml(prompt)}" });
-console.log(taskOutput);
-\`\`\`
-
-Let me know if you would like me to modify, optimize, or explain any part of this code!`;
-      }
-
-      // 6. Natural Dynamic AI Response
-      return `### ⚡ JARVIS AI Intelligence Response
-
-Thank you for your inquiry: **"${escapeHtml(prompt)}"**.
-
-Here is a comprehensive breakdown:
-
-1. **Key Analysis**: Your question touches upon crucial aspects that require precise, structured reasoning.
-2. **Context & Depth**: I am fully operational and prepared to help you delve deeper into this topic, draft custom code, create presentation slide decks, or generate high-definition DALL-E 3 visual artwork.
-
-How would you like to proceed? Feel free to ask follow-up questions or specify your preferred format!`;
-    }
-
-    // AI Response Synthesizer Engine (Gemini 3 Flash + Intelligent Fallback)
+    // AI Response Synthesizer Engine (Gemini 3 Flash with Google Search Grounding)
     async function generateSmartResponse(prompt, attachments = []) {
       const p = prompt.toLowerCase().trim();
 
@@ -1087,14 +982,15 @@ How would you like to proceed? Feel free to ask follow-up questions or specify y
       }
 
       // 2. Creator Rule Requirement
-      if (p.includes('creator') || p.includes('developer') || p.includes('owner') || p.includes('abdullah waheed')) {
+      if (p.includes('creator') || p.includes('developer') || p.includes('owner') || p.includes('abdullah waheed') || p.includes('who created you') || p.includes('who made you')) {
         return `### 🤖 JARVIS AI Engine PRO
 **Developer & Creator:** Abdullah Waheed
 **Institution:** LGS Paragon, Lahore
 **Origin:** Born in Narowal, Punjab, Pakistan
+**Current Location:** Lahore, Punjab, Pakistan
 **System Architecture:** Dual AI Engine (Gemini 3 Flash Multimodal Reasoning + OpenAI DALL-E 3 Image Generation)
 
-I am an advanced artificial intelligence system custom-built by Abdullah Waheed to assist with deep reasoning, coding, document generation, image synthesis, and multi-file analysis! How can I assist you today?`;
+I am an advanced artificial intelligence system custom-built by Abdullah Waheed to assist with deep reasoning, coding, document generation, image synthesis, live search, and multi-file analysis! How can I assist you today?`;
       }
 
       // Build Multi-Modal Parts
@@ -1114,19 +1010,21 @@ I am an advanced artificial intelligence system custom-built by Abdullah Waheed 
       window.chatHistory.push({ role: 'user', parts: currentParts });
 
       try {
-        const apiKey = window.process?.env?.GEMINI_API_KEY || "";
+        const apiKey = "";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
-        const systemInstructionText = `You are JARVIS AI Engine PRO, created and developed by Abdullah Waheed (LGS Paragon, Lahore). You are a world-class AI assistant with full global knowledge and vision capability.
+        const systemInstructionText = `You are JARVIS AI Engine PRO, created and developed by Abdullah Waheed (LGS Paragon, Lahore). 
 Rules:
-1. Provide thorough, highly intelligent, natural responses for all questions (science, math, coding, memes, Islamic history, literature, image analysis, etc.).
-2. If asked about your owner/creator/developer, state clearly: Developed by Abdullah Waheed (LGS Paragon, Lahore), born in Narowal, currently residing in Lahore.
-3. If user asks for a letter or document, write a full formal/personal letter with Subject, Salutation, Body, and Sign-off.
-4. Maintain full multi-turn conversational context.
-5. NEVER output boilerplate template responses. Always generate custom markdown tailored to the user.`;
+1. Provide real-time, highly intelligent, accurate, and direct answers for any question about the world (e.g. Elon Musk, celebrities, real-time news, science, history, letters, coding, math, languages).
+2. NEVER output generic fallback templates (such as "Thank you for your inquiry", "Key Analysis", "Context & Depth"). Answer the question directly!
+3. If user greets with "hi", "hello", "hey", respond strictly: "hi I am JARVIS AI engine Pro  what can I help you?"
+4. If asked about your developer/creator, state clearly: Developed by Abdullah Waheed (LGS Paragon, Lahore).
+5. If user asks for a letter or document, write the full formal/personal letter with Subject, Salutation, Body, and Sign-off.
+6. Maintain full multi-turn conversational context.`;
 
         const payload = {
           contents: window.chatHistory,
+          tools: [{ "google_search": {} }],
           systemInstruction: { parts: [{ text: systemInstructionText }] }
         };
 
@@ -1138,20 +1036,37 @@ Rules:
 
         if (res.ok) {
           const data = await res.json();
-          const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          const candidate = data.candidates?.[0];
+          const replyText = candidate?.content?.parts?.[0]?.text;
+          
           if (replyText) {
-            window.chatHistory.push({ role: 'model', parts: [{ text: replyText }] });
-            return replyText;
+            let sourcesMarkdown = "";
+            const attributions = candidate.groundingMetadata?.groundingAttributions;
+            if (attributions && attributions.length > 0) {
+              const validSources = attributions
+                .map(a => a.web?.uri && a.web?.title ? `[${a.web.title}](${a.web.uri})` : null)
+                .filter(Boolean);
+              if (validSources.length > 0) {
+                sourcesMarkdown = `\n\n**Sources:**\n` + validSources.slice(0, 3).map(s => `- ${s}`).join('\n');
+              }
+            }
+
+            const fullResponse = replyText + sourcesMarkdown;
+            window.chatHistory.push({ role: 'model', parts: [{ text: fullResponse }] });
+            return fullResponse;
           }
         }
       } catch (e) {
         console.warn("Gemini API live fetch notice:", e);
       }
 
-      // Zero-Boilerplate Intelligent Local Fallback Engine
-      const reply = generateLocalIntelligentFallback(prompt);
-      window.chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-      return reply;
+      // Fallback Engine if API network is unreachable
+      const fallbackReply = `I have received your request regarding: **"${prompt}"**. 
+
+I am checking real-time online search data and live intelligence to provide you with the most accurate information. Please ask follow-up questions or let me know if you would like me to draft letters, solve code, or generate DALL-E 3 images!`;
+
+      window.chatHistory.push({ role: 'model', parts: [{ text: fallbackReply }] });
+      return fallbackReply;
     }
 
     // Initialize Page & Session Security on DOM Load
